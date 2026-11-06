@@ -4,14 +4,14 @@ using Aura3D.Core.Particles;
 using Aura3D.Core.Resources;
 using Aura3D.Gallery.Kit;
 using Aura3D.Gallery.Localization;
-using Aura3D.Gallery.Mvvm;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Irihi.Lingua;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Windows.Input;
 using Color = System.Drawing.Color;
 
 namespace Aura3D.Gallery.Demos;
@@ -31,7 +31,7 @@ namespace Aura3D.Gallery.Demos;
 /// 视图桥只有两个事件：<see cref="FrameRequested"/>（贴图/混合模式变化要排一次重绘）与
 /// <see cref="ShowBoundsToggled"/>（调试开关写在宿主的 PipelineSettings 上，VM 不碰 DemoContext）。
 /// </summary>
-public sealed class ParticlesViewModel : ViewModelBase
+public sealed partial class ParticlesViewModel : ObservableObject
 {
     // 程序化贴图是纯 CPU 资源，构造期就能生成。
     private static readonly Texture SoftDot = Procedural.SoftDot(128, 2.4f);
@@ -42,7 +42,8 @@ public sealed class ParticlesViewModel : ViewModelBase
         [Strings.Keys.Particles_TextureSoftDot, Strings.Keys.Particles_TextureSpark, Strings.Keys.Particles_TextureFlame];
 
     /// <summary>
-    /// 建好 VM：对齐参数初值、接好命令，再把 Readout 的模板与计算参数装配起来。
+    /// 建好 VM：对齐参数初值，再把 Readout 的模板与计算参数装配起来；命令经
+    /// <c>[RelayCommand]</c> 源生成，无需在此接线。
     /// </summary>
     public ParticlesViewModel()
     {
@@ -72,27 +73,6 @@ public sealed class ParticlesViewModel : ViewModelBase
 
         selectedTexture = TextureOptions[textureIndex];
         selectedBlendMode = FountainEmitter.BlendMode;
-
-        ReplayBurstCommand = new RelayCommand(() =>
-        {
-            burst?.Stop();
-            burst?.Play();
-        });
-
-        ApplyDebrisCommand = new RelayCommand(() =>
-        {
-            debris?.Stop();
-            debris?.Play();
-        });
-
-        RestartAllCommand = new RelayCommand(() =>
-        {
-            foreach (var system in new[] { fountain, burst, debris })
-            {
-                system?.Stop();
-                system?.Play();
-            }
-        });
 
         // Readout 模板 {0}..{10}：存活数一类是逐帧读的计算参数，渲染路径与贴图名在切换时才变，
         // 尾部 {10} 是「无贴图」提示——有贴图时是空串，等价于旧代码的字符串拼接。
@@ -140,14 +120,32 @@ public sealed class ParticlesViewModel : ViewModelBase
     /// <summary>混合模式下拉的选项。</summary>
     public IList BlendModeOptions { get; }
 
-    /// <summary>重放一次性爆发。</summary>
-    public ICommand ReplayBurstCommand { get; }
+    /// <summary>重放一次性爆发；源生成 <c>ReplayBurstCommand</c> 供按钮绑定。</summary>
+    [RelayCommand]
+    private void ReplayBurst()
+    {
+        burst?.Stop();
+        burst?.Play();
+    }
 
-    /// <summary>按新的 MaxParticles 重开碎块系统。</summary>
-    public ICommand ApplyDebrisCommand { get; }
+    /// <summary>按新的 MaxParticles 重开碎块系统；源生成 <c>ApplyDebrisCommand</c>。</summary>
+    [RelayCommand]
+    private void ApplyDebris()
+    {
+        debris?.Stop();
+        debris?.Play();
+    }
 
-    /// <summary>三个系统全部 Stop→Play。</summary>
-    public ICommand RestartAllCommand { get; }
+    /// <summary>三个系统全部 Stop→Play；源生成 <c>RestartAllCommand</c>。</summary>
+    [RelayCommand]
+    private void RestartAll()
+    {
+        foreach (var system in new[] { fountain, burst, debris })
+        {
+            system?.Stop();
+            system?.Play();
+        }
+    }
 
     /// <summary>喷泉发射器：公告板路径的模型对象，双向属性写穿到这里。</summary>
     public ParticleEmitter FountainEmitter { get; } = new()
@@ -336,7 +334,7 @@ public sealed class ParticlesViewModel : ViewModelBase
         get => fountainRate;
         set
         {
-            if (Set(ref fountainRate, value))
+            if (SetProperty(ref fountainRate, value))
                 FountainEmitter.EmissionRate = (float)value;
         }
     }
@@ -347,7 +345,7 @@ public sealed class ParticlesViewModel : ViewModelBase
         get => fountainConeAngle;
         set
         {
-            if (Set(ref fountainConeAngle, value))
+            if (SetProperty(ref fountainConeAngle, value))
                 FountainEmitter.ConeAngle = (float)value;
         }
     }
@@ -358,7 +356,7 @@ public sealed class ParticlesViewModel : ViewModelBase
         get => fountainGravityY;
         set
         {
-            if (Set(ref fountainGravityY, value))
+            if (SetProperty(ref fountainGravityY, value))
                 FountainEmitter.Gravity = new Vector3(0, (float)value, 0);
         }
     }
@@ -369,7 +367,7 @@ public sealed class ParticlesViewModel : ViewModelBase
         get => fountainDamping;
         set
         {
-            if (Set(ref fountainDamping, value))
+            if (SetProperty(ref fountainDamping, value))
                 FountainEmitter.Damping = (float)value;
         }
     }
@@ -380,7 +378,7 @@ public sealed class ParticlesViewModel : ViewModelBase
         get => fountainStartSize;
         set
         {
-            if (!Set(ref fountainStartSize, value))
+            if (!SetProperty(ref fountainStartSize, value))
                 return;
 
             var max = (float)value;
@@ -395,7 +393,7 @@ public sealed class ParticlesViewModel : ViewModelBase
         get => selectedTexture;
         set
         {
-            if (value == null || !Set(ref selectedTexture, value))
+            if (value == null || !SetProperty(ref selectedTexture, value))
                 return;
 
             textureIndex = Math.Max(0, TextureOptions.IndexOf(value));
@@ -411,7 +409,7 @@ public sealed class ParticlesViewModel : ViewModelBase
         get => flipbookTiles;
         set
         {
-            if (!Set(ref flipbookTiles, Math.Round(value)))
+            if (!SetProperty(ref flipbookTiles, Math.Round(value)))
                 return;
 
             ApplyBillboard();
@@ -425,7 +423,7 @@ public sealed class ParticlesViewModel : ViewModelBase
         get => burstRate;
         set
         {
-            if (Set(ref burstRate, value))
+            if (SetProperty(ref burstRate, value))
                 BurstEmitter.EmissionRate = (float)value;
         }
     }
@@ -436,7 +434,7 @@ public sealed class ParticlesViewModel : ViewModelBase
         get => burstDuration;
         set
         {
-            if (Set(ref burstDuration, value))
+            if (SetProperty(ref burstDuration, value))
                 BurstEmitter.Duration = (float)value;
         }
     }
@@ -447,7 +445,7 @@ public sealed class ParticlesViewModel : ViewModelBase
         get => burstLifetime;
         set
         {
-            if (Set(ref burstLifetime, value))
+            if (SetProperty(ref burstLifetime, value))
                 BurstEmitter.Lifetime = new RangeFloat(BurstEmitter.Lifetime.Min, (float)value);
         }
     }
@@ -458,7 +456,7 @@ public sealed class ParticlesViewModel : ViewModelBase
         get => burstVelocity;
         set
         {
-            if (!Set(ref burstVelocity, value))
+            if (!SetProperty(ref burstVelocity, value))
                 return;
 
             var max = (float)value;
@@ -475,7 +473,7 @@ public sealed class ParticlesViewModel : ViewModelBase
         get => debrisRate;
         set
         {
-            if (Set(ref debrisRate, value))
+            if (SetProperty(ref debrisRate, value))
                 DebrisEmitter.EmissionRate = (float)value;
         }
     }
@@ -486,7 +484,7 @@ public sealed class ParticlesViewModel : ViewModelBase
         get => debrisSpin;
         set
         {
-            if (!Set(ref debrisSpin, value))
+            if (!SetProperty(ref debrisSpin, value))
                 return;
 
             var max = (float)value;
@@ -501,7 +499,7 @@ public sealed class ParticlesViewModel : ViewModelBase
         get => debrisMeshScale;
         set
         {
-            if (Set(ref debrisMeshScale, value))
+            if (SetProperty(ref debrisMeshScale, value))
                 DebrisEmitter.MeshScale = (float)value;
         }
     }
@@ -512,7 +510,7 @@ public sealed class ParticlesViewModel : ViewModelBase
         get => debrisMaxParticles;
         set
         {
-            if (Set(ref debrisMaxParticles, value))
+            if (SetProperty(ref debrisMaxParticles, value))
                 DebrisEmitter.MaxParticles = (int)value;
         }
     }
@@ -523,7 +521,7 @@ public sealed class ParticlesViewModel : ViewModelBase
         get => selectedBlendMode;
         set
         {
-            if (value is not BlendMode mode || !Set(ref selectedBlendMode, value))
+            if (value is not BlendMode mode || !SetProperty(ref selectedBlendMode, value))
                 return;
 
             FountainEmitter.BlendMode = mode;
@@ -539,7 +537,7 @@ public sealed class ParticlesViewModel : ViewModelBase
         get => pauseAll;
         set
         {
-            if (!Set(ref pauseAll, value))
+            if (!SetProperty(ref pauseAll, value))
                 return;
 
             foreach (var system in new[] { fountain, burst, debris })
@@ -558,7 +556,7 @@ public sealed class ParticlesViewModel : ViewModelBase
         get => culling;
         set
         {
-            if (!Set(ref culling, value))
+            if (!SetProperty(ref culling, value))
                 return;
 
             foreach (var system in new[] { fountain, burst, debris })
@@ -575,7 +573,7 @@ public sealed class ParticlesViewModel : ViewModelBase
         get => showBounds;
         set
         {
-            if (Set(ref showBounds, value))
+            if (SetProperty(ref showBounds, value))
                 ShowBoundsToggled?.Invoke(value);
         }
     }
