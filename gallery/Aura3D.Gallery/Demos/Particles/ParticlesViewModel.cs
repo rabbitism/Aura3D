@@ -91,12 +91,19 @@ public sealed partial class ParticlesViewModel : ObservableObject
             .Build();
     }
 
-    /// <summary>场景建好后由视图登记三个粒子系统，命令与开关从此直接作用于它们。</summary>
+    /// <summary>
+    /// 场景建好后由视图登记三个粒子系统，命令与开关从此直接作用于它们。
+    /// 系统建出来必是「播放中且未暂停」；若开关在此之前已被拨到暂停，登记后补一次冻结。
+    /// </summary>
     public void AttachSystems(ParticleSystem fountainSystem, ParticleSystem burstSystem, ParticleSystem debrisSystem)
     {
         fountain = fountainSystem;
         burst = burstSystem;
         debris = debrisSystem;
+
+        ApplyPauseIntent(fountain);
+        ApplyPauseIntent(burst);
+        ApplyPauseIntent(debris);
     }
 
     /// <summary>资产阶段取到的火焰翻页图；在此之前构造期贴图回落到程序化圆点。</summary>
@@ -126,6 +133,7 @@ public sealed partial class ParticlesViewModel : ObservableObject
     {
         burst?.Stop();
         burst?.Play();
+        ApplyPauseIntent(burst);
     }
 
     /// <summary>按新的 MaxParticles 重开碎块系统；源生成 <c>ApplyDebrisCommand</c>。</summary>
@@ -134,6 +142,7 @@ public sealed partial class ParticlesViewModel : ObservableObject
     {
         debris?.Stop();
         debris?.Play();
+        ApplyPauseIntent(debris);
     }
 
     /// <summary>三个系统全部 Stop→Play；源生成 <c>RestartAllCommand</c>。</summary>
@@ -144,7 +153,18 @@ public sealed partial class ParticlesViewModel : ObservableObject
         {
             system?.Stop();
             system?.Play();
+            ApplyPauseIntent(system);
         }
+    }
+
+    /// <summary>
+    /// Stop→Play 的全新启动路径会把系统带回未暂停；「Pause 全部」还开着的话重开后要重新冻结，
+    /// 否则开关显示已暂停、粒子却在动。此时引擎必为未暂停态，一次 Pause() 翻转即回到冻结。
+    /// </summary>
+    private void ApplyPauseIntent(ParticleSystem? system)
+    {
+        if (pauseAll)
+            system?.Pause();
     }
 
     /// <summary>喷泉发射器：公告板路径的模型对象，双向属性写穿到这里。</summary>
@@ -531,7 +551,12 @@ public sealed partial class ParticlesViewModel : ObservableObject
         }
     }
 
-    /// <summary>暂停/恢复全部系统。</summary>
+    /// <summary>
+    /// 暂停/恢复全部系统。引擎的 <c>Pause()</c> 是翻转开关（暂停↔恢复），而 <c>Play()</c>
+    /// 在已播放时早退、不清暂停标志——暂停后用 Play() 恢复会永远停住（引擎问题，已另报 issue）。
+    /// 所以这里统一「翻一次」：本 VM 是引擎暂停态的唯一改写者，且 Stop→Play 与建场景后都会
+    /// 重放暂停意图，引擎态与本开关始终同步，一次翻转必然落在目标态上。
+    /// </summary>
     public bool PauseAll
     {
         get => pauseAll;
@@ -541,12 +566,7 @@ public sealed partial class ParticlesViewModel : ObservableObject
                 return;
 
             foreach (var system in new[] { fountain, burst, debris })
-            {
-                if (value)
-                    system?.Pause();
-                else
-                    system?.Play();
-            }
+                system?.Pause();
         }
     }
 
