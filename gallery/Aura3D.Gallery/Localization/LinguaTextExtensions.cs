@@ -1,4 +1,3 @@
-using System;
 using System.Globalization;
 using Irihi.Lingua;
 
@@ -24,12 +23,4 @@ public static class LinguaTextExtensions
     /// <summary>把当前语言的文案当格式串用，例如「{0} 项 / {1} MB」。</summary>
     public static string Format(this LinguaKey key, params object?[] args) =>
         string.Format(CultureInfo.CurrentCulture, key.T(), args);
-
-    /// <summary>
-    /// 把文案键变成可绑定源：ViewModel 的标签属性返回它，XAML 用 <c>{Binding Xxx^}</c>
-    /// （StreamBinding）订阅后，切换语言时由绑定自动收到新值，不需要重建界面。
-    /// 多占位的动态模板请改用 1.1 的 <c>CreateFormat()</c> 构建器，不要在 getter 里拼串。
-    /// </summary>
-    public static IObservable<string?> Observe(this LinguaKey key) =>
-        key.Manager.GetObservable(key.Key)!;
 }

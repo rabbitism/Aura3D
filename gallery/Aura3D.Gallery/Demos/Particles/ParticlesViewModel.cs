@@ -244,91 +244,91 @@ public sealed class ParticlesViewModel : ViewModelBase
     private bool showBounds = true;
 
     /// <summary>页首说明。</summary>
-    public IObservable<string?> IntroLabel => Strings.Keys.Particles_Intro.Observe();
+    public IObservable<string?> IntroLabel => Strings.Instance.Particles_Intro;
 
     /// <summary>「喷泉」分组标题。</summary>
-    public IObservable<string?> FountainSectionLabel => Strings.Keys.Particles_Fountain.Observe();
+    public IObservable<string?> FountainSectionLabel => Strings.Instance.Particles_Fountain;
 
     /// <summary>「爆发」分组标题。</summary>
-    public IObservable<string?> BurstSectionLabel => Strings.Keys.Particles_Burst.Observe();
+    public IObservable<string?> BurstSectionLabel => Strings.Instance.Particles_Burst;
 
     /// <summary>「碎块」分组标题。</summary>
-    public IObservable<string?> DebrisSectionLabel => Strings.Keys.Particles_Debris.Observe();
+    public IObservable<string?> DebrisSectionLabel => Strings.Instance.Particles_Debris;
 
     /// <summary>「三者共享」分组标题。</summary>
-    public IObservable<string?> SharedSectionLabel => Strings.Keys.Particles_Shared.Observe();
+    public IObservable<string?> SharedSectionLabel => Strings.Instance.Particles_Shared;
 
     /// <summary>喷泉发射率标签。</summary>
-    public IObservable<string?> FountainRateLabel => Strings.Keys.Particles_FountainRate.Observe();
+    public IObservable<string?> FountainRateLabel => Strings.Instance.Particles_FountainRate;
 
     /// <summary>锥形角标签。</summary>
-    public IObservable<string?> FountainConeAngleLabel => Strings.Keys.Particles_ConeAngle.Observe();
+    public IObservable<string?> FountainConeAngleLabel => Strings.Instance.Particles_ConeAngle;
 
     /// <summary>重力 Y 标签。</summary>
-    public IObservable<string?> FountainGravityLabel => Strings.Keys.Particles_GravityY.Observe();
+    public IObservable<string?> FountainGravityLabel => Strings.Instance.Particles_GravityY;
 
     /// <summary>阻尼标签。</summary>
-    public IObservable<string?> FountainDampingLabel => Strings.Keys.Particles_Damping.Observe();
+    public IObservable<string?> FountainDampingLabel => Strings.Instance.Particles_Damping;
 
     /// <summary>起始尺寸标签。</summary>
-    public IObservable<string?> FountainStartSizeLabel => Strings.Keys.Particles_StartSize.Observe();
+    public IObservable<string?> FountainStartSizeLabel => Strings.Instance.Particles_StartSize;
 
     /// <summary>贴图下拉标签。</summary>
-    public IObservable<string?> TextureLabel => Strings.Keys.Particles_Map.Observe();
+    public IObservable<string?> TextureLabel => Strings.Instance.Particles_Map;
 
     /// <summary>翻页格数标签。</summary>
-    public IObservable<string?> FlipbookTilesLabel => Strings.Keys.Particles_FlipbookTiles.Observe();
+    public IObservable<string?> FlipbookTilesLabel => Strings.Instance.Particles_FlipbookTiles;
 
     /// <summary>翻页说明。</summary>
-    public IObservable<string?> FlipbookNoteLabel => Strings.Keys.Particles_FlipbookNote.Observe();
+    public IObservable<string?> FlipbookNoteLabel => Strings.Instance.Particles_FlipbookNote;
 
     /// <summary>爆发发射率标签。</summary>
-    public IObservable<string?> BurstRateLabel => Strings.Keys.Particles_BurstRate.Observe();
+    public IObservable<string?> BurstRateLabel => Strings.Instance.Particles_BurstRate;
 
     /// <summary>爆发时长标签。</summary>
-    public IObservable<string?> BurstDurationLabel => Strings.Keys.Particles_Duration.Observe();
+    public IObservable<string?> BurstDurationLabel => Strings.Instance.Particles_Duration;
 
     /// <summary>寿命上限标签。</summary>
-    public IObservable<string?> BurstLifetimeLabel => Strings.Keys.Particles_MaxLife.Observe();
+    public IObservable<string?> BurstLifetimeLabel => Strings.Instance.Particles_MaxLife;
 
     /// <summary>初速上限标签。</summary>
-    public IObservable<string?> BurstVelocityLabel => Strings.Keys.Particles_MaxSpeed.Observe();
+    public IObservable<string?> BurstVelocityLabel => Strings.Instance.Particles_MaxSpeed;
 
     /// <summary>「再放一次」按钮文案。</summary>
-    public IObservable<string?> ReplayBurstLabel => Strings.Keys.Particles_Replay.Observe();
+    public IObservable<string?> ReplayBurstLabel => Strings.Instance.Particles_Replay;
 
     /// <summary>碎块发射率标签。</summary>
-    public IObservable<string?> DebrisRateLabel => Strings.Keys.Particles_DebrisRate.Observe();
+    public IObservable<string?> DebrisRateLabel => Strings.Instance.Particles_DebrisRate;
 
     /// <summary>自转速度标签。</summary>
-    public IObservable<string?> DebrisSpinLabel => Strings.Keys.Particles_SpinSpeed.Observe();
+    public IObservable<string?> DebrisSpinLabel => Strings.Instance.Particles_SpinSpeed;
 
     /// <summary>网格缩放标签。</summary>
-    public IObservable<string?> DebrisMeshScaleLabel => Strings.Keys.Particles_MeshScale.Observe();
+    public IObservable<string?> DebrisMeshScaleLabel => Strings.Instance.Particles_MeshScale;
 
     /// <summary>单发射器上限标签。</summary>
-    public IObservable<string?> DebrisMaxParticlesLabel => Strings.Keys.Particles_MaxParticles.Observe();
+    public IObservable<string?> DebrisMaxParticlesLabel => Strings.Instance.Particles_MaxParticles;
 
     /// <summary>「让上限生效」按钮文案。</summary>
-    public IObservable<string?> ApplyDebrisLabel => Strings.Keys.Particles_ApplyMaxParticles.Observe();
+    public IObservable<string?> ApplyDebrisLabel => Strings.Instance.Particles_ApplyMaxParticles;
 
     /// <summary>混合模式下拉标签。</summary>
-    public IObservable<string?> BlendModeLabel => Strings.Keys.Particles_BlendMode.Observe();
+    public IObservable<string?> BlendModeLabel => Strings.Instance.Particles_BlendMode;
 
     /// <summary>「全部重开」按钮文案。</summary>
-    public IObservable<string?> RestartAllLabel => Strings.Keys.Particles_RestartAll.Observe();
+    public IObservable<string?> RestartAllLabel => Strings.Instance.Particles_RestartAll;
 
     /// <summary>「Pause 全部」开关标签。</summary>
-    public IObservable<string?> PauseAllLabel => Strings.Keys.Particles_PauseAll.Observe();
+    public IObservable<string?> PauseAllLabel => Strings.Instance.Particles_PauseAll;
 
     /// <summary>按体积剔除开关标签。</summary>
-    public IObservable<string?> CullingLabel => Strings.Keys.Particles_VisibilityCulling.Observe();
+    public IObservable<string?> CullingLabel => Strings.Instance.Particles_VisibilityCulling;
 
     /// <summary>画粒子体积开关标签。</summary>
-    public IObservable<string?> ShowBoundsLabel => Strings.Keys.Particles_ShowBounds.Observe();
+    public IObservable<string?> ShowBoundsLabel => Strings.Instance.Particles_ShowBounds;
 
     /// <summary>读数行标题。</summary>
-    public IObservable<string?> StateLabel => Strings.Keys.Particles_State.Observe();
+    public IObservable<string?> StateLabel => Strings.Instance.Particles_State;
 
     /// <summary>喷泉发射率（个/秒）。</summary>
     public double FountainRate
