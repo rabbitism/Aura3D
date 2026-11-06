@@ -2,14 +2,16 @@
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
-         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
-         x:DataType="demos:ShadowsDemo">
+         x:DataType="demos:ShadowsViewModel">
 
   <!--
-    阴影页。整页就是这两层：视口 + 浮在右侧的检视面板。
-    视图（kit:DemoView）在这里声明式地选管线与拾取，宿主只负责把它接到上下文上。
+    阴影页：MVVM 化（样板见 Particles/PostProcessing 页）。文案与参数全部绑定 ShadowsViewModel——
+    标签是 Lingua observable（^ 绑定，换语言自动生效），行控件值双向绑定到 VM：写灯与相机的
+    直接写穿 VM 持有的对象；写宿主 PipelineSettings 的（CSM 三样、平行光上限、调试开关）由
+    code-behind 订阅 VM 的值事件逐项转写。Reload 按钮经 ReloadRequested 桥到宿主整页重建。
+    视图 code-behind 只剩生命周期：建场景（相机/地面/立柱/球；两盏灯本体住在 VM）、转写参数、逐帧 Tick。
   -->
   <Panel>
 
@@ -18,65 +20,63 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Shadows_Intro}}" />
+        <kit:Hint Text="{Binding IntroLabel^}" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Shadows_KeyLight}}" />
+        <kit:Section Title="{Binding KeyLightSectionLabel^}" />
 
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Shadows_Pitch}}" Minimum="-85" Maximum="-5" Value="-34" Format="0"
-                       ValueChanged="OnMainPitchChanged" />
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Shadows_Yaw}}" Minimum="-180" Maximum="180" Value="-22" Format="0"
-                       ValueChanged="OnMainYawChanged" />
+        <kit:SliderRow Label="{Binding PitchLabel^}" Minimum="-85" Maximum="-5" Format="0"
+                       Value="{Binding Pitch}" />
+        <kit:SliderRow Label="{Binding YawLabel^}" Minimum="-180" Maximum="180" Format="0"
+                       Value="{Binding Yaw}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Shadows_KeyCastShadow}}" IsChecked="True"
-                       Toggled="OnMainCastToggled" />
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Shadows_ExplicitKey}}" IsChecked="True"
-                       Toggled="OnMainExplicitToggled" />
+        <kit:ToggleRow Label="{Binding CastShadowLabel^}" IsChecked="{Binding CastShadow}" />
+        <kit:ToggleRow Label="{Binding ExplicitKeyLabel^}" IsChecked="{Binding ExplicitKey}" />
 
-        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Shadows_KeyNote}}" />
+        <kit:Hint Text="{Binding KeyNoteLabel^}" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Shadows_SingleMap}}" />
+        <kit:Section Title="{Binding SingleMapSectionLabel^}" />
 
-        <kit:SliderRow x:Name="ShadowWidthRow" Label="{Translate {x:Static loc:Strings+Keys.Shadows_ConfigWidth}}" Minimum="4" Maximum="200" Format="0"
-                       ValueChanged="OnShadowWidthChanged" />
-        <kit:SliderRow x:Name="ShadowHeightRow" Label="{Translate {x:Static loc:Strings+Keys.Shadows_ConfigHeight}}" Minimum="4" Maximum="200" Format="0"
-                       ValueChanged="OnShadowHeightChanged" />
-        <kit:SliderRow x:Name="ShadowNearRow" Label="NearPlane" Minimum="0.05" Maximum="40"
-                       ValueChanged="OnShadowNearChanged" />
-        <kit:SliderRow x:Name="ShadowFarRow" Label="FarPlane" Minimum="5" Maximum="200"
-                       ValueChanged="OnShadowFarChanged" />
+        <kit:SliderRow Label="{Binding ConfigWidthLabel^}" Minimum="4" Maximum="200" Format="0"
+                       Value="{Binding ShadowWidth}" />
+        <kit:SliderRow Label="{Binding ConfigHeightLabel^}" Minimum="4" Maximum="200" Format="0"
+                       Value="{Binding ShadowHeight}" />
+        <kit:SliderRow Label="{Binding NearPlaneLabel^}" Minimum="0.05" Maximum="40"
+                       Value="{Binding ShadowNear}" />
+        <kit:SliderRow Label="{Binding ConfigFarPlaneLabel^}" Minimum="5" Maximum="200"
+                       Value="{Binding ShadowFar}" />
 
-        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Shadows_ConfigNote}}" />
+        <kit:Hint Text="{Binding ConfigNoteLabel^}" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Shadows_Cascades}}" />
+        <kit:Section Title="{Binding CascadesSectionLabel^}" />
 
-        <kit:SliderRow x:Name="CascadeCountRow" Label="CsmCascadeCount" Minimum="1" Maximum="4" Format="0"
-                       ValueChanged="OnCascadeCountChanged" />
-        <kit:SliderRow x:Name="SplitLambdaRow" Label="{Translate {x:Static loc:Strings+Keys.Shadows_SplitLambda}}" Minimum="0" Maximum="1"
-                       ValueChanged="OnSplitLambdaChanged" />
-        <kit:SliderRow x:Name="MapResolutionRow" Label="CsmShadowMapResolution" Minimum="256" Maximum="4096" Format="0"
-                       ValueChanged="OnMapResolutionChanged" />
-        <kit:SliderRow x:Name="FarPlaneRow" Label="{Translate {x:Static loc:Strings+Keys.Shadows_FarPlane}}" Minimum="20" Maximum="400" Value="120" Format="0"
-                       ValueChanged="OnCameraFarChanged" />
+        <kit:SliderRow Label="{Binding CascadeCountLabel^}" Minimum="1" Maximum="4" Format="0"
+                       Value="{Binding CsmCascadeCount}" />
+        <kit:SliderRow Label="{Binding SplitLambdaLabel^}" Minimum="0" Maximum="1"
+                       Value="{Binding CsmSplitLambda}" />
+        <kit:SliderRow Label="{Binding ShadowMapResolutionLabel^}" Minimum="256" Maximum="4096" Format="0"
+                       Value="{Binding CsmShadowMapResolution}" />
+        <kit:SliderRow Label="{Binding FarPlaneLabel^}" Minimum="20" Maximum="400" Format="0"
+                       Value="{Binding CameraFar}" />
 
-        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Shadows_CsmLiveNote}}" />
+        <kit:Hint Text="{Binding CsmLiveNoteLabel^}" />
 
-        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Shadows_WasmNote}}" />
+        <kit:Hint Text="{Binding WasmNoteLabel^}" />
 
-        <Button Content="Reload" Click="OnReload" HorizontalAlignment="Stretch" />
+        <Button Content="{Binding ReloadLabel^}" Command="{Binding ReloadCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Shadows_LightLimit}}" />
+        <kit:Section Title="{Binding LightLimitSectionLabel^}" />
 
-        <kit:SliderRow x:Name="LightLimitRow" Label="DirectionalLightLimit" Minimum="1" Maximum="4" Format="0"
-                       ValueChanged="OnLightLimitChanged" />
+        <kit:SliderRow Label="{Binding DirectionalLightLimitLabel^}" Minimum="1" Maximum="4" Format="0"
+                       Value="{Binding DirectionalLightLimit}" />
 
-        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Shadows_LimitNote}}" />
+        <kit:Hint Text="{Binding LimitNoteLabel^}" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Shadows_Debug}}" />
+        <kit:Section Title="{Binding DebugSectionLabel^}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Shadows_DirectionalVolume}}" IsChecked="True" Toggled="OnShowDirectionalLightToggled" />
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Shadows_BoundingBox}}" IsChecked="True" Toggled="OnShowBoundingBoxToggled" />
+        <kit:ToggleRow Label="{Binding DirectionalVolumeLabel^}" IsChecked="{Binding ShowDirectionalLight}" />
+        <kit:ToggleRow Label="{Binding BoundingBoxLabel^}" IsChecked="{Binding ShowBoundingBox}" />
 
-        <kit:ReadoutRow x:Name="Readout" Label="{Translate {x:Static loc:Strings+Keys.Shadows_Resources}}" />
+        <kit:ReadoutRow Label="{Binding ResourcesLabel^}" Text="{Binding ReadoutText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>

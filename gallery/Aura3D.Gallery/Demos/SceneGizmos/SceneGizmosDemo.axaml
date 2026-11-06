@@ -2,14 +2,15 @@
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
-         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
-         x:DataType="demos:SceneGizmosDemo">
+         x:DataType="demos:SceneGizmosViewModel">
 
   <!--
-    场景辅助层页：视口 + 右侧检视浮层。
-    开关与滑杆的初值都是字面量，直接写在 XAML 里；只有与设置相关的初值才回落到构造函数同步。
+    场景辅助层页：视口 + 右侧检视浮层。文案与参数全部绑定 SceneGizmosViewModel——
+    标签是 Lingua observable（^ 绑定，换语言自动生效），行控件值走双向绑定。
+    十个开关的真值在宿主 Settings.Debug 与 Scene 上，由 code-behind 订阅 VM 事件转写；
+    视图只剩生命周期：组装场景、驱动两盏灯公转与逐帧 Readout。
   -->
   <Panel>
 
@@ -18,41 +19,41 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.SceneGizmos_Intro}}" />
+        <kit:Hint Text="{Binding IntroLabel^}" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.SceneGizmos_Grid}}" />
+        <kit:Section Title="{Binding GridSectionLabel^}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.SceneGizmos_ShowGrid}}" IsChecked="True" Toggled="OnShowGridToggled" />
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.SceneGizmos_ShowAxes}}" IsChecked="True" Toggled="OnShowAxisToggled" />
+        <kit:ToggleRow Label="{Binding ShowGridLabel^}" IsChecked="{Binding ShowGrid}" />
+        <kit:ToggleRow Label="{Binding ShowAxesLabel^}" IsChecked="{Binding ShowAxes}" />
 
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.SceneGizmos_GridSize}}" Minimum="4" Maximum="60" Value="12" Format="0" ShowTicks="True"
-                       ValueChanged="OnGridSizeChanged" />
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.SceneGizmos_GridDivisions}}" Minimum="2" Maximum="60" Value="12" Format="0" ShowTicks="True"
-                       ValueChanged="OnGridDivisionsChanged" />
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.SceneGizmos_AxisLength}}" Minimum="0.5" Maximum="12" Value="2.5" ShowTicks="True"
-                       ValueChanged="OnAxisLengthChanged" />
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.SceneGizmos_ArrowSize}}" Minimum="0.02" Maximum="2" Value="0.35" ShowTicks="True"
-                       ValueChanged="OnArrowheadSizeChanged" />
+        <kit:SliderRow Label="{Binding GridSizeLabel^}" Minimum="4" Maximum="60" Format="0" ShowTicks="True"
+                       Value="{Binding GridSize}" />
+        <kit:SliderRow Label="{Binding GridDivisionsLabel^}" Minimum="2" Maximum="60" Format="0" ShowTicks="True"
+                       Value="{Binding GridDivisions}" />
+        <kit:SliderRow Label="{Binding AxisLengthLabel^}" Minimum="0.5" Maximum="12" ShowTicks="True"
+                       Value="{Binding AxisLength}" />
+        <kit:SliderRow Label="{Binding ArrowSizeLabel^}" Minimum="0.02" Maximum="2" ShowTicks="True"
+                       Value="{Binding ArrowheadSize}" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.SceneGizmos_DebugToggles}}" />
+        <kit:Section Title="{Binding DebugTogglesSectionLabel^}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.SceneGizmos_BoundingBox}}" IsChecked="False" Toggled="OnShowBoundingBoxToggled" />
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.SceneGizmos_DirectionalVolume}}" IsChecked="False" Toggled="OnShowDirectionalLightToggled" />
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.SceneGizmos_PointVolume}}" IsChecked="True" Toggled="OnShowPointLightToggled" />
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.SceneGizmos_SpotVolume}}" IsChecked="True" Toggled="OnShowSpotLightToggled" />
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.SceneGizmos_CameraFrustum}}" IsChecked="False" Toggled="OnShowCameraToggled" />
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.SceneGizmos_ParticleBounds}}" IsChecked="False" Toggled="OnShowParticleBoundsToggled" />
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.SceneGizmos_Bones}}" IsChecked="False" Toggled="OnShowBoneToggled" />
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.SceneGizmos_Enable}}" IsChecked="True" Toggled="OnDebugEnableToggled" />
+        <kit:ToggleRow Label="{Binding BoundingBoxLabel^}" IsChecked="{Binding ShowBoundingBox}" />
+        <kit:ToggleRow Label="{Binding DirectionalVolumeLabel^}" IsChecked="{Binding ShowDirectionalLight}" />
+        <kit:ToggleRow Label="{Binding PointVolumeLabel^}" IsChecked="{Binding ShowPointLight}" />
+        <kit:ToggleRow Label="{Binding SpotVolumeLabel^}" IsChecked="{Binding ShowSpotLight}" />
+        <kit:ToggleRow Label="{Binding CameraFrustumLabel^}" IsChecked="{Binding ShowCamera}" />
+        <kit:ToggleRow Label="{Binding ParticleBoundsLabel^}" IsChecked="{Binding ShowParticleBounds}" />
+        <kit:ToggleRow Label="{Binding BonesLabel^}" IsChecked="{Binding ShowBone}" />
+        <kit:ToggleRow Label="{Binding EnableLabel^}" IsChecked="{Binding DebugEnable}" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.SceneGizmos_Animation}}" />
+        <kit:Section Title="{Binding AnimationSectionLabel^}" />
 
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.SceneGizmos_LightOrbit}}" Minimum="0" Maximum="90" Value="24" Format="0" ShowTicks="True"
-                       ValueChanged="OnOrbitSpeedChanged" />
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.SceneGizmos_SpotOuterAngle}}" Minimum="4" Maximum="70" Value="24" Format="0" ShowTicks="True"
-                       ValueChanged="OnSpotConeChanged" />
+        <kit:SliderRow Label="{Binding LightOrbitLabel^}" Minimum="0" Maximum="90" Format="0" ShowTicks="True"
+                       Value="{Binding LightOrbitSpeed}" />
+        <kit:SliderRow Label="{Binding SpotOuterAngleLabel^}" Minimum="4" Maximum="70" Format="0" ShowTicks="True"
+                       Value="{Binding SpotOuterAngle}" />
 
-        <kit:ReadoutRow x:Name="DebugReadout" Label="{Translate {x:Static loc:Strings+Keys.SceneGizmos_State}}" />
+        <kit:ReadoutRow Label="{Binding StateLabel^}" Text="{Binding ReadoutText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>

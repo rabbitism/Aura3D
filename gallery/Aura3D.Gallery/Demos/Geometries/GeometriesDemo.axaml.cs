@@ -2,47 +2,53 @@ using Aura3D.Core.Geometries;
 using Aura3D.Core.Nodes;
 using Aura3D.Core.Resources;
 using Aura3D.Gallery.Kit;
-using System;
-using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
-using Aura3D.Gallery.Localization;
 
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// 四种内置几何体的构造参数与节点变换。改哪一段参数就重建那一个几何体（顶点是真的重新生成，
-/// 不是靠缩放糊弄），四段互不干扰；下拉只决定顶点/索引读数读的是哪一个。
-/// 全页零外部资产：棋盘纹理由 <see cref="Procedural"/> 现算。
-/// 参数行的排版全在 <c>GeometriesDemo.axaml</c> 里，这里只剩场景组装与回调。
+/// 几何体页的视图：文案、参数与读数全在 <see cref="GeometriesViewModel"/>，XAML 经绑定直连。
+/// 四种内置几何体（含构造参数重建与整排旋转）的引擎侧配置随整排节点一起住在 VM；
+/// 本类只保留生命周期——建场景（摆相机、铺地面、挂整排、落网格/坐标轴开关初值）、
+/// 逐帧驱动旋转与读数。全页零外部资产：棋盘纹理由 <see cref="Procedural"/> 现算。
 /// </summary>
 public sealed partial class GeometriesDemo : Demo
 {
-    private readonly Dictionary<string, Mesh> meshes = new(StringComparer.Ordinal);
-
-    private Node? row;
-    private string readoutKind = "Box";
-
-    private double boxWidth = 2, boxHeight = 2, boxDepth = 2;
-    private double sphereRadius = 1.4, sphereWidthSegments = 48, sphereHeightSegments = 24, spherePhiLength = 360;
-    private double cylTop = 1, cylBottom = 1, cylHeight = 2.4, cylRadial = 48;
-    private bool cylOpen;
-    private double planeWidth = 3, planeHeight = 3, planeWSegments = 8, planeHSegments = 8;
-
-    private float spin;
-
-    /// <summary>下拉的选项，同时也是 <c>meshes</c> 的键；XAML 里以 <c>Options="{Binding KindOptions}"</c> 取用。</summary>
-    public string[] KindOptions { get; } = ["Box", "Sphere", "Cylinder", "Plane"];
+    private readonly GeometriesViewModel viewModel = new();
 
     /// <summary>
-    /// 建页：装配 XAML，并把下拉的选中项对齐到页面当前读数盯着的那个几何体。
+    /// 建页：装配 XAML 并把 DataContext 换成 VM。仍须显式赋值——外壳继承下来的
+    /// DataContext 优先于默认值；基类先设的「页面自身」在这里被 VM 顶替。
     /// </summary>
     /// <param name="context">宿主环境。</param>
     public GeometriesDemo(DemoContext context) : base(context)
     {
         InitializeComponent();
 
-        KindRow.SelectedItem = readoutKind;
+        // 顶替基类的 DataContext=this：页面绑定从此指向 VM。
+        DataContext = viewModel;
+
+        // 参数重建要排一帧重绘，等价旧 Rebuild 末尾的 InvalidateRender。
+        viewModel.FrameRequested += () => Context.InvalidateRender();
+
+        // 网格/坐标轴写在场景上，VM 不碰 DemoContext，经事件桥接；场景未建时跳过赋值
+        // 但照旧排帧，逐行等价旧 OnShowGridToggled/OnShowAxisToggled。
+        viewModel.ShowGridToggled += value =>
+        {
+            if (Context.Scene != null)
+                Context.Scene.ShowGrid = value;
+
+            Context.InvalidateRender();
+        };
+
+        viewModel.ShowAxesToggled += value =>
+        {
+            if (Context.Scene != null)
+                Context.Scene.ShowAxisGizmo = value;
+
+            Context.InvalidateRender();
+        };
     }
 
     /// <inheritdoc />
@@ -53,9 +59,13 @@ public sealed partial class GeometriesDemo : Demo
     {
         var scene = Context.Scene!;
 
-        scene.ShowGrid = true;
+        // 开关初值落在 VM（true/false），等价旧代码「无条件 ShowGrid=true + 坐标轴走引擎默认」。
+        scene.ShowGrid = viewModel.ShowGrid;
+        scene.ShowAxisGizmo = viewModel.ShowAxes;
+
         scene.MainCamera.Position = new Vector3(0, 3.2f, 11f);
         scene.MainCamera.LookAt(new Vector3(0, 1.2f, 0));
+
         // 80×80 地面，默认 far 100 稍一拉远就撞墙；按本页尺度抬到 250。
         scene.MainCamera.FarPlane = 250f;
 
@@ -65,6 +75,7 @@ public sealed partial class GeometriesDemo : Demo
 
         scene.AddNode(light);
 
+        // 地面是纯布景，留在视图；四个参数化几何体连同整排节点在 VM 构造期已备好，这里只挂进场景。
         var ground = new Mesh
         {
             Name = "Ground",
@@ -76,223 +87,14 @@ public sealed partial class GeometriesDemo : Demo
 
         scene.AddNode(ground);
 
-        row = new Node { Name = "Row" };
-
-        scene.AddNode(row);
-
-        for (int index = 0; index < KindOptions.Length; index++)
-        {
-            var kind = KindOptions[index];
-
-            var mesh = new Mesh
-            {
-                Name = kind,
-                Geometry = Build(kind),
-                Material = new Material(),
-            };
-
-            mesh.Material.SetTexture("BaseColor", Procedural.Checker(128, 4));
-            mesh.Position = new Vector3((index - 1.5f) * 4.2f, 1.5f, 0);
-
-            row.AddChild(mesh, AttachToParentRule.KeepLocal);
-            meshes[kind] = mesh;
-        }
-    }
-
-    private void OnKindChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        readoutKind = e.ValueAs<string>();
-
-        Report();
-    }
-
-    private void OnBoxWidthChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        boxWidth = e.ValueAs<double>();
-
-        Rebuild("Box");
-    }
-
-    private void OnBoxHeightChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        boxHeight = e.ValueAs<double>();
-
-        Rebuild("Box");
-    }
-
-    private void OnBoxDepthChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        boxDepth = e.ValueAs<double>();
-
-        Rebuild("Box");
-    }
-
-    private void OnSphereRadiusChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        sphereRadius = e.ValueAs<double>();
-
-        Rebuild("Sphere");
-    }
-
-    private void OnSphereWidthSegmentsChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        sphereWidthSegments = e.ValueAs<double>();
-
-        Rebuild("Sphere");
-    }
-
-    private void OnSphereHeightSegmentsChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        sphereHeightSegments = e.ValueAs<double>();
-
-        Rebuild("Sphere");
-    }
-
-    private void OnSpherePhiLengthChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        spherePhiLength = e.ValueAs<double>();
-
-        Rebuild("Sphere");
-    }
-
-    private void OnCylTopChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        cylTop = e.ValueAs<double>();
-
-        Rebuild("Cylinder");
-    }
-
-    private void OnCylBottomChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        cylBottom = e.ValueAs<double>();
-
-        Rebuild("Cylinder");
-    }
-
-    private void OnCylHeightChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        cylHeight = e.ValueAs<double>();
-
-        Rebuild("Cylinder");
-    }
-
-    private void OnCylRadialChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        cylRadial = e.ValueAs<double>();
-
-        Rebuild("Cylinder");
-    }
-
-    private void OnCylOpenToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        cylOpen = e.ValueAs<bool>();
-
-        Rebuild("Cylinder");
-    }
-
-    private void OnPlaneWidthChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        planeWidth = e.ValueAs<double>();
-
-        Rebuild("Plane");
-    }
-
-    private void OnPlaneHeightChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        planeHeight = e.ValueAs<double>();
-
-        Rebuild("Plane");
-    }
-
-    private void OnPlaneWSegmentsChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        planeWSegments = e.ValueAs<double>();
-
-        Rebuild("Plane");
-    }
-
-    private void OnPlaneHSegmentsChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        planeHSegments = e.ValueAs<double>();
-
-        Rebuild("Plane");
-    }
-
-    private void OnSpinChanged(object? sender, InspectorValueChangedEventArgs e) =>
-        spin = (float)e.ValueAs<double>();
-
-    private void OnShowGridToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        if (Context.Scene != null)
-            Context.Scene.ShowGrid = e.ValueAs<bool>();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnShowAxisToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        if (Context.Scene != null)
-            Context.Scene.ShowAxisGizmo = e.ValueAs<bool>();
-
-        Context.InvalidateRender();
+        scene.AddNode(viewModel.Row);
     }
 
     /// <inheritdoc />
     public override void Update(double deltaTime)
     {
-        if (spin <= 0 || row == null)
-            return;
-
-        row.RotationDegrees = new Vector3(0, row.RotationDegrees.Y + spin * (float)deltaTime, 0);
-
-        Context.RequestFrame();
+        // 整排旋转与读数重读都在 Tick 里；渲染本身由视图的自动逐帧驱动，本页没有要追加的
+        // 重绘请求（旧 Update 末尾的 RequestFrame 在连续渲染下本就是多余的）。
+        viewModel.Tick(deltaTime);
     }
-
-    private Geometry Build(string kind) => kind switch
-    {
-        "Box" => new BoxGeometry((float)boxWidth, (float)boxHeight, (float)boxDepth),
-        "Sphere" => new SphereGeometry(
-            (float)sphereRadius,
-            (int)sphereWidthSegments,
-            (int)sphereHeightSegments,
-            phiLength: (float)(spherePhiLength * MathF.PI / 180f)),
-        "Cylinder" => new CylinderGeometry(
-            (float)cylTop,
-            (float)cylBottom,
-            (float)cylHeight,
-            (int)cylRadial,
-            4,
-            cylOpen),
-        _ => new PlaneGeometry((float)planeWidth, (float)planeHeight, (int)planeWSegments, (int)planeHSegments),
-    };
-
-    /// <summary>
-    /// 用当前参数重建指定那一种几何体。下拉只决定读数读哪一个，所以改了参数不一定要重印读数。
-    /// </summary>
-    private void Rebuild(string kind)
-    {
-        if (meshes.TryGetValue(kind, out var mesh))
-        {
-            mesh.Geometry = Build(kind);
-        }
-
-        if (kind == readoutKind)
-            Report();
-
-        Context.InvalidateRender();
-    }
-
-    private void Report()
-    {
-        if (!meshes.TryGetValue(readoutKind, out var mesh) || mesh.Geometry == null)
-            return;
-
-        var geometry = mesh.Geometry;
-
-        var bytes = (long)geometry.VertexCount * (3 + 2 + 3) * sizeof(float);
-
-        VertexReadout.Text = Strings.Keys.Geometries_VertexReadout.Format(
-            geometry.VertexCount, geometry.IndicesCount, bytes / 1024.0);
-    }
-
 }

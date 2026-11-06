@@ -275,7 +275,9 @@
   <data name="Instancing_Restore" xml:space="preserve"><value>Restore the full count</value></data>
   <data name="Instancing_Cost" xml:space="preserve"><value>Cost</value></data>
   <data name="MaterialShaders_Intro" xml:space="preserve"><value>Custom shaders attach to a material keyed by pass class name (this page overrides LightPass throughout), and you can replace the fragment stage alone while keeping the engine's vertex stage. Material parameters bind to same-named uniforms. Note: writing a parameter raises the material's Version and forces materials carrying custom shaders to recompile, which is why per-frame uniform writes are off by default.</value></data>
+  <data name="MaterialShaders_AlphaCutoff" xml:space="preserve"><value>alphaCutoff</value></data>
   <data name="MaterialShaders_BaseColorMap" xml:space="preserve"><value>BaseColor map</value></data>
+  <data name="MaterialShaders_BlendMode" xml:space="preserve"><value>BlendMode</value></data>
   <data name="MaterialShaders_NormalMap" xml:space="preserve"><value>Normal channel (tangent-space normal)</value></data>
   <data name="MaterialShaders_UseConstantShader" xml:space="preserve"><value>Use the custom constant-colour shader</value></data>
   <data name="MaterialShaders_Hue" xml:space="preserve"><value>Hue (deg)</value></data>
@@ -405,6 +407,12 @@
   <data name="Shadows_DirectionalVolume" xml:space="preserve"><value>Light volume: directional</value></data>
   <data name="Shadows_BoundingBox" xml:space="preserve"><value>Bounding box</value></data>
   <data name="Shadows_Resources" xml:space="preserve"><value>Shadow resources in effect</value></data>
+  <data name="Shadows_NearPlane" xml:space="preserve"><value>NearPlane</value></data>
+  <data name="Shadows_ConfigFarPlane" xml:space="preserve"><value>FarPlane</value></data>
+  <data name="Shadows_CsmCascadeCount" xml:space="preserve"><value>CsmCascadeCount</value></data>
+  <data name="Shadows_CsmShadowMapResolution" xml:space="preserve"><value>CsmShadowMapResolution</value></data>
+  <data name="Shadows_DirectionalLightLimit" xml:space="preserve"><value>DirectionalLightLimit</value></data>
+  <data name="Shadows_Reload" xml:space="preserve"><value>Reload</value></data>
   <data name="SkinnedAnimation_Intro" xml:space="preserve"><value>Clip names and durations come from the glb's actual animations array, not from constants: this model carries four, and the TPose one is exactly what you need to check the bind pose against.</value></data>
   <data name="SkinnedAnimation_Clip" xml:space="preserve"><value>Clip</value></data>
   <data name="SkinnedAnimation_Reset" xml:space="preserve"><value>Reset (back to 0 s)</value></data>

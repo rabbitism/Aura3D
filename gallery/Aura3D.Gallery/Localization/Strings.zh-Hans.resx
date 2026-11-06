@@ -275,7 +275,9 @@
   <data name="Instancing_Restore" xml:space="preserve"><value>恢复满量</value></data>
   <data name="Instancing_Cost" xml:space="preserve"><value>代价</value></data>
   <data name="MaterialShaders_Intro" xml:space="preserve"><value>自定义着色器按 pass 的类名作键挂到材质上（本页全部覆盖 LightPass），可以只换片元、顶点沿用引擎实现。材质参数按同名 uniform 绑定，注意：写参数会抬高材质的 Version，让带自定义着色器的材质重编译——所以逐帧改 uniform 默认关着。</value></data>
+  <data name="MaterialShaders_AlphaCutoff" xml:space="preserve"><value>alphaCutoff</value></data>
   <data name="MaterialShaders_BaseColorMap" xml:space="preserve"><value>BaseColor 贴图</value></data>
+  <data name="MaterialShaders_BlendMode" xml:space="preserve"><value>BlendMode</value></data>
   <data name="MaterialShaders_NormalMap" xml:space="preserve"><value>Normal 通道（切线空间法线）</value></data>
   <data name="MaterialShaders_UseConstantShader" xml:space="preserve"><value>用自定义常量色着色器</value></data>
   <data name="MaterialShaders_Hue" xml:space="preserve"><value>色相 °</value></data>
@@ -405,6 +407,12 @@
   <data name="Shadows_DirectionalVolume" xml:space="preserve"><value>光源体积：平行光</value></data>
   <data name="Shadows_BoundingBox" xml:space="preserve"><value>包围盒</value></data>
   <data name="Shadows_Resources" xml:space="preserve"><value>实际生效的阴影资源</value></data>
+  <data name="Shadows_NearPlane" xml:space="preserve"><value>NearPlane</value></data>
+  <data name="Shadows_ConfigFarPlane" xml:space="preserve"><value>FarPlane</value></data>
+  <data name="Shadows_CsmCascadeCount" xml:space="preserve"><value>CsmCascadeCount</value></data>
+  <data name="Shadows_CsmShadowMapResolution" xml:space="preserve"><value>CsmShadowMapResolution</value></data>
+  <data name="Shadows_DirectionalLightLimit" xml:space="preserve"><value>DirectionalLightLimit</value></data>
+  <data name="Shadows_Reload" xml:space="preserve"><value>Reload</value></data>
   <data name="SkinnedAnimation_Intro" xml:space="preserve"><value>剪辑名与时长都来自 glb 里实际的 animations 数组，不是写死的：这个模型带 4 条，其中 TPose 那条正好能用来核对绑定姿势。</value></data>
   <data name="SkinnedAnimation_Clip" xml:space="preserve"><value>剪辑</value></data>
   <data name="SkinnedAnimation_Reset" xml:space="preserve"><value>Reset（回到 0 秒）</value></data>
