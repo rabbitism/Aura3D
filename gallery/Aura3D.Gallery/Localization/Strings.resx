@@ -181,6 +181,8 @@
   <data name="Background_IblCache" xml:space="preserve"><value>Background branch and IBL cache</value></data>
   <data name="Camera_Intro" xml:space="preserve"><value>Orthographic projection has no near-large-far-small, which makes it the right tool for measuring; changing FieldOfView under perspective alters both the vertical field and the effective aspect. Pulling near and far apart so they straddle an object reveals a cross-section — a second kind of invisibility on top of frustum culling.</value></data>
   <data name="Camera_Projection" xml:space="preserve"><value>Projection mode</value></data>
+  <data name="Camera_FieldOfView" xml:space="preserve"><value>FieldOfView °</value></data>
+  <data name="Camera_OrthographicSize" xml:space="preserve"><value>OrthographicSize</value></data>
   <data name="Camera_NearPlane" xml:space="preserve"><value>Near plane</value></data>
   <data name="Camera_FarPlane" xml:space="preserve"><value>Far plane</value></data>
   <data name="Camera_FitFifthBox" xml:space="preserve"><value>FitToBoundingBox (the 5th box)</value></data>
@@ -353,6 +355,13 @@
   <data name="PostProcessing_Reload" xml:space="preserve"><value>Reload: apply the group above</value></data>
   <data name="PostProcessing_CastShadow" xml:space="preserve"><value>Directional light CastShadow</value></data>
   <data name="PostProcessing_Matrix" xml:space="preserve"><value>What the current pipeline honours</value></data>
+  <data name="PostProcessing_ToneMappingExposure" xml:space="preserve"><value>ToneMappingExposure</value></data>
+  <data name="PostProcessing_BrightnessClamp" xml:space="preserve"><value>BrightnessClamp</value></data>
+  <data name="PostProcessing_FrustumCulling" xml:space="preserve"><value>EnableFrustumCulling</value></data>
+  <data name="PostProcessing_DirectionalLightLimit" xml:space="preserve"><value>DirectionalLightLimit</value></data>
+  <data name="PostProcessing_SpotLightLimit" xml:space="preserve"><value>SpotLightLimit</value></data>
+  <data name="PostProcessing_CsmSplitLambda" xml:space="preserve"><value>CsmSplitLambda</value></data>
+  <data name="PostProcessing_CsmShadowMapResolution" xml:space="preserve"><value>CsmShadowMapResolution</value></data>
   <data name="Primitives_Intro" xml:space="preserve"><value>All seven primitives share one vertex set and differ only in how the GPU connects it. Changing columns, rows or amplitude genuinely rebuilds the vertex buffer; focusing one primitive moves the rest off-screen so you can read its connection rule on its own.</value></data>
   <data name="Primitives_Focus" xml:space="preserve"><value>Focused primitive</value></data>
   <data name="Primitives_Columns" xml:space="preserve"><value>Columns (vertices per row)</value></data>

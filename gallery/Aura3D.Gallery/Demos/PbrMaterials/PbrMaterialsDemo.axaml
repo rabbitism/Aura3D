@@ -2,14 +2,14 @@
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
-         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
-         x:DataType="demos:PbrMaterialsDemo">
+         x:DataType="demos:PbrMaterialsViewModel">
 
   <!--
-    PBR 材质库：四颗球各挂一套 Poly Haven（CC0）实拍 PBR 材质。
-    场景组装在 .axaml.cs，这页没有可调参数，面板只留一段说明。
+    PBR 材质页：MVVM 化（模式照抄 Particles）。文案与三颗球在 PbrMaterialsViewModel——
+    标签是 Lingua observable（^ 绑定，换语言自动生效），材质序读数是 VM 的普通 string 属性。
+    这页没有可调参数，code-behind 只剩生命周期：取资产喂 VM、组场景、逐帧自转。
   -->
   <Panel>
 
@@ -18,11 +18,11 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.PbrMaterials_Intro}}" />
+        <kit:Hint Text="{Binding IntroLabel^}" />
 
-        <kit:ReadoutRow x:Name="OrderReadout" Label="{Translate {x:Static loc:Strings+Keys.PbrMaterials_Order}}" />
+        <kit:ReadoutRow Label="{Binding OrderLabel^}" Text="{Binding OrderText}" />
 
-        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.PbrMaterials_Note}}" />
+        <kit:Hint Text="{Binding NoteLabel^}" />
 
       </StackPanel>
     </kit:InspectorPanel>

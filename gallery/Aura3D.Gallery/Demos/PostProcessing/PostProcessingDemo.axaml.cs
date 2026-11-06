@@ -2,49 +2,59 @@ using Aura3D.Core.Geometries;
 using Aura3D.Core.Nodes;
 using Aura3D.Core.Resources;
 using Aura3D.Gallery.Kit;
-using Aura3D.Gallery.Localization;
-using Avalonia.Interactivity;
 using System.Numerics;
 using System.Threading.Tasks;
 
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// <c>PipelineSettings</c> 的每一项到底被谁读：本页把「逐帧生效」与「必须重建管线才生效」两类参数分开，
-/// 并直接按当前管线列出每个滑杆是否有人读——很多参数在错的管线上拧起来毫无反应，这本身就是要演示的行为。
-/// 参数行的排版全在 <c>PostProcessingDemo.axaml</c> 里，这里只剩场景组装与回调。
+/// 管线设置页的视图：文案、参数与命令全在 <see cref="PostProcessingViewModel"/>，XAML 经绑定直连。
+/// 本类只保留生命周期——建场景（相机/地面/亮度球组/点光；平行光本体住在 VM）、把 VM 的参数
+/// 事件转写进宿主的 <c>PipelineSettings</c>（VM 不碰 DemoContext，参照 Particles 页的做法）、
+/// 逐帧驱动 Readout 与渲染。页面要演示的「逐帧生效 vs 必须重建」分界见 VM 的参数注释。
 /// </summary>
 public sealed partial class PostProcessingDemo : Demo
 {
-    private DirectionalLight? sun;
+    private readonly PostProcessingViewModel viewModel;
+
     private Node? brightRow;
 
-    private bool needsRebuildHint;
-
     /// <summary>
-    /// 建页：装配 XAML，并把每行的初值对齐到 <see cref="DemoContext.Settings"/> 里真正生效的那一份。
+    /// 建页：先按宿主当前状态建 VM（参数初值对齐 Settings、Readout 记住当前管线），
+    /// 装配 XAML 后把 DataContext 换成 VM。仍须显式赋值——外壳继承下来的 DataContext
+    /// 优先于默认值；基类先设的「页面自身」在这里被 VM 顶替。
     /// </summary>
     /// <param name="context">宿主环境。</param>
     public PostProcessingDemo(DemoContext context) : base(context)
     {
+        viewModel = new(context.Settings, context.RequestedPipeline);
+
         InitializeComponent();
 
-        var settings = Context.Settings;
+        // 顶替基类的 DataContext=this：页面绑定从此指向 VM。
+        DataContext = viewModel;
 
-        ExposureRow.Value = settings.ToneMappingExposure;
-        BrightnessClampRow.Value = settings.BrightnessClamp;
-        AmbientRow.Value = settings.AmbientIntensity;
-        IblAmbientRow.Value = settings.IblAmbientIntensity;
+        // 参数转写：宿主的 PipelineSettings 只有视图够得着。VM 的每个写穿属性把新值经事件
+        // 送过来，这里逐项写进 Settings——与旧的 ValueChanged/Toggled 处理器逐行等价
+        // （含取 float/int 的口径；逐帧区随后的重绘请求走下面的 FrameRequested）。
+        viewModel.ToneMappingExposureChanged += value => Context.Settings.ToneMappingExposure = (float)value;
+        viewModel.BrightnessClampChanged += value => Context.Settings.BrightnessClamp = (float)value;
+        viewModel.AmbientIntensityChanged += value => Context.Settings.AmbientIntensity = (float)value;
+        viewModel.IblAmbientIntensityChanged += value => Context.Settings.IblAmbientIntensity = (float)value;
+        viewModel.FxaaToggled += value => Context.Settings.EnableFxaa = value;
+        viewModel.FrustumCullingToggled += value => Context.Settings.EnableFrustumCulling = value;
+        viewModel.DirectionalLightLimitChanged += value => Context.Settings.DirectionalLightLimit = (int)value;
+        viewModel.PointLightLimitChanged += value => Context.Settings.PointLightLimit = (int)value;
+        viewModel.SpotLightLimitChanged += value => Context.Settings.SpotLightLimit = (int)value;
+        viewModel.CsmCascadeCountChanged += value => Context.Settings.CsmCascadeCount = (int)value;
+        viewModel.CsmSplitLambdaChanged += value => Context.Settings.CsmSplitLambda = (float)value;
+        viewModel.CsmShadowMapResolutionChanged += value => Context.Settings.CsmShadowMapResolution = (int)value;
 
-        FxaaRow.IsChecked = settings.EnableFxaa;
-        CullingRow.IsChecked = settings.EnableFrustumCulling;
+        // 逐帧区参数（含平行光投影开关）写完要排一帧重绘；下半区参数只在重建时被读，不必重绘。
+        viewModel.FrameRequested += ApplyLive;
 
-        DirectionalLimitRow.Value = settings.DirectionalLightLimit;
-        PointLimitRow.Value = settings.PointLightLimit;
-        SpotLimitRow.Value = settings.SpotLightLimit;
-        CascadeCountRow.Value = settings.CsmCascadeCount;
-        SplitLambdaRow.Value = settings.CsmSplitLambda;
-        MapResolutionRow.Value = settings.CsmShadowMapResolution;
+        // 整页重建只有宿主干得了：换着色器变体与纹理尺寸要重走「建视图 → 取资产 → 建场景」。
+        viewModel.ReloadRequested += () => Context.Reload(Context.RequestedPipeline);
     }
 
     /// <inheritdoc />
@@ -60,16 +70,7 @@ public sealed partial class PostProcessingDemo : Demo
         // 70×70 地面 + 拉远余量，默认 far 100 不够；按本页尺度抬到 220。
         scene.MainCamera.FarPlane = 220f;
 
-        sun = new DirectionalLight
-        {
-            LightColor = System.Drawing.Color.White,
-            CastShadow = true,
-            Irradiance = 120000,
-        };
-
-        sun.RotationDegrees = new Vector3(-42f, -28f, 0);
-
-        scene.AddNode(sun);
+        scene.AddNode(viewModel.Sun);
 
         var ground = new Mesh
         {
@@ -117,9 +118,9 @@ public sealed partial class PostProcessingDemo : Demo
             scene.AddNode(point);
         }
 
+        // 旧代码在这里还调一次 Report() 预填读数；现在读数是 VM 的 observable，
+        // 同一帧的 Update 会先调 Tick()，显示时机不变。
         ApplyLive();
-
-        Report();
     }
 
     /// <inheritdoc />
@@ -128,122 +129,11 @@ public sealed partial class PostProcessingDemo : Demo
         if (brightRow != null)
             brightRow.RotationDegrees = new Vector3(0, (float)(deltaTime * 6) + brightRow.RotationDegrees.Y, 0);
 
-        Report();
+        viewModel.Tick();
 
         Context.RequestFrame();
     }
 
-    private void OnExposureChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.ToneMappingExposure = (float)e.ValueAs<double>();
-
-        ApplyLive();
-    }
-
-    private void OnBrightnessClampChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.BrightnessClamp = (float)e.ValueAs<double>();
-
-        ApplyLive();
-    }
-
-    private void OnAmbientIntensityChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.AmbientIntensity = (float)e.ValueAs<double>();
-
-        ApplyLive();
-    }
-
-    private void OnIblAmbientIntensityChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.IblAmbientIntensity = (float)e.ValueAs<double>();
-
-        ApplyLive();
-    }
-
-    private void OnFxaaToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.EnableFxaa = e.ValueAs<bool>();
-
-        ApplyLive();
-    }
-
-    private void OnCullingToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.EnableFrustumCulling = e.ValueAs<bool>();
-
-        ApplyLive();
-    }
-
-    private void OnDirectionalLimitChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.DirectionalLightLimit = (int)e.ValueAs<double>();
-    }
-
-    private void OnPointLimitChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.PointLightLimit = (int)e.ValueAs<double>();
-    }
-
-    private void OnSpotLimitChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.SpotLightLimit = (int)e.ValueAs<double>();
-    }
-
-    private void OnCascadeCountChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.CsmCascadeCount = (int)e.ValueAs<double>();
-    }
-
-    private void OnSplitLambdaChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.CsmSplitLambda = (float)e.ValueAs<double>();
-    }
-
-    private void OnMapResolutionChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.CsmShadowMapResolution = (int)e.ValueAs<double>();
-    }
-
-    private void OnReload(object? sender, RoutedEventArgs e)
-    {
-        needsRebuildHint = true;
-
-        Context.Reload(Context.RequestedPipeline);
-    }
-
-    private void OnCastShadowToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        if (sun != null)
-            sun.CastShadow = e.ValueAs<bool>();
-
-        ApplyLive();
-    }
-
     // Settings 这个实例在 CreateView 时就交给了视图与管线，改字段即改配置，只需要排一帧重绘。
     private void ApplyLive() => Context.InvalidateRender();
-
-    private void Report()
-    {
-        var kind = Context.RequestedPipeline;
-
-        var pbr = kind is PipelineKind.PBRDeferred or PipelineKind.PBRForward;
-        var ambient = kind is PipelineKind.BlinnPhong or PipelineKind.CelShading;
-        var shadow = kind is not PipelineKind.NoLight;
-
-        var settings = Context.Settings;
-
-        MatrixReadout.Text = Strings.Keys.PostProcessing_MatrixReadout.Format(
-            kind,
-            pbr ? "✓" : Strings.Keys.PostProcessing_ExposureNoTone.T(),
-            ambient ? "✓" : "×",
-            pbr ? "✓" : "×",
-            shadow ? "✓" : Strings.Keys.PostProcessing_CsmNoShadowMap.T(),
-            settings.PointLightLimit,
-            settings.CsmCascadeCount,
-            settings.CsmShadowMapResolution,
-            needsRebuildHint
-                ? Strings.Keys.PostProcessing_HintRebuilt.T()
-                : Strings.Keys.PostProcessing_HintNeedsReload.T());
-    }
 }

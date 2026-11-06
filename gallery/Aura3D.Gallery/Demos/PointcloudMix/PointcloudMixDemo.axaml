@@ -2,14 +2,15 @@
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
-         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
-         x:DataType="demos:PointcloudMixDemo">
+         x:DataType="demos:PointcloudMixViewModel">
 
   <!--
-    点云与模型混载页。glTF 桌子和程序化点云跑在同一个默认管线里，点云的材质
-    只有三个普通参数（uPointSize / uUnlit / uUseVertexColor），没有任何着色器覆盖；
+    点云与模型混载页，MVVM 化。文案与三个材质参数全部绑定 PointcloudMixViewModel——标签是
+    Lingua observable（^ 绑定，换语言自动生效），行控件值走双向绑定写穿到点云材质。
+    glTF 桌子和程序化点云跑在同一个默认管线里，点云的材质只有三个普通参数
+    （uPointSize / uUnlit / uUseVertexColor），没有任何着色器覆盖；
     页面不锁管线，切到 PBR 前向/延迟或卡通风，同一份场景照常出图。
   -->
   <Panel>
@@ -19,18 +20,16 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.PointcloudMix_Intro}}" />
+        <kit:Hint Text="{Binding IntroLabel^}" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.PointcloudMix_PointSettings}}" />
+        <kit:Section Title="{Binding PointSettingsLabel^}" />
 
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.PointcloudMix_PointSize}}" Minimum="1" Maximum="24" Value="4" Format="0"
-                       ValueChanged="OnPointSizeChanged" />
+        <kit:SliderRow Label="{Binding PointSizeLabel^}" Minimum="1" Maximum="24" Format="0"
+                       Value="{Binding PointSize}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.PointcloudMix_Unlit}}" IsChecked="True"
-                       Toggled="OnUnlitToggled" />
+        <kit:ToggleRow Label="{Binding UnlitLabel^}" IsChecked="{Binding Unlit}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.PointcloudMix_VertexColor}}" IsChecked="True"
-                       Toggled="OnVertexColorToggled" />
+        <kit:ToggleRow Label="{Binding VertexColorLabel^}" IsChecked="{Binding UseVertexColor}" />
 
       </StackPanel>
     </kit:InspectorPanel>

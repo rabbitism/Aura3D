@@ -181,6 +181,8 @@
   <data name="Background_IblCache" xml:space="preserve"><value>背景分支与 IBL 缓存</value></data>
   <data name="Camera_Intro" xml:space="preserve"><value>正交投影没有近大远小，用来量尺寸；透视投影改 FieldOfView 会同时改变垂直视野与纵横比效果。近/远裁剪面拉到物体之间就能看见截面——这是视锥剔除之外另一层「看不见」。</value></data>
   <data name="Camera_Projection" xml:space="preserve"><value>投影方式</value></data>
+  <data name="Camera_FieldOfView" xml:space="preserve"><value>视场角 °</value></data>
+  <data name="Camera_OrthographicSize" xml:space="preserve"><value>正交尺寸</value></data>
   <data name="Camera_NearPlane" xml:space="preserve"><value>近裁剪面</value></data>
   <data name="Camera_FarPlane" xml:space="preserve"><value>远裁剪面</value></data>
   <data name="Camera_FitFifthBox" xml:space="preserve"><value>FitToBoundingBox（第 5 个盒子）</value></data>
@@ -353,6 +355,13 @@
   <data name="PostProcessing_Reload" xml:space="preserve"><value>Reload：把上面这组应用下去</value></data>
   <data name="PostProcessing_CastShadow" xml:space="preserve"><value>平行光投影 CastShadow</value></data>
   <data name="PostProcessing_Matrix" xml:space="preserve"><value>当前管线的生效矩阵</value></data>
+  <data name="PostProcessing_ToneMappingExposure" xml:space="preserve"><value>ToneMappingExposure</value></data>
+  <data name="PostProcessing_BrightnessClamp" xml:space="preserve"><value>BrightnessClamp</value></data>
+  <data name="PostProcessing_FrustumCulling" xml:space="preserve"><value>EnableFrustumCulling</value></data>
+  <data name="PostProcessing_DirectionalLightLimit" xml:space="preserve"><value>DirectionalLightLimit</value></data>
+  <data name="PostProcessing_SpotLightLimit" xml:space="preserve"><value>SpotLightLimit</value></data>
+  <data name="PostProcessing_CsmSplitLambda" xml:space="preserve"><value>CsmSplitLambda</value></data>
+  <data name="PostProcessing_CsmShadowMapResolution" xml:space="preserve"><value>CsmShadowMapResolution</value></data>
   <data name="Primitives_Intro" xml:space="preserve"><value>七种图元共用同一批顶点，只是 GPU 连线规则不同。改「列/行/波幅」会真的重建顶点缓冲；选中某一种图元后其余会被摆到画面外，方便单独看清连线方式。</value></data>
   <data name="Primitives_Focus" xml:space="preserve"><value>聚焦图元</value></data>
   <data name="Primitives_Columns" xml:space="preserve"><value>列数（每行顶点）</value></data>

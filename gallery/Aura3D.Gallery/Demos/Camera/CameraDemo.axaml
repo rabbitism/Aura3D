@@ -2,13 +2,14 @@
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
-         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
-         x:DataType="demos:CameraDemo">
+         x:DataType="demos:CameraViewModel">
 
   <!--
-    相机页：视口 + 一层跟随 WorldToScreen 的十字标记 + 右侧检视浮层。
+    相机页：MVVM 化。文案与参数全部绑定 CameraViewModel——标签是 Lingua observable
+    （^ 绑定，换语言自动生效），行控件值走双向绑定写穿到 Scene.MainCamera。
+    视图 code-behind 只剩场景组装，以及逐帧推进十字标记与屏幕投影读数。
     十字标记只用来对照屏幕坐标口径，所以整层不参与命中测试。
   -->
   <Panel>
@@ -25,31 +26,30 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Camera_Intro}}" />
+        <kit:Hint Text="{Binding IntroLabel^}" />
 
-        <kit:ComboRow x:Name="ProjectionRow" Label="{Translate {x:Static loc:Strings+Keys.Camera_Projection}}"
-                      Options="{Binding ProjectionOptions}"
-                      SelectionChanged="OnProjectionChanged" />
+        <kit:ComboRow Label="{Binding ProjectionLabel^}" Options="{Binding ProjectionOptions}"
+                      SelectedItem="{Binding SelectedProjection}" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Camera_Frustum}}" />
+        <kit:Section Title="{Binding FrustumSectionLabel^}" />
 
-        <kit:SliderRow Label="FieldOfView °" Minimum="15" Maximum="120" Value="60" Format="0" ShowTicks="True"
-                       ValueChanged="OnFieldOfViewChanged" />
-        <kit:SliderRow Label="OrthographicSize" Minimum="0.5" Maximum="20" Value="4" ShowTicks="True"
-                       ValueChanged="OnOrthographicSizeChanged" />
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Camera_NearPlane}}" Minimum="0.01" Maximum="12" Value="0.1" ShowTicks="True"
-                       ValueChanged="OnNearChanged" />
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Camera_FarPlane}}" Minimum="2" Maximum="120" Value="100" Format="0.#" ShowTicks="True"
-                       ValueChanged="OnFarChanged" />
+        <kit:SliderRow Label="{Binding FieldOfViewLabel^}" Minimum="15" Maximum="120" Format="0" ShowTicks="True"
+                       Value="{Binding FieldOfView}" />
+        <kit:SliderRow Label="{Binding OrthographicSizeLabel^}" Minimum="0.5" Maximum="20" ShowTicks="True"
+                       Value="{Binding OrthographicSize}" />
+        <kit:SliderRow Label="{Binding NearPlaneLabel^}" Minimum="0.01" Maximum="12" ShowTicks="True"
+                       Value="{Binding NearPlane}" />
+        <kit:SliderRow Label="{Binding FarPlaneLabel^}" Minimum="2" Maximum="120" Format="0.#" ShowTicks="True"
+                       Value="{Binding FarPlane}" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Camera_Framing}}" />
+        <kit:Section Title="{Binding FramingSectionLabel^}" />
 
-        <Button Content="{Translate {x:Static loc:Strings+Keys.Camera_FitFifthBox}}" Click="OnFitClicked" HorizontalAlignment="Stretch" />
-        <Button Content="{Translate {x:Static loc:Strings+Keys.Camera_ResetCamera}}" Click="OnResetClicked" HorizontalAlignment="Stretch" />
+        <Button Content="{Binding FitFifthBoxLabel^}" Command="{Binding FitFifthBoxCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Binding ResetCameraLabel^}" Command="{Binding ResetCameraCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Camera_RenderBackground}}" IsChecked="True" Toggled="OnRenderBackgroundToggled" />
+        <kit:ToggleRow Label="{Binding RenderBackgroundLabel^}" IsChecked="{Binding RenderBackground}" />
 
-        <kit:ReadoutRow x:Name="ScreenReadout" Label="{Translate {x:Static loc:Strings+Keys.Camera_Box0Projection}}" />
+        <kit:ReadoutRow Label="{Binding Box0ProjectionLabel^}" Text="{Binding ScreenReadoutText}" />
 
       </StackPanel>
     </kit:InspectorPanel>
