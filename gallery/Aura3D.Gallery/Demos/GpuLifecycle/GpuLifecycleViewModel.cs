@@ -10,8 +10,7 @@ namespace Aura3D.Gallery.Demos;
 /// <summary>
 /// 生命周期页的界面状态。分工：
 /// <list type="bullet">
-///   <item><description>文案：每个标签一个 Lingua observable，XAML 用 <c>{Binding Xxx^}</c> 订阅，
-///     换语言时由绑定自动收到新值，不依赖外壳整页重挂。</description></item>
+///   <item><description>文案：AXAML 直接写 <c>{Translate}</c> 标记扩展取 Strings.Keys 键值；换语言走外壳既有的整页重挂。</description></item>
 ///   <item><description>状态读数：帧号、五个场景事件各自的计数、最慢帧与「最近一次动作」住在这里，
 ///     由视图逐帧喂进来的事实（<see cref="Tick"/>）与生命周期回调的记账（<see cref="RecordSceneInitialized"/>
 ///     一族）推进；运行状态行是 11 占位符的 Lingua format，事件日志是普通字符串属性。</description></item>
@@ -89,42 +88,6 @@ public sealed partial class GpuLifecycleViewModel : ObservableObject
 
     /// <summary>连续渲染开关变化；<c>AutoRequestNextFrameRendering</c> 只有视图够得着。</summary>
     public event Action<bool>? ContinuousRenderToggled;
-
-    /// <summary>页首说明。</summary>
-    public IObservable<string?> IntroLabel => Strings.Instance.GpuLifecycle_Intro;
-
-    /// <summary>「场景事件」分组标题。</summary>
-    public IObservable<string?> EventsSectionLabel => Strings.Instance.GpuLifecycle_Events;
-
-    /// <summary>「释放显存」按钮文案。</summary>
-    public IObservable<string?> ReleaseGpuLabel => Strings.Instance.GpuLifecycle_ReleaseGpu;
-
-    /// <summary>「模拟上下文丢失」按钮文案。</summary>
-    public IObservable<string?> SimulateLostLabel => Strings.Instance.GpuLifecycle_SimulateLost;
-
-    /// <summary>「销毁场景」按钮文案。</summary>
-    public IObservable<string?> DestroySceneLabel => Strings.Instance.GpuLifecycle_DestroyScene;
-
-    /// <summary>「清空日志」按钮文案。</summary>
-    public IObservable<string?> ClearLogLabel => Strings.Instance.GpuLifecycle_ClearLog;
-
-    /// <summary>「按需渲染」分组标题。</summary>
-    public IObservable<string?> OnDemandSectionLabel => Strings.Instance.GpuLifecycle_OnDemand;
-
-    /// <summary>连续渲染开关标签。</summary>
-    public IObservable<string?> ContinuousLabel => Strings.Instance.GpuLifecycle_Continuous;
-
-    /// <summary>「只画一帧」按钮文案。</summary>
-    public IObservable<string?> RequestFrameLabel => Strings.Instance.GpuLifecycle_RequestFrame;
-
-    /// <summary>按需渲染说明。</summary>
-    public IObservable<string?> OnDemandNoteLabel => Strings.Instance.GpuLifecycle_OnDemandNote;
-
-    /// <summary>运行状态行标题。</summary>
-    public IObservable<string?> RuntimeLabel => Strings.Instance.GpuLifecycle_Runtime;
-
-    /// <summary>事件日志行标题。</summary>
-    public IObservable<string?> EventLogLabel => Strings.Instance.GpuLifecycle_EventLog;
 
     /// <summary>运行状态行。语言切换时模板换新，绑定自动收到重排后的整句。</summary>
     public LinguaFormatObservable ReadoutText { get; }

@@ -13,8 +13,7 @@ namespace Aura3D.Gallery.Demos;
 /// <summary>
 /// 管线设置页的界面状态，按 Particles 页的样板 MVVM 化。分工：
 /// <list type="bullet">
-///   <item><description>文案：每个标签一个 Lingua observable，XAML 用 <c>{Binding Xxx^}</c> 订阅，
-///     换语言时由绑定自动收到新值。</description></item>
+///   <item><description>文案：AXAML 直接写 <c>{Translate}</c> 标记扩展取 Strings.Keys 键值；换语言走外壳既有的整页重挂。</description></item>
 ///   <item><description>参数：滑杆/开关双向绑定到这里的属性。宿主的 <see cref="PipelineSettings"/>
 ///     归 DemoContext 所有、VM 够不着（同 Particles 页的宿主调试设置），所以 setter 走
 ///     「backing + 值事件」，由视图把新值逐项转写进 Settings；逐帧区参数写完再发
@@ -131,66 +130,6 @@ public sealed partial class PostProcessingViewModel : ObservableObject
     private bool Ambient => pipelineKind is PipelineKind.BlinnPhong or PipelineKind.CelShading;
 
     private bool Shadow => pipelineKind is not PipelineKind.NoLight;
-
-    /// <summary>页首说明。</summary>
-    public IObservable<string?> IntroLabel => Strings.Instance.PostProcessing_Intro;
-
-    /// <summary>「色调映射」分组标题。</summary>
-    public IObservable<string?> ToneMappingSectionLabel => Strings.Instance.PostProcessing_ToneMapping;
-
-    /// <summary>「环境光」分组标题。</summary>
-    public IObservable<string?> AmbientSectionLabel => Strings.Instance.PostProcessing_Ambient;
-
-    /// <summary>「后处理与剔除」分组标题。</summary>
-    public IObservable<string?> PostSectionLabel => Strings.Instance.PostProcessing_Post;
-
-    /// <summary>「必须重建」分组标题。</summary>
-    public IObservable<string?> RebuildSectionLabel => Strings.Instance.PostProcessing_Rebuild;
-
-    /// <summary>曝光滑杆标签；原文是硬编码的设置项名，迁移时补的键，两语言同文。</summary>
-    public IObservable<string?> ExposureLabel => Strings.Instance.PostProcessing_ToneMappingExposure;
-
-    /// <summary>亮度上限滑杆标签；同上，补键、两语言同文。</summary>
-    public IObservable<string?> BrightnessClampLabel => Strings.Instance.PostProcessing_BrightnessClamp;
-
-    /// <summary>环境光强度滑杆标签。</summary>
-    public IObservable<string?> AmbientIntensityLabel => Strings.Instance.PostProcessing_AmbientIntensity;
-
-    /// <summary>IBL 环境光强度滑杆标签。</summary>
-    public IObservable<string?> IblAmbientLabel => Strings.Instance.PostProcessing_IblAmbient;
-
-    /// <summary>FXAA 开关标签。</summary>
-    public IObservable<string?> FxaaLabel => Strings.Instance.PostProcessing_Fxaa;
-
-    /// <summary>视锥剔除开关标签；原文同样是硬编码的设置项名，补键、两语言同文。</summary>
-    public IObservable<string?> CullingLabel => Strings.Instance.PostProcessing_FrustumCulling;
-
-    /// <summary>平行光上限滑杆标签；补键、两语言同文。</summary>
-    public IObservable<string?> DirectionalLightLimitLabel => Strings.Instance.PostProcessing_DirectionalLightLimit;
-
-    /// <summary>点光上限滑杆标签。</summary>
-    public IObservable<string?> PointLightLimitLabel => Strings.Instance.PostProcessing_PointLightLimit;
-
-    /// <summary>聚光灯上限滑杆标签；补键、两语言同文。</summary>
-    public IObservable<string?> SpotLightLimitLabel => Strings.Instance.PostProcessing_SpotLightLimit;
-
-    /// <summary>CSM 级联数滑杆标签。</summary>
-    public IObservable<string?> CascadeCountLabel => Strings.Instance.PostProcessing_CsmCascadeCount;
-
-    /// <summary>CSM 分割系数滑杆标签；补键、两语言同文。</summary>
-    public IObservable<string?> SplitLambdaLabel => Strings.Instance.PostProcessing_CsmSplitLambda;
-
-    /// <summary>CSM 阴影图分辨率滑杆标签；补键、两语言同文。</summary>
-    public IObservable<string?> ShadowMapResolutionLabel => Strings.Instance.PostProcessing_CsmShadowMapResolution;
-
-    /// <summary>「Reload」按钮文案。</summary>
-    public IObservable<string?> ReloadLabel => Strings.Instance.PostProcessing_Reload;
-
-    /// <summary>平行光投影开关标签。</summary>
-    public IObservable<string?> CastShadowLabel => Strings.Instance.PostProcessing_CastShadow;
-
-    /// <summary>读数行标题。</summary>
-    public IObservable<string?> MatrixLabel => Strings.Instance.PostProcessing_Matrix;
 
     /// <summary>
     /// 色调映射曝光；逐帧区参数——新值经事件由视图写进宿主 Settings，随后请求一帧重绘。

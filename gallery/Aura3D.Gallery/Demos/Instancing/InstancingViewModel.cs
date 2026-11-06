@@ -17,8 +17,7 @@ namespace Aura3D.Gallery.Demos;
 /// <summary>
 /// 实例化页的界面状态（MVVM 化，照搬粒子页/HISM 页的分工）：
 /// <list type="bullet">
-///   <item><description>文案：每个标签一个 Lingua observable，XAML 用 <c>{Binding Xxx^}</c> 订阅，
-///     换语言时由绑定自动收到新值，不依赖外壳整页重挂。</description></item>
+///   <item><description>文案：AXAML 直接写 <c>{Translate}</c> 标记扩展取 Strings.Keys 键值；换语言走外壳既有的整页重挂。</description></item>
 ///   <item><description>参数：滑杆/开关/下拉双向绑定到这里的属性，setter 写穿到两片
 ///     <see cref="InstancedMesh"/>（或先记字段、由逐帧驱动消费）；初值即原页面 XAML/字段里
 ///     那一份，旧页面靠 Value/IsChecked 初值 + 事件处理写回，现在由绑定初始化取代。</description></item>
@@ -135,36 +134,6 @@ public sealed partial class InstancingViewModel : ObservableObject
 
         FrameRequested?.Invoke();
     }
-
-    /// <summary>页首说明。</summary>
-    public IObservable<string?> IntroLabel => Strings.Instance.Instancing_Intro;
-
-    /// <summary>每片实例数滑杆标签。</summary>
-    public IObservable<string?> PerFieldLabel => Strings.Instance.Instancing_PerField;
-
-    /// <summary>更新方式下拉标签。</summary>
-    public IObservable<string?> UpdateModeLabel => Strings.Instance.Instancing_UpdateMode;
-
-    /// <summary>波动动画开关标签。</summary>
-    public IObservable<string?> WaveLabel => Strings.Instance.Instancing_Wave;
-
-    /// <summary>波动速度滑杆标签。</summary>
-    public IObservable<string?> WaveSpeedLabel => Strings.Instance.Instancing_WaveSpeed;
-
-    /// <summary>起伏高度滑杆标签。</summary>
-    public IObservable<string?> WaveHeightLabel => Strings.Instance.Instancing_WaveHeight;
-
-    /// <summary>视锥剔除开关标签。</summary>
-    public IObservable<string?> CullingLabel => Strings.Instance.Instancing_Culling;
-
-    /// <summary>「摘掉左片前 200 个」按钮文案。</summary>
-    public IObservable<string?> RemoveFrontLabel => Strings.Instance.Instancing_RemoveInstances;
-
-    /// <summary>「恢复满量」按钮文案。</summary>
-    public IObservable<string?> RestoreLabel => Strings.Instance.Instancing_Restore;
-
-    /// <summary>读数行标题。</summary>
-    public IObservable<string?> CostLabel => Strings.Instance.Instancing_Cost;
 
     /// <summary>每片实例数；改一次整场重铺（锚点网格与逐实例顶点色属性都按新集合重建）。</summary>
     public double InstanceCount

@@ -21,8 +21,7 @@ namespace Aura3D.Gallery.Demos;
 /// float/Vector4，且会先把每个 uniform 预载成参考材质（历史示例角色 Nilou 的卡渲参数），
 /// 所以缺参数、缺贴图的卡通材质也能正常渲染。分工：
 /// <list type="bullet">
-///   <item><description>文案：每个标签一个 Lingua observable，XAML 用 <c>{Binding XxxLabel^}</c> 订阅，
-///     换语言时由绑定自动收到新值，不依赖外壳整页重挂。</description></item>
+///   <item><description>文案：AXAML 直接写 <c>{Translate}</c> 标记扩展取 Strings.Keys 键值；换语言走外壳既有的整页重挂。</description></item>
 ///   <item><description>参数：开关/滑杆双向绑定到这里的属性，setter 写穿到 <see cref="plugged"/>/
 ///     <see cref="numbers"/> 两个字典与三档染色 Vector4，再由 <see cref="ApplyAll"/> 落到
 ///     身体/脸两个卡通材质；初值即旧 XAML 行控件上写死的那一份。</description></item>
@@ -181,114 +180,6 @@ public sealed partial class CelShadingViewModel : ObservableObject
 
         ReadoutText.Refresh();
     }
-
-    /// <summary>页首说明。</summary>
-    public IObservable<string?> IntroLabel => Strings.Instance.CelShading_Intro;
-
-    /// <summary>「六个纹理通道」分组标题。</summary>
-    public IObservable<string?> ChannelsSectionLabel => Strings.Instance.CelShading_Channels;
-
-    /// <summary>BaseColor 通道开关标签。</summary>
-    public IObservable<string?> BaseColorLabel => Strings.Instance.CelShading_BaseColor;
-
-    /// <summary>Normal 通道开关标签。</summary>
-    public IObservable<string?> NormalLabel => Strings.Instance.CelShading_Normal;
-
-    /// <summary>ILM 通道开关标签。</summary>
-    public IObservable<string?> IlmLabel => Strings.Instance.CelShading_Ilm;
-
-    /// <summary>ShadowRamp 通道开关标签。</summary>
-    public IObservable<string?> ShadowRampLabel => Strings.Instance.CelShading_ShadowRamp;
-
-    /// <summary>SDF 通道开关标签。</summary>
-    public IObservable<string?> SdfLabel => Strings.Instance.CelShading_Sdf;
-
-    /// <summary>SpecularRamp 通道开关标签。</summary>
-    public IObservable<string?> SpecularRampLabel => Strings.Instance.CelShading_SpecularRamp;
-
-    /// <summary>「半兰伯特与分档」分组标题。</summary>
-    public IObservable<string?> HalfLambertSectionLabel => Strings.Instance.CelShading_HalfLambert;
-
-    /// <summary>_GreyFac 滑杆标签。</summary>
-    public IObservable<string?> GreyFacLabel => Strings.Instance.CelShading_GreyFac;
-
-    /// <summary>_DarkFac 滑杆标签。</summary>
-    public IObservable<string?> DarkFacLabel => Strings.Instance.CelShading_DarkFac;
-
-    /// <summary>_BrightFac 滑杆标签。</summary>
-    public IObservable<string?> BrightFacLabel => Strings.Instance.CelShading_BrightFac;
-
-    /// <summary>_BrightAreaShadowFac 滑杆标签。</summary>
-    public IObservable<string?> BrightAreaShadowFacLabel => Strings.Instance.CelShading_BrightAreaShadowFac;
-
-    /// <summary>「五条 ramp 行」分组标题。</summary>
-    public IObservable<string?> RampRowsSectionLabel => Strings.Instance.CelShading_RampRows;
-
-    /// <summary>_RampIndex0 滑杆标签；旧页硬编码的 uniform 名照抄，两种语言保留原文。</summary>
-    public IObservable<string?> RampIndex0Label => Strings.Instance.CelShading_RampIndex0;
-
-    /// <summary>_RampIndex1 滑杆标签；同上，uniform 名保留原文。</summary>
-    public IObservable<string?> RampIndex1Label => Strings.Instance.CelShading_RampIndex1;
-
-    /// <summary>_RampIndex2 滑杆标签；同上，uniform 名保留原文。</summary>
-    public IObservable<string?> RampIndex2Label => Strings.Instance.CelShading_RampIndex2;
-
-    /// <summary>_RampIndex3 滑杆标签；同上，uniform 名保留原文。</summary>
-    public IObservable<string?> RampIndex3Label => Strings.Instance.CelShading_RampIndex3;
-
-    /// <summary>_RampIndex4 滑杆标签；同上，uniform 名保留原文。</summary>
-    public IObservable<string?> RampIndex4Label => Strings.Instance.CelShading_RampIndex4;
-
-    /// <summary>ramp 行说明。</summary>
-    public IObservable<string?> RampRowsNoteLabel => Strings.Instance.CelShading_RampRowsNote;
-
-    /// <summary>「三档染色」分组标题。</summary>
-    public IObservable<string?> TintSlotsSectionLabel => Strings.Instance.CelShading_TintSlots;
-
-    /// <summary>亮部染色滑杆标签。</summary>
-    public IObservable<string?> LightAreaTintLabel => Strings.Instance.CelShading_LightAreaTint;
-
-    /// <summary>暖色暗部滑杆标签。</summary>
-    public IObservable<string?> DarkShadowLabel => Strings.Instance.CelShading_DarkShadow;
-
-    /// <summary>冷色暗部滑杆标签。</summary>
-    public IObservable<string?> CoolShadowLabel => Strings.Instance.CelShading_CoolShadow;
-
-    /// <summary>冷色档说明。</summary>
-    public IObservable<string?> CoolShadowNoteLabel => Strings.Instance.CelShading_CoolShadowNote;
-
-    /// <summary>「脸部专用」分组标题。</summary>
-    public IObservable<string?> FaceOnlySectionLabel => Strings.Instance.CelShading_FaceOnly;
-
-    /// <summary>_FaceShadowOffset 滑杆标签。</summary>
-    public IObservable<string?> FaceShadowOffsetLabel => Strings.Instance.CelShading_FaceShadowOffset;
-
-    /// <summary>_FaceShadowTransitionSoftness 滑杆标签。</summary>
-    public IObservable<string?> FaceShadowSoftnessLabel => Strings.Instance.CelShading_FaceShadowSoftness;
-
-    /// <summary>RenderType=1 开关标签。</summary>
-    public IObservable<string?> FaceRenderTypeLabel => Strings.Instance.CelShading_FaceRenderType;
-
-    /// <summary>「定向光」分组标题；旧页硬编码英文，迁移时补键。</summary>
-    public IObservable<string?> DirectionalLightSectionLabel => Strings.Instance.CelShading_DirectionalLight;
-
-    /// <summary>定向光偏航速度滑杆标签；旧页硬编码英文，迁移时补键。</summary>
-    public IObservable<string?> YawSpeedLabel => Strings.Instance.CelShading_YawSpeed;
-
-    /// <summary>「描边 pass」分组标题。</summary>
-    public IObservable<string?> OutlinePassSectionLabel => Strings.Instance.CelShading_OutlinePass;
-
-    /// <summary>描边环境光滑杆标签；旧页硬编码的引擎成员路径照抄，两种语言保留原文。</summary>
-    public IObservable<string?> OutlineAmbientLabel => Strings.Instance.CelShading_OutlineAmbient;
-
-    /// <summary>描边 pass 说明。</summary>
-    public IObservable<string?> OutlineNoteLabel => Strings.Instance.CelShading_OutlineNote;
-
-    /// <summary>引擎环境光滑杆标签；同上，引擎成员路径保留原文。</summary>
-    public IObservable<string?> SettingsAmbientLabel => Strings.Instance.CelShading_SettingsAmbient;
-
-    /// <summary>读数行标题。</summary>
-    public IObservable<string?> BindingsLabel => Strings.Instance.CelShading_Bindings;
 
     /// <summary>BaseColor 通道开关；拨开给身体材质喂程序化棋盘底色，拨回传 null 清掉通道。</summary>
     public bool BaseColorPlugged

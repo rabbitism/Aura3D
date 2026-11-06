@@ -1,6 +1,7 @@
 <ex:Demo x:Class="Aura3D.Gallery.Demos.GpuLifecycleDemo"
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
@@ -19,26 +20,26 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Binding IntroLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_Intro}}" />
 
-        <kit:Section Title="{Binding EventsSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_Events}}" />
 
-        <Button Content="{Binding ReleaseGpuLabel^}" Command="{Binding ReleaseGpuResourcesCommand}" HorizontalAlignment="Stretch" />
-        <Button Content="{Binding SimulateLostLabel^}" Command="{Binding SimulateContextLostCommand}" HorizontalAlignment="Stretch" />
-        <Button Content="{Binding DestroySceneLabel^}" Command="{Binding DestroySceneCommand}" HorizontalAlignment="Stretch" />
-        <Button Content="{Binding ClearLogLabel^}" Command="{Binding ClearLogCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_ReleaseGpu}}" Command="{Binding ReleaseGpuResourcesCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_SimulateLost}}" Command="{Binding SimulateContextLostCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_DestroyScene}}" Command="{Binding DestroySceneCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_ClearLog}}" Command="{Binding ClearLogCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:Section Title="{Binding OnDemandSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_OnDemand}}" />
 
-        <kit:ToggleRow Label="{Binding ContinuousLabel^}" IsChecked="{Binding ContinuousRender}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_Continuous}}" IsChecked="{Binding ContinuousRender}" />
 
-        <Button Content="{Binding RequestFrameLabel^}" Command="{Binding RequestOneFrameCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_RequestFrame}}" Command="{Binding RequestOneFrameCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:Hint Text="{Binding OnDemandNoteLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_OnDemandNote}}" />
 
-        <kit:ReadoutRow Label="{Binding RuntimeLabel^}" Text="{Binding ReadoutText^}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_Runtime}}" Text="{Binding ReadoutText^}" />
 
-        <kit:ReadoutRow Label="{Binding EventLogLabel^}" Text="{Binding LogText}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_EventLog}}" Text="{Binding LogText}" />
 
       </StackPanel>
     </kit:InspectorPanel>

@@ -12,7 +12,7 @@ using ModelNode = Aura3D.Core.Nodes.Model;
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// 动画混合页的视图，MVVM 化：文案、参数、命令、两套采样器与剪辑字典全在
+/// 动画混合页的视图，MVVM 化：参数、命令、两套采样器与剪辑字典全在
 /// <see cref="AnimationMixViewModel"/>，XAML 经绑定直连；本类只保留生命周期——取资产喂模型、
 /// 在渲染线程回调里组装相机/灯光/地面、按旧顺序登记两份模型并挂骨骼附件。
 /// <see cref="Kit.BlendSpacePad"/> 是强视图交互控件，也留在这里：拖动回调把轴值推进 VM，

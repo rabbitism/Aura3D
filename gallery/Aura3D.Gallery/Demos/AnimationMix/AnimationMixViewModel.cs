@@ -14,8 +14,7 @@ namespace Aura3D.Gallery.Demos;
 /// <summary>
 /// 动画混合页的界面状态，按 Particles/FbxAnimation 的样板 MVVM 化。分工：
 /// <list type="bullet">
-///   <item><description>文案：每个标签一个 Lingua observable，XAML 用 <c>{Binding Xxx^}</c> 订阅，
-///     换语言时由绑定自动收到新值，不依赖外壳整页重挂。</description></item>
+///   <item><description>文案：AXAML 直接写 <c>{Translate}</c> 标记扩展取 Strings.Keys 键值；换语言走外壳既有的整页重挂。</description></item>
 ///   <item><description>参数：滑杆/开关双向绑定到这里的属性，setter 写穿状态机节点与混合空间；
 ///     初值即旧页字段的默认值，旧 AXAML 里那批 <c>Value=</c>/<c>IsChecked=</c> 字面量由绑定初始化取代。</description></item>
 ///   <item><description>Readout：混合空间一行是纯模板读数（5 个占位全是计算参数），format builder
@@ -276,51 +275,6 @@ public sealed partial class AnimationMixViewModel : ObservableObject
     private double sweepClock;
 
     private string graphReadoutText = string.Empty;
-
-    /// <summary>页首说明。</summary>
-    public IObservable<string?> IntroLabel => Strings.Instance.AnimationMix_Intro;
-
-    /// <summary>「状态机」分组标题。</summary>
-    public IObservable<string?> GraphSectionLabel => Strings.Instance.AnimationMix_Graph;
-
-    /// <summary>自动转圈开关标签。</summary>
-    public IObservable<string?> AutoToggleLabel => Strings.Instance.AnimationMix_AutoToggle;
-
-    /// <summary>状态停留时长滑杆标签。</summary>
-    public IObservable<string?> ToggleIntervalLabel => Strings.Instance.AnimationMix_ToggleInterval;
-
-    /// <summary>交叉时长滑杆标签。</summary>
-    public IObservable<string?> BlendTimeLabel => Strings.Instance.AnimationMix_BlendTime;
-
-    /// <summary>「切到下一个状态」按钮文案。</summary>
-    public IObservable<string?> ManualSwitchLabel => Strings.Instance.AnimationMix_ManualSwitch;
-
-    /// <summary>转移说明。</summary>
-    public IObservable<string?> TransitionNoteLabel => Strings.Instance.AnimationMix_TransitionNote;
-
-    /// <summary>状态机读数行标题。</summary>
-    public IObservable<string?> StateMachineLabel => Strings.Instance.AnimationMix_StateMachine;
-
-    /// <summary>「混合空间」分组标题。</summary>
-    public IObservable<string?> BlendSpaceSectionLabel => Strings.Instance.AnimationMix_BlendSpace;
-
-    /// <summary>自动扫掠开关标签。</summary>
-    public IObservable<string?> AutoSweepLabel => Strings.Instance.AnimationMix_AutoSweep;
-
-    /// <summary>扫掠周期滑杆标签。</summary>
-    public IObservable<string?> SweepPeriodLabel => Strings.Instance.AnimationMix_SweepPeriod;
-
-    /// <summary>反距离权重幂滑杆标签。</summary>
-    public IObservable<string?> IdwPowerLabel => Strings.Instance.AnimationMix_IdwPower;
-
-    /// <summary>「Reset」按钮文案。</summary>
-    public IObservable<string?> ResetAxesLabel => Strings.Instance.AnimationMix_ResetAxes;
-
-    /// <summary>混合空间说明。</summary>
-    public IObservable<string?> BlendSpaceNoteLabel => Strings.Instance.AnimationMix_BlendSpaceNote;
-
-    /// <summary>混合空间读数行标题。</summary>
-    public IObservable<string?> BlendSpaceRowLabel => Strings.Instance.AnimationMix_BlendSpaceRow;
 
     /// <summary>沿状态环自动转圈。</summary>
     public bool AutoToggle

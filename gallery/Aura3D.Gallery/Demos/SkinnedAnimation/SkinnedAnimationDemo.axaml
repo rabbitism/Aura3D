@@ -1,6 +1,7 @@
 <ex:Demo x:Class="Aura3D.Gallery.Demos.SkinnedAnimationDemo"
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
@@ -19,43 +20,43 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Binding IntroLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_Intro}}" />
 
-        <kit:Section Title="{Binding PlaybackSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_Playback}}" />
 
-        <kit:ComboRow Label="{Binding ClipLabel^}" Options="{Binding ClipOptions}"
+        <kit:ComboRow Label="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_Clip}}" Options="{Binding ClipOptions}"
                       SelectedItem="{Binding SelectedClip}" />
 
-        <kit:SliderRow Label="{Binding TimeScaleLabel^}" Minimum="0" Maximum="3" Format="0.00"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_TimeScale}}" Minimum="0" Maximum="3" Format="0.00"
                        Value="{Binding TimeScale}" />
 
-        <kit:ComboRow Label="{Binding LoopModeLabel^}" Options="{Binding LoopModeOptions}"
+        <kit:ComboRow Label="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_LoopMode}}" Options="{Binding LoopModeOptions}"
                       SelectedItem="{Binding SelectedLoopMode}" />
 
-        <Button Content="{Binding ResetLabel^}" Command="{Binding ResetCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_Reset}}" Command="{Binding ResetCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:Section Title="{Binding DriverSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_Driver}}" />
 
-        <kit:ToggleRow Label="{Binding ExternalUpdateLabel^}" IsChecked="{Binding ExternalUpdate}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_ExternalUpdate}}" IsChecked="{Binding ExternalUpdate}" />
 
-        <kit:Hint Text="{Binding DriveNoteLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_DriveNote}}" />
 
-        <Button Content="{Binding AdvanceStepLabel^}" Command="{Binding AdvanceStepCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_AdvanceStep}}" Command="{Binding AdvanceStepCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:Section Title="{Binding BonesSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_Bones}}" />
 
-        <kit:ToggleRow Label="{Binding ShowBoneLabel^}" IsChecked="{Binding ShowBone}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_ShowBone}}" IsChecked="{Binding ShowBone}" />
 
-        <kit:ToggleRow Label="{Binding AttachmentLabel^}" IsChecked="{Binding ShowAttachment}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_Attachment}}" IsChecked="{Binding ShowAttachment}" />
 
-        <kit:SliderRow Label="{Binding AttachmentYawLabel^}" Minimum="-180" Maximum="180" Format="0"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_AttachmentYaw}}" Minimum="-180" Maximum="180" Format="0"
                        Value="{Binding AttachmentYaw}" />
 
-        <kit:Hint Text="{Binding AttachNoteLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_AttachNote}}" />
 
-        <kit:ReadoutRow Label="{Binding BonePickerLabel^}" Text="{Binding BoneReadoutText^}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_BonePicker}}" Text="{Binding BoneReadoutText^}" />
 
-        <kit:ReadoutRow Label="{Binding PlaybackStateLabel^}" Text="{Binding PlaybackReadoutText^}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_PlaybackState}}" Text="{Binding PlaybackReadoutText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>

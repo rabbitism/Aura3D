@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// 拾取页的视图：文案、参数与命令全在 <see cref="PickingViewModel"/>，XAML 经绑定直连。
+/// 拾取页的视图：参数与命令全在 <see cref="PickingViewModel"/>，XAML 经绑定直连。
 /// 拾取是强视图交互，留在本类——<see cref="ViewAttached"/> 里订阅 ObjectPicked、自挂
 /// PointerPressed 按点击位置现算全命中，Update 里按「中心射线」开关逐帧从视口正中拾取，
 /// 结果都推进 VM 的报告方法；坐标是 DIP（视图内部才乘 RenderScaling），<c>e.GetPosition(view)</c>

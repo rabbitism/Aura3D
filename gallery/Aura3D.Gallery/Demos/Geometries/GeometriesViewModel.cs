@@ -15,8 +15,7 @@ namespace Aura3D.Gallery.Demos;
 /// <summary>
 /// 几何体页的界面状态，按 Particles/Primitives 页的样板 MVVM 化。分工：
 /// <list type="bullet">
-///   <item><description>文案：每个标签一个 Lingua observable，XAML 用 <c>{Binding XxxLabel^}</c> 订阅，
-///     换语言时由绑定自动收到新值，不依赖外壳整页重挂。</description></item>
+///   <item><description>文案：AXAML 直接写 <c>{Translate}</c> 标记扩展取 Strings.Keys 键值；换语言走外壳既有的整页重挂。</description></item>
 ///   <item><description>参数：滑杆/开关双向绑定到这里的属性。几何构造参数没有引擎对象可写穿——
 ///     只在顶点重建时被消费——所以 setter 的「写穿」就是按新参数把那一个网格的几何体重灌一遍
 ///     （顶点是真的重新生成，不是靠缩放糊弄）；四段参数各管各的几何体，互不干扰。
@@ -124,87 +123,6 @@ public sealed partial class GeometriesViewModel : ObservableObject
         if (rotationSpeed > 0)
             Row.RotationDegrees = new Vector3(0, Row.RotationDegrees.Y + (float)rotationSpeed * (float)deltaTime, 0);
     }
-
-    /// <summary>页首说明。</summary>
-    public IObservable<string?> IntroLabel => Strings.Instance.Geometries_Intro;
-
-    /// <summary>「读数对象」下拉标签。</summary>
-    public IObservable<string?> ReadoutKindLabel => Strings.Instance.Geometries_ReadoutKind;
-
-    /// <summary>「Box 立方体」分组标题。</summary>
-    public IObservable<string?> BoxSectionLabel => Strings.Instance.Geometries_Box;
-
-    /// <summary>立方体宽标签。</summary>
-    public IObservable<string?> BoxWidthLabel => Strings.Instance.Geometries_BoxWidth;
-
-    /// <summary>立方体高标签。</summary>
-    public IObservable<string?> BoxHeightLabel => Strings.Instance.Geometries_BoxHeight;
-
-    /// <summary>立方体深标签。</summary>
-    public IObservable<string?> BoxDepthLabel => Strings.Instance.Geometries_BoxDepth;
-
-    /// <summary>「Sphere 球体」分组标题。</summary>
-    public IObservable<string?> SphereSectionLabel => Strings.Instance.Geometries_Sphere;
-
-    /// <summary>球体半径标签。</summary>
-    public IObservable<string?> SphereRadiusLabel => Strings.Instance.Geometries_SphereRadius;
-
-    /// <summary>球体水平分段标签。</summary>
-    public IObservable<string?> SphereStacksLabel => Strings.Instance.Geometries_SphereStacks;
-
-    /// <summary>球体垂直分段标签。</summary>
-    public IObservable<string?> SphereSlicesLabel => Strings.Instance.Geometries_SphereSlices;
-
-    /// <summary>球体经度范围标签。</summary>
-    public IObservable<string?> SphereLongitudeLabel => Strings.Instance.Geometries_SphereLongitude;
-
-    /// <summary>「Cylinder 圆柱/圆台」分组标题。</summary>
-    public IObservable<string?> CylinderSectionLabel => Strings.Instance.Geometries_Cylinder;
-
-    /// <summary>圆柱顶半径标签。</summary>
-    public IObservable<string?> CylinderTopRadiusLabel => Strings.Instance.Geometries_CylinderTopRadius;
-
-    /// <summary>圆柱底半径标签。</summary>
-    public IObservable<string?> CylinderBottomRadiusLabel => Strings.Instance.Geometries_CylinderBottomRadius;
-
-    /// <summary>圆柱高标签。</summary>
-    public IObservable<string?> CylinderHeightLabel => Strings.Instance.Geometries_CylinderHeight;
-
-    /// <summary>圆柱周向分段标签。</summary>
-    public IObservable<string?> CylinderSegmentsLabel => Strings.Instance.Geometries_CylinderSegments;
-
-    /// <summary>圆柱开口开关标签。</summary>
-    public IObservable<string?> CylinderOpenLabel => Strings.Instance.Geometries_CylinderOpen;
-
-    /// <summary>「Plane 平面」分组标题。</summary>
-    public IObservable<string?> PlaneSectionLabel => Strings.Instance.Geometries_Plane;
-
-    /// <summary>平面宽标签。</summary>
-    public IObservable<string?> PlaneWidthLabel => Strings.Instance.Geometries_PlaneWidth;
-
-    /// <summary>平面高标签。</summary>
-    public IObservable<string?> PlaneHeightLabel => Strings.Instance.Geometries_PlaneHeight;
-
-    /// <summary>平面横向分段标签。</summary>
-    public IObservable<string?> PlaneSectionsXLabel => Strings.Instance.Geometries_PlaneSectionsX;
-
-    /// <summary>平面纵向分段标签。</summary>
-    public IObservable<string?> PlaneSectionsZLabel => Strings.Instance.Geometries_PlaneSectionsZ;
-
-    /// <summary>「场景」分组标题。</summary>
-    public IObservable<string?> SceneSectionLabel => Strings.Instance.Geometries_Scene;
-
-    /// <summary>整排旋转速度滑杆标签。</summary>
-    public IObservable<string?> RotationSpeedLabel => Strings.Instance.Geometries_RotationSpeed;
-
-    /// <summary>地面网格开关标签。</summary>
-    public IObservable<string?> GridLabel => Strings.Instance.Geometries_Grid;
-
-    /// <summary>坐标轴 gizmo 开关标签。</summary>
-    public IObservable<string?> AxesLabel => Strings.Instance.Geometries_Axes;
-
-    /// <summary>读数行标题。</summary>
-    public IObservable<string?> VertexDataLabel => Strings.Instance.Geometries_VertexData;
 
     /// <summary>
     /// 「读数对象」下拉的选中项；换一种几何体只把读数挪过去并立即重读——等价于旧

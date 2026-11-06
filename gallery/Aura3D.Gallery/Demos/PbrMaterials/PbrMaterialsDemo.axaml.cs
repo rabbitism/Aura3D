@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// PBR 材质页的视图，MVVM 化（模式照抄 Particles）：面板文案与三颗材质球住在
+/// PBR 材质页的视图，MVVM 化（模式照抄 Particles）：面板三颗材质球住在
 /// <see cref="PbrMaterialsViewModel"/>（选材口径与贴图接线的说明也见那边），本类只留生命周期——
 /// 资产阶段取天空盒与九张贴图喂 VM，渲染线程回调里组场景（天空盒/定向光/地面/相机），逐帧自转并请求重绘。
 /// 环境挂六面天空盒：金属反射没有 IBL 就是一坨死灰，环境立方图是这页能不能看的前提。

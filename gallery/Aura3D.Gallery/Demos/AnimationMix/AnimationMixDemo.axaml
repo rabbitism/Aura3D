@@ -1,6 +1,7 @@
 <ex:Demo x:Class="Aura3D.Gallery.Demos.AnimationMixDemo"
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
@@ -19,40 +20,40 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Binding IntroLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.AnimationMix_Intro}}" />
 
-        <kit:Section Title="{Binding GraphSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.AnimationMix_Graph}}" />
 
-        <kit:ToggleRow Label="{Binding AutoToggleLabel^}" IsChecked="{Binding AutoToggle}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.AnimationMix_AutoToggle}}" IsChecked="{Binding AutoToggle}" />
 
-        <kit:SliderRow Label="{Binding ToggleIntervalLabel^}" Minimum="0.6" Maximum="6" Format="0.0"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.AnimationMix_ToggleInterval}}" Minimum="0.6" Maximum="6" Format="0.0"
                        Value="{Binding ToggleSeconds}" />
-        <kit:SliderRow Label="{Binding BlendTimeLabel^}" Minimum="0" Maximum="2" Format="0.00"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.AnimationMix_BlendTime}}" Minimum="0" Maximum="2" Format="0.00"
                        Value="{Binding BlendTime}" />
 
-        <Button Content="{Binding ManualSwitchLabel^}" Command="{Binding ManualSwitchCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.AnimationMix_ManualSwitch}}" Command="{Binding ManualSwitchCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:Hint Text="{Binding TransitionNoteLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.AnimationMix_TransitionNote}}" />
 
-        <kit:ReadoutRow Label="{Binding StateMachineLabel^}" Text="{Binding GraphReadoutText}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.AnimationMix_StateMachine}}" Text="{Binding GraphReadoutText}" />
 
-        <kit:Section Title="{Binding BlendSpaceSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.AnimationMix_BlendSpace}}" />
 
-        <kit:ToggleRow Label="{Binding AutoSweepLabel^}" IsChecked="{Binding AutoSweep}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.AnimationMix_AutoSweep}}" IsChecked="{Binding AutoSweep}" />
 
-        <kit:SliderRow Label="{Binding SweepPeriodLabel^}" Minimum="2" Maximum="20" Format="0.0"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.AnimationMix_SweepPeriod}}" Minimum="2" Maximum="20" Format="0.0"
                        Value="{Binding SweepPeriod}" />
 
         <kit:BlendSpacePad x:Name="BlendPad" Height="230"
                            AxisChanged="OnPadAxisChanged" />
-        <kit:SliderRow Label="{Binding IdwPowerLabel^}" Minimum="0.5" Maximum="6" Format="0.00"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.AnimationMix_IdwPower}}" Minimum="0.5" Maximum="6" Format="0.00"
                        Value="{Binding IdwPower}" />
 
-        <Button Content="{Binding ResetAxesLabel^}" Command="{Binding ResetAxesCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.AnimationMix_ResetAxes}}" Command="{Binding ResetAxesCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:Hint Text="{Binding BlendSpaceNoteLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.AnimationMix_BlendSpaceNote}}" />
 
-        <kit:ReadoutRow Label="{Binding BlendSpaceRowLabel^}" Text="{Binding BlendReadoutText^}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.AnimationMix_BlendSpaceRow}}" Text="{Binding BlendReadoutText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>

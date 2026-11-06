@@ -12,8 +12,7 @@ namespace Aura3D.Gallery.Demos;
 /// <summary>
 /// 相机页的界面状态。分工：
 /// <list type="bullet">
-///   <item><description>文案：每个标签一个 Lingua observable，XAML 用 <c>{Binding Xxx^}</c> 订阅，
-///     换语言时由绑定自动收到新值，不依赖外壳整页重挂。</description></item>
+///   <item><description>文案：AXAML 直接写 <c>{Translate}</c> 标记扩展取 Strings.Keys 键值；换语言走外壳既有的整页重挂。</description></item>
 ///   <item><description>参数：滑杆/开关/下拉双向绑定到这里的属性，setter 走 <see cref="ApplyProjection"/>
 ///     把视锥四参整组写穿到真相机——旧页每个事件处理末尾都调一次 ApplyProjection，
 ///     「改一项、重放全部」的语义逐行保留。</description></item>
@@ -105,42 +104,6 @@ public sealed partial class CameraViewModel : ObservableObject
             ? Strings.Keys.Camera_ScreenReadout.Format(point.X, point.Y, outputWidth, outputHeight)
             : Strings.Keys.Camera_BehindCamera.T();
     }
-
-    /// <summary>页首说明。</summary>
-    public IObservable<string?> IntroLabel => Strings.Instance.Camera_Intro;
-
-    /// <summary>投影方式下拉标签。</summary>
-    public IObservable<string?> ProjectionLabel => Strings.Instance.Camera_Projection;
-
-    /// <summary>「视锥参数」分组标题。</summary>
-    public IObservable<string?> FrustumSectionLabel => Strings.Instance.Camera_Frustum;
-
-    /// <summary>视场角标签。</summary>
-    public IObservable<string?> FieldOfViewLabel => Strings.Instance.Camera_FieldOfView;
-
-    /// <summary>正交尺寸标签。</summary>
-    public IObservable<string?> OrthographicSizeLabel => Strings.Instance.Camera_OrthographicSize;
-
-    /// <summary>近裁剪面标签。</summary>
-    public IObservable<string?> NearPlaneLabel => Strings.Instance.Camera_NearPlane;
-
-    /// <summary>远裁剪面标签。</summary>
-    public IObservable<string?> FarPlaneLabel => Strings.Instance.Camera_FarPlane;
-
-    /// <summary>「取景」分组标题。</summary>
-    public IObservable<string?> FramingSectionLabel => Strings.Instance.Camera_Framing;
-
-    /// <summary>「Fit 第 5 盒」按钮文案。</summary>
-    public IObservable<string?> FitFifthBoxLabel => Strings.Instance.Camera_FitFifthBox;
-
-    /// <summary>「回到默认机位」按钮文案。</summary>
-    public IObservable<string?> ResetCameraLabel => Strings.Instance.Camera_ResetCamera;
-
-    /// <summary>渲染背景开关标签。</summary>
-    public IObservable<string?> RenderBackgroundLabel => Strings.Instance.Camera_RenderBackground;
-
-    /// <summary>读数行标题。</summary>
-    public IObservable<string?> Box0ProjectionLabel => Strings.Instance.Camera_Box0Projection;
 
     /// <summary>投影方式；写穿真相机并排一次重绘。</summary>
     public object? SelectedProjection

@@ -19,8 +19,7 @@ namespace Aura3D.Gallery.Demos;
 /// <summary>
 /// 环境图与 IBL 页的界面状态，MVVM 化（模式照抄 Particles/PostProcessing）。分工：
 /// <list type="bullet">
-///   <item><description>文案：每个标签一个 Lingua observable，XAML 用 <c>{Binding XxxLabel^}</c> 订阅，
-///     换语言时由绑定自动收到新值。</description></item>
+///   <item><description>文案：AXAML 直接写 <c>{Translate}</c> 标记扩展取 Strings.Keys 键值；换语言走外壳既有的整页重挂。</description></item>
 ///   <item><description>参数：滑杆/开关/下拉双向绑定到这里的属性。全景图与面边长直接写穿到
 ///     VM 持有的场景（<c>Scene.Background</c> 是引擎对象）；写宿主 <see cref="PipelineSettings"/>
 ///     的三项（IBL 强度/曝光/亮度上限）照 PostProcessing 页走「backing + 值事件」，
@@ -200,51 +199,6 @@ public sealed partial class EnvironmentViewModel : ObservableObject
     private bool sunVisible = true;
     private bool renderBackground = true;
     private bool rebaked;
-
-    /// <summary>页首说明。</summary>
-    public IObservable<string?> IntroLabel => Strings.Instance.Environment_Intro;
-
-    /// <summary>「环境图」分组标题。</summary>
-    public IObservable<string?> MapSectionLabel => Strings.Instance.Environment_Map;
-
-    /// <summary>全景图下拉标签。</summary>
-    public IObservable<string?> PanoramaLabel => Strings.Instance.Environment_Panorama;
-
-    /// <summary>立方图边长滑杆标签。</summary>
-    public IObservable<string?> CubeSizeLabel => Strings.Instance.Environment_CubeSize;
-
-    /// <summary>面边长说明。</summary>
-    public IObservable<string?> FaceSizeNoteLabel => Strings.Instance.Environment_FaceSizeNote;
-
-    /// <summary>「立刻重烘」按钮文案。</summary>
-    public IObservable<string?> RebakeLabel => Strings.Instance.Environment_Rebake;
-
-    /// <summary>「Reload」按钮文案。</summary>
-    public IObservable<string?> ReloadLabel => Strings.Instance.Environment_Reload;
-
-    /// <summary>Background 类型说明。</summary>
-    public IObservable<string?> BackgroundNoteLabel => Strings.Instance.Environment_BackgroundNote;
-
-    /// <summary>「I 与 L 的分工」分组标题。</summary>
-    public IObservable<string?> IblSplitSectionLabel => Strings.Instance.Environment_IblSplit;
-
-    /// <summary>IBL 环境光强度滑杆标签。</summary>
-    public IObservable<string?> IblAmbientLabel => Strings.Instance.Environment_IblAmbient;
-
-    /// <summary>平行光可见开关标签。</summary>
-    public IObservable<string?> SunVisibleLabel => Strings.Instance.Environment_KeyLightVisible;
-
-    /// <summary>曝光滑杆标签；原文是硬编码的设置项名，迁移时补的键，两语言同文。</summary>
-    public IObservable<string?> ExposureLabel => Strings.Instance.Environment_ToneMappingExposure;
-
-    /// <summary>亮度上限滑杆标签；同上，补键、两语言同文。</summary>
-    public IObservable<string?> ClampLabel => Strings.Instance.Environment_BrightnessClamp;
-
-    /// <summary>画背景开关标签。</summary>
-    public IObservable<string?> RenderBackgroundLabel => Strings.Instance.Environment_RenderBackground;
-
-    /// <summary>读数行标题。</summary>
-    public IObservable<string?> CacheStateLabel => Strings.Instance.Environment_CacheState;
 
     /// <summary>
     /// 全景图下拉的选中项；换图立即重设 Background（setter 自己会作废两张 IBL 缓存），

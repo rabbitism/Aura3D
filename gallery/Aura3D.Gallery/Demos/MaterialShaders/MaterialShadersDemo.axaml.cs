@@ -5,7 +5,7 @@ using Color = System.Drawing.Color;
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// 材质页的视图：文案、参数与读数全在 <see cref="MaterialShadersViewModel"/>，XAML 经绑定直连。
+/// 材质页的视图：参数与读数全在 <see cref="MaterialShadersViewModel"/>，XAML 经绑定直连。
 /// 材质的三件事（通道、按 pass 类名覆盖的 GLSL、按名绑定的材质参数）连同程序化贴图与整排网格
 /// 随 VM 在构造期建全；本类只保留生命周期——建场景（摆相机、加灯、登记整排）、逐帧驱动。
 /// 覆盖键写死为 LightPass，换管线就没有覆盖可言，所以本页锁管线（见 DemoRegistry 登记项）。

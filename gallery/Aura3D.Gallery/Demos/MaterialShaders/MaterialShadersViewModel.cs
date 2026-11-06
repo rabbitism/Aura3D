@@ -18,8 +18,7 @@ namespace Aura3D.Gallery.Demos;
 /// 通道（<c>SetTexture</c> → 同名 <c>*Texture</c> uniform）、自定义着色器覆盖
 /// （按 pass 类名挂 GLSL，可只换片元）、材质参数（<c>SetParameterValue</c> → 同名 uniform）。分工：
 /// <list type="bullet">
-///   <item><description>文案：每个标签一个 Lingua observable，XAML 用 <c>{Binding XxxLabel^}</c> 订阅，
-///     换语言时由绑定自动收到新值，不依赖外壳整页重挂。</description></item>
+///   <item><description>文案：AXAML 直接写 <c>{Translate}</c> 标记扩展取 Strings.Keys 键值；换语言走外壳既有的整页重挂。</description></item>
 ///   <item><description>参数：滑杆/开关/下拉双向绑定到这里的属性，setter 写穿到对应材质——
 ///     通道贴图、自定义着色器的 <c>uColor</c>/<c>uStripe</c> uniform、混合模式与 alpha 裁剪。
 ///     初值即旧 XAML 行控件上写死的那一份（Hue 滑杆没写 Value，默认 0），材质也按同一份值
@@ -147,72 +146,6 @@ public sealed partial class MaterialShadersViewModel : ObservableObject
 
         ReadoutText.Refresh();
     }
-
-    /// <summary>页首说明。</summary>
-    public IObservable<string?> IntroLabel => Strings.Instance.MaterialShaders_Intro;
-
-    /// <summary>「通道」分组标题。</summary>
-    public IObservable<string?> ChannelsSectionLabel => Strings.Instance.MaterialShaders_Channels;
-
-    /// <summary>BaseColor 贴图下拉标签。</summary>
-    public IObservable<string?> BaseColorMapLabel => Strings.Instance.MaterialShaders_BaseColorMap;
-
-    /// <summary>Normal 通道开关标签。</summary>
-    public IObservable<string?> NormalMapLabel => Strings.Instance.MaterialShaders_NormalMap;
-
-    /// <summary>「覆盖顶点 + 片元」分组标题。</summary>
-    public IObservable<string?> BothStagesSectionLabel => Strings.Instance.MaterialShaders_BothStages;
-
-    /// <summary>「用自定义常量色着色器」开关标签。</summary>
-    public IObservable<string?> UseConstantShaderLabel => Strings.Instance.MaterialShaders_UseConstantShader;
-
-    /// <summary>色相滑杆标签。</summary>
-    public IObservable<string?> HueLabel => Strings.Instance.MaterialShaders_Hue;
-
-    /// <summary>「贴图 × 染色」分组标题。</summary>
-    public IObservable<string?> TintedSectionLabel => Strings.Instance.MaterialShaders_Tinted;
-
-    /// <summary>染色强度滑杆标签。</summary>
-    public IObservable<string?> TintStrengthLabel => Strings.Instance.MaterialShaders_TintStrength;
-
-    /// <summary>「材质参数」分组标题。</summary>
-    public IObservable<string?> ParametersSectionLabel => Strings.Instance.MaterialShaders_Parameters;
-
-    /// <summary>条纹速度滑杆标签。</summary>
-    public IObservable<string?> StripeSpeedLabel => Strings.Instance.MaterialShaders_StripeSpeed;
-
-    /// <summary>U 向频率滑杆标签。</summary>
-    public IObservable<string?> FrequencyULabel => Strings.Instance.MaterialShaders_FrequencyU;
-
-    /// <summary>V 向频率滑杆标签。</summary>
-    public IObservable<string?> FrequencyVLabel => Strings.Instance.MaterialShaders_FrequencyV;
-
-    /// <summary>混合模式下拉标签；引擎枚举名，两种语言都保留原文。</summary>
-    public IObservable<string?> BlendModeLabel => Strings.Instance.MaterialShaders_BlendMode;
-
-    /// <summary>alpha 裁剪滑杆标签（本页两处同名滑杆共用）；引擎 uniform 名，保留原文。</summary>
-    public IObservable<string?> AlphaCutoffLabel => Strings.Instance.MaterialShaders_AlphaCutoff;
-
-    /// <summary>「逐帧写 uTime」开关标签。</summary>
-    public IObservable<string?> WriteTimeLabel => Strings.Instance.MaterialShaders_WriteTime;
-
-    /// <summary>「同一张 alpha 贴图」分组标题。</summary>
-    public IObservable<string?> AlphaModesSectionLabel => Strings.Instance.MaterialShaders_AlphaModes;
-
-    /// <summary>Translucent 双面开关标签。</summary>
-    public IObservable<string?> DoubleSidedLabel => Strings.Instance.MaterialShaders_DoubleSided;
-
-    /// <summary>「场景」分组标题。</summary>
-    public IObservable<string?> SceneSectionLabel => Strings.Instance.MaterialShaders_Scene;
-
-    /// <summary>整排自转速度滑杆标签。</summary>
-    public IObservable<string?> RotationSpeedLabel => Strings.Instance.MaterialShaders_RotationSpeed;
-
-    /// <summary>地面网格开关标签。</summary>
-    public IObservable<string?> GridLabel => Strings.Instance.MaterialShaders_Grid;
-
-    /// <summary>读数行标题。</summary>
-    public IObservable<string?> RuntimeLabel => Strings.Instance.MaterialShaders_Runtime;
 
     /// <summary>
     /// BaseColor 下拉的选中项；换贴图即换左上球（引擎材质）的 BaseColor 通道。

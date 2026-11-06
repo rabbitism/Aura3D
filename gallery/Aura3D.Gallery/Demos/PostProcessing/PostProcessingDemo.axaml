@@ -1,6 +1,7 @@
 <ex:Demo x:Class="Aura3D.Gallery.Demos.PostProcessingDemo"
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
@@ -19,47 +20,47 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Binding IntroLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.PostProcessing_Intro}}" />
 
-        <kit:Section Title="{Binding ToneMappingSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.PostProcessing_ToneMapping}}" />
 
-        <kit:SliderRow Label="{Binding ExposureLabel^}" Minimum="0.05" Maximum="4" ShowTicks="True"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_ToneMappingExposure}}" Minimum="0.05" Maximum="4" ShowTicks="True"
                        Value="{Binding ToneMappingExposure}" />
-        <kit:SliderRow Label="{Binding BrightnessClampLabel^}" Minimum="0.5" Maximum="16" ShowTicks="True"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_BrightnessClamp}}" Minimum="0.5" Maximum="16" ShowTicks="True"
                        Value="{Binding BrightnessClamp}" />
 
-        <kit:Section Title="{Binding AmbientSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.PostProcessing_Ambient}}" />
 
-        <kit:SliderRow Label="{Binding AmbientIntensityLabel^}" Minimum="0" Maximum="2" ShowTicks="True"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_AmbientIntensity}}" Minimum="0" Maximum="2" ShowTicks="True"
                        Value="{Binding AmbientIntensity}" />
-        <kit:SliderRow Label="{Binding IblAmbientLabel^}" Minimum="0" Maximum="4" ShowTicks="True"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_IblAmbient}}" Minimum="0" Maximum="4" ShowTicks="True"
                        Value="{Binding IblAmbientIntensity}" />
 
-        <kit:Section Title="{Binding PostSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.PostProcessing_Post}}" />
 
-        <kit:ToggleRow Label="{Binding FxaaLabel^}" IsChecked="{Binding EnableFxaa}" />
-        <kit:ToggleRow Label="{Binding CullingLabel^}" IsChecked="{Binding EnableFrustumCulling}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_Fxaa}}" IsChecked="{Binding EnableFxaa}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_FrustumCulling}}" IsChecked="{Binding EnableFrustumCulling}" />
 
-        <kit:Section Title="{Binding RebuildSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.PostProcessing_Rebuild}}" />
 
-        <kit:SliderRow Label="{Binding DirectionalLightLimitLabel^}" Minimum="1" Maximum="10" Format="0" ShowTicks="True"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_DirectionalLightLimit}}" Minimum="1" Maximum="10" Format="0" ShowTicks="True"
                        Value="{Binding DirectionalLightLimit}" />
-        <kit:SliderRow Label="{Binding PointLightLimitLabel^}" Minimum="1" Maximum="10" Format="0" ShowTicks="True"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_PointLightLimit}}" Minimum="1" Maximum="10" Format="0" ShowTicks="True"
                        Value="{Binding PointLightLimit}" />
-        <kit:SliderRow Label="{Binding SpotLightLimitLabel^}" Minimum="1" Maximum="10" Format="0" ShowTicks="True"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_SpotLightLimit}}" Minimum="1" Maximum="10" Format="0" ShowTicks="True"
                        Value="{Binding SpotLightLimit}" />
-        <kit:SliderRow Label="{Binding CascadeCountLabel^}" Minimum="1" Maximum="4" Format="0" ShowTicks="True"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_CsmCascadeCount}}" Minimum="1" Maximum="4" Format="0" ShowTicks="True"
                        Value="{Binding CsmCascadeCount}" />
-        <kit:SliderRow Label="{Binding SplitLambdaLabel^}" Minimum="0" Maximum="1" ShowTicks="True"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_CsmSplitLambda}}" Minimum="0" Maximum="1" ShowTicks="True"
                        Value="{Binding CsmSplitLambda}" />
-        <kit:SliderRow Label="{Binding ShadowMapResolutionLabel^}" Minimum="256" Maximum="4096" Format="0" ShowTicks="True"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_CsmShadowMapResolution}}" Minimum="256" Maximum="4096" Format="0" ShowTicks="True"
                        Value="{Binding CsmShadowMapResolution}" />
 
-        <Button Content="{Binding ReloadLabel^}" Command="{Binding ReloadCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.PostProcessing_Reload}}" Command="{Binding ReloadCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:ToggleRow Label="{Binding CastShadowLabel^}" IsChecked="{Binding CastShadow}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_CastShadow}}" IsChecked="{Binding CastShadow}" />
 
-        <kit:ReadoutRow Label="{Binding MatrixLabel^}" Text="{Binding ReadoutText^}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_Matrix}}" Text="{Binding ReadoutText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>

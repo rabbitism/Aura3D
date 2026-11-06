@@ -13,7 +13,7 @@ namespace Aura3D.Gallery.Demos;
 /// <see cref="InstancedMeshGroup"/>（HISM）页的视图：八叉树把上万个实例切成若干
 /// <see cref="InstancedMesh"/> 分组，剔除按组做，相机只看到一角时其余组不参与绘制；
 /// 读数里的原地更新数与重建数是本页主角——跨叶更新会把整棵树重建一次。
-/// MVVM 化后文案、参数与命令全在 <see cref="HismViewModel"/>，XAML 经绑定直连，
+/// MVVM 化后参数与命令全在 <see cref="HismViewModel"/>，XAML 经绑定直连，
 /// 本类只保留生命周期——组装场景（相机、灯光、地面、HISM 分组）、逐帧驱动读数与渲染。
 /// 实例分布、逐帧搬动与八叉树参数的写穿见 VM。
 /// </summary>

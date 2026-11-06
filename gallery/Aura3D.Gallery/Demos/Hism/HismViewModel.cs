@@ -17,8 +17,7 @@ namespace Aura3D.Gallery.Demos;
 /// <summary>
 /// HISM 页的界面状态（MVVM 化，照搬粒子页的分工）：
 /// <list type="bullet">
-///   <item><description>文案：每个标签一个 Lingua observable，XAML 用 <c>{Binding Xxx^}</c> 订阅，
-///     换语言时由绑定自动收到新值，不依赖外壳整页重挂。</description></item>
+///   <item><description>文案：AXAML 直接写 <c>{Translate}</c> 标记扩展取 Strings.Keys 键值；换语言走外壳既有的整页重挂。</description></item>
 ///   <item><description>参数：滑杆/开关/下拉双向绑定到这里的属性，setter 写穿到
 ///     <see cref="InstancedMeshGroup"/>（或先记字段、等建场景后生效）；
 ///     初值即原页面 XAML 里写死的那一份，由绑定初始化取代。</description></item>
@@ -131,39 +130,6 @@ public sealed partial class HismViewModel : ObservableObject
         // 旧 Update 的 Report 位置：只有真的搬动了实例才重读八叉树统计，空闲帧不做事。
         ReadoutText.Refresh();
     }
-
-    /// <summary>页首说明。</summary>
-    public IObservable<string?> IntroLabel => Strings.Instance.Hism_Intro;
-
-    /// <summary>实例数滑杆标签。</summary>
-    public IObservable<string?> InstanceCountLabel => Strings.Instance.Hism_InstanceCount;
-
-    /// <summary>每组实例上限滑杆标签。</summary>
-    public IObservable<string?> PerGroupLabel => Strings.Instance.Hism_PerGroup;
-
-    /// <summary>八叉树深度滑杆标签。</summary>
-    public IObservable<string?> MaxDepthLabel => Strings.Instance.Hism_MaxDepth;
-
-    /// <summary>移动方式下拉标签。</summary>
-    public IObservable<string?> MoveModeLabel => Strings.Instance.Hism_MoveMode;
-
-    /// <summary>「逐帧搬动实例」开关标签。</summary>
-    public IObservable<string?> MoveEveryFrameLabel => Strings.Instance.Hism_MoveEveryFrame;
-
-    /// <summary>每秒搬动次数滑杆标签。</summary>
-    public IObservable<string?> MovesPerSecondLabel => Strings.Instance.Hism_MovesPerSecond;
-
-    /// <summary>按组视锥剔除开关标签。</summary>
-    public IObservable<string?> GroupCullingLabel => Strings.Instance.Hism_GroupCulling;
-
-    /// <summary>「清空」按钮文案（原页面是硬编码的 ClearInstances，补键后随语言走）。</summary>
-    public IObservable<string?> ClearLabel => Strings.Instance.Hism_Clear;
-
-    /// <summary>「重新铺满」按钮文案。</summary>
-    public IObservable<string?> RefillLabel => Strings.Instance.Hism_Refill;
-
-    /// <summary>读数行标题。</summary>
-    public IObservable<string?> OctreeStateLabel => Strings.Instance.Hism_OctreeState;
 
     /// <summary>实例总数；改一次整场重铺（树按新集合重建）。</summary>
     public double InstanceCount

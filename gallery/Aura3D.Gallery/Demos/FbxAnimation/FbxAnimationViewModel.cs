@@ -14,8 +14,7 @@ namespace Aura3D.Gallery.Demos;
 /// <summary>
 /// FBX 动作库页的界面状态，按 Particles 页的样板 MVVM 化。分工：
 /// <list type="bullet">
-///   <item><description>文案：每个标签一个 Lingua observable，XAML 用 <c>{Binding Xxx^}</c> 订阅，
-///     换语言时由绑定自动收到新值。</description></item>
+///   <item><description>文案：AXAML 直接写 <c>{Translate}</c> 标记扩展取 Strings.Keys 键值；换语言走外壳既有的整页重挂。</description></item>
 ///   <item><description>参数：剪辑/骨骼下拉与取样滑杆双向绑定到这里的属性；换剪辑写穿到模型节点的
 ///     AnimationSampler（第 0 项「不挂采样器」写 null），换骨骼与取样时刻只改取样读数。</description></item>
 ///   <item><description>Readout：骨架与剪辑表两行是纯模板读数，Lingua 1.1 的 format builder 组装，
@@ -156,42 +155,6 @@ public sealed partial class FbxAnimationViewModel : ObservableObject
     private double sampleTime;
 
     private string sampleText;
-
-    /// <summary>页首说明。</summary>
-    public IObservable<string?> IntroLabel => Strings.Instance.FbxAnimation_Intro;
-
-    /// <summary>「剪辑」分组标题。</summary>
-    public IObservable<string?> ClipsSectionLabel => Strings.Instance.FbxAnimation_Clips;
-
-    /// <summary>「挂上的动作」下拉标签。</summary>
-    public IObservable<string?> SamplerLabel => Strings.Instance.FbxAnimation_Sampler;
-
-    /// <summary>「不挂采样器」的口径说明。</summary>
-    public IObservable<string?> NoSamplerNoteLabel => Strings.Instance.FbxAnimation_NoSamplerNote;
-
-    /// <summary>「Animation.Sample 的裸接口」分组标题。</summary>
-    public IObservable<string?> SampleInterfaceSectionLabel => Strings.Instance.FbxAnimation_SampleInterface;
-
-    /// <summary>骨骼下拉标签。</summary>
-    public IObservable<string?> BoneLabel => Strings.Instance.FbxAnimation_Bone;
-
-    /// <summary>取样时刻滑杆标签。</summary>
-    public IObservable<string?> AtSecondLabel => Strings.Instance.FbxAnimation_AtSecond;
-
-    /// <summary>取样说明。</summary>
-    public IObservable<string?> SampleNoteLabel => Strings.Instance.FbxAnimation_SampleNote;
-
-    /// <summary>取样读数行标题。</summary>
-    public IObservable<string?> ResultLabel => Strings.Instance.FbxAnimation_Result;
-
-    /// <summary>「骨架与加载器」分组标题。</summary>
-    public IObservable<string?> SkeletonLoaderSectionLabel => Strings.Instance.FbxAnimation_SkeletonLoader;
-
-    /// <summary>骨架读数行标题。</summary>
-    public IObservable<string?> SkeletonLabel => Strings.Instance.FbxAnimation_Skeleton;
-
-    /// <summary>剪辑表读数行标题。</summary>
-    public IObservable<string?> ClipTableLabel => Strings.Instance.FbxAnimation_ClipTable;
 
     /// <summary>「挂上的动作」下拉的选中项；换剪辑即换模型节点上的采样器，并重算取样读数。</summary>
     public object? SelectedClip

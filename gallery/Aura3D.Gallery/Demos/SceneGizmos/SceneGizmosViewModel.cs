@@ -12,8 +12,7 @@ namespace Aura3D.Gallery.Demos;
 /// <summary>
 /// 场景辅助层页的界面状态。分工：
 /// <list type="bullet">
-///   <item><description>文案：每个标签一个 Lingua observable，XAML 用 <c>{Binding Xxx^}</c> 订阅，
-///     换语言时由绑定自动收到新值，不依赖外壳整页重挂。</description></item>
+///   <item><description>文案：AXAML 直接写 <c>{Translate}</c> 标记扩展取 Strings.Keys 键值；换语言走外壳既有的整页重挂。</description></item>
 ///   <item><description>参数：滑杆/开关双向绑定到这里的属性。滑杆写穿到场景建好后登记进来的
 ///     <see cref="Grid"/>/<see cref="AxisGizmo"/> 与 VM 持有的 <see cref="Spot"/>；
 ///     十个开关只改 VM 状态并经语义事件通知视图，由视图转写进宿主的
@@ -145,69 +144,6 @@ public sealed partial class SceneGizmosViewModel : ObservableObject
     private bool showParticleBounds;
     private bool showBone;
     private bool debugEnable = true;
-
-    /// <summary>页首说明。</summary>
-    public IObservable<string?> IntroLabel => Strings.Instance.SceneGizmos_Intro;
-
-    /// <summary>「Ground grid」分组标题。</summary>
-    public IObservable<string?> GridSectionLabel => Strings.Instance.SceneGizmos_Grid;
-
-    /// <summary>「显示网格」开关标签。</summary>
-    public IObservable<string?> ShowGridLabel => Strings.Instance.SceneGizmos_ShowGrid;
-
-    /// <summary>「显示坐标轴」开关标签。</summary>
-    public IObservable<string?> ShowAxesLabel => Strings.Instance.SceneGizmos_ShowAxes;
-
-    /// <summary>网格边长标签。</summary>
-    public IObservable<string?> GridSizeLabel => Strings.Instance.SceneGizmos_GridSize;
-
-    /// <summary>网格分隔数标签。</summary>
-    public IObservable<string?> GridDivisionsLabel => Strings.Instance.SceneGizmos_GridDivisions;
-
-    /// <summary>轴长标签。</summary>
-    public IObservable<string?> AxisLengthLabel => Strings.Instance.SceneGizmos_AxisLength;
-
-    /// <summary>箭头尺寸标签。</summary>
-    public IObservable<string?> ArrowSizeLabel => Strings.Instance.SceneGizmos_ArrowSize;
-
-    /// <summary>「DebugDrawPass 细分开关」分组标题。</summary>
-    public IObservable<string?> DebugTogglesSectionLabel => Strings.Instance.SceneGizmos_DebugToggles;
-
-    /// <summary>「包围盒」开关标签。</summary>
-    public IObservable<string?> BoundingBoxLabel => Strings.Instance.SceneGizmos_BoundingBox;
-
-    /// <summary>「平行光体积」开关标签。</summary>
-    public IObservable<string?> DirectionalVolumeLabel => Strings.Instance.SceneGizmos_DirectionalVolume;
-
-    /// <summary>「点光体积」开关标签。</summary>
-    public IObservable<string?> PointVolumeLabel => Strings.Instance.SceneGizmos_PointVolume;
-
-    /// <summary>「聚光体积」开关标签。</summary>
-    public IObservable<string?> SpotVolumeLabel => Strings.Instance.SceneGizmos_SpotVolume;
-
-    /// <summary>「相机视锥」开关标签。</summary>
-    public IObservable<string?> CameraFrustumLabel => Strings.Instance.SceneGizmos_CameraFrustum;
-
-    /// <summary>「粒子体积」开关标签。</summary>
-    public IObservable<string?> ParticleBoundsLabel => Strings.Instance.SceneGizmos_ParticleBounds;
-
-    /// <summary>「骨骼」开关标签。</summary>
-    public IObservable<string?> BonesLabel => Strings.Instance.SceneGizmos_Bones;
-
-    /// <summary>总开关标签。</summary>
-    public IObservable<string?> EnableLabel => Strings.Instance.SceneGizmos_Enable;
-
-    /// <summary>「动画」分组标题。</summary>
-    public IObservable<string?> AnimationSectionLabel => Strings.Instance.SceneGizmos_Animation;
-
-    /// <summary>公转速度标签。</summary>
-    public IObservable<string?> LightOrbitLabel => Strings.Instance.SceneGizmos_LightOrbit;
-
-    /// <summary>聚光外锥角标签。</summary>
-    public IObservable<string?> SpotOuterAngleLabel => Strings.Instance.SceneGizmos_SpotOuterAngle;
-
-    /// <summary>读数行标题。</summary>
-    public IObservable<string?> StateLabel => Strings.Instance.SceneGizmos_State;
 
     /// <summary>
     /// 网格边长（半宽，引擎属性叫 Size）。场景未建时先记在 backing 上，登记后由

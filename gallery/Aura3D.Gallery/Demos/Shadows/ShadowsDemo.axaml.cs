@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// 阴影页的视图：文案、参数与命令全在 <see cref="ShadowsViewModel"/>，XAML 经绑定直连。
+/// 阴影页的视图：参数与命令全在 <see cref="ShadowsViewModel"/>，XAML 经绑定直连。
 /// 本类只保留生命周期——在渲染线程回调里组装场景（相机/地面/立柱/球；两盏方向光本体住在 VM）、
 /// 把 VM 的 Settings 值事件逐项转写进宿主的 <c>PipelineSettings</c>（VM 不碰 DemoContext，照抄
 /// PostProcessing 页的做法）、逐帧驱动 Readout 与渲染。主光级联（CSM）与单张正交图两条路径的

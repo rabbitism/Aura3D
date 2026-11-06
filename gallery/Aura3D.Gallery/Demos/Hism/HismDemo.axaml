@@ -1,6 +1,7 @@
 <ex:Demo x:Class="Aura3D.Gallery.Demos.HismDemo"
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
@@ -18,29 +19,29 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Binding IntroLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Hism_Intro}}" />
 
-        <kit:SliderRow Label="{Binding InstanceCountLabel^}" Minimum="1000" Maximum="120000" Format="0"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Hism_InstanceCount}}" Minimum="1000" Maximum="120000" Format="0"
                        Value="{Binding InstanceCount}" />
-        <kit:SliderRow Label="{Binding PerGroupLabel^}" Minimum="64" Maximum="4096" Format="0"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Hism_PerGroup}}" Minimum="64" Maximum="4096" Format="0"
                        Value="{Binding MaxPerGroup}" />
-        <kit:SliderRow Label="{Binding MaxDepthLabel^}" Minimum="1" Maximum="9" Format="0"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Hism_MaxDepth}}" Minimum="1" Maximum="9" Format="0"
                        Value="{Binding MaxDepth}" />
 
-        <kit:ComboRow Label="{Binding MoveModeLabel^}" Options="{Binding MoveModeOptions}"
+        <kit:ComboRow Label="{Translate {x:Static loc:Strings+Keys.Hism_MoveMode}}" Options="{Binding MoveModeOptions}"
                       SelectedItem="{Binding SelectedMoveMode}" />
 
-        <kit:ToggleRow Label="{Binding MoveEveryFrameLabel^}" IsChecked="{Binding MoveEveryFrame}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Hism_MoveEveryFrame}}" IsChecked="{Binding MoveEveryFrame}" />
 
-        <kit:SliderRow Label="{Binding MovesPerSecondLabel^}" Minimum="1" Maximum="240" Format="0"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Hism_MovesPerSecond}}" Minimum="1" Maximum="240" Format="0"
                        Value="{Binding MovesPerSecond}" />
 
-        <kit:ToggleRow Label="{Binding GroupCullingLabel^}" IsChecked="{Binding GroupCulling}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Hism_GroupCulling}}" IsChecked="{Binding GroupCulling}" />
 
-        <Button Content="{Binding ClearLabel^}" Command="{Binding ClearInstancesCommand}" HorizontalAlignment="Stretch" />
-        <Button Content="{Binding RefillLabel^}" Command="{Binding RefillCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.Hism_Clear}}" Command="{Binding ClearInstancesCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.Hism_Refill}}" Command="{Binding RefillCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:ReadoutRow Label="{Binding OctreeStateLabel^}" Text="{Binding ReadoutText^}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.Hism_OctreeState}}" Text="{Binding ReadoutText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>

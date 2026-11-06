@@ -15,8 +15,7 @@ namespace Aura3D.Gallery.Demos;
 /// <summary>
 /// 拾取页的界面状态，按 Particles/Pipelines 页的样板 MVVM 化。分工：
 /// <list type="bullet">
-///   <item><description>文案：每个标签一个 Lingua observable，XAML 用 <c>{Binding Xxx^}</c> 订阅，
-///     换语言时由绑定自动收到新值。</description></item>
+///   <item><description>文案：AXAML 直接写 <c>{Translate}</c> 标记扩展取 Strings.Keys 键值；换语言走外壳既有的整页重挂。</description></item>
 ///   <item><description>参数：滑杆/开关双向绑定到这里的属性。挡板可见与方阵边长写穿到住在
 ///     VM 里的引擎模型；EnablePicking 是视图属性、中心射线由视图的逐帧路径消费，两者
 ///     VM 都够不着，setter 走「backing + 值事件」，由视图转写（同 PostProcessing 页的 Settings 桥）。</description></item>
@@ -112,27 +111,6 @@ public sealed partial class PickingViewModel : ObservableObject
 
     /// <summary>实例方阵：边长滑杆整批重写它的实例变换。</summary>
     public InstancedMesh Field { get; }
-
-    /// <summary>页首说明。</summary>
-    public IObservable<string?> IntroLabel => Strings.Instance.Picking_Intro;
-
-    /// <summary>「视图 EnablePicking」开关标签。</summary>
-    public IObservable<string?> EnablePickingLabel => Strings.Instance.Picking_EnablePicking;
-
-    /// <summary>「中心射线逐帧拾取」开关标签。</summary>
-    public IObservable<string?> CenterRayLabel => Strings.Instance.Picking_CenterRay;
-
-    /// <summary>「挡板可见」开关标签。</summary>
-    public IObservable<string?> OccluderVisibleLabel => Strings.Instance.Picking_OccluderVisible;
-
-    /// <summary>实例方阵边长滑杆标签。</summary>
-    public IObservable<string?> GridSizeLabel => Strings.Instance.Picking_GridSize;
-
-    /// <summary>「清一次点击计数」按钮文案。</summary>
-    public IObservable<string?> ClearClicksLabel => Strings.Instance.Picking_ClearClicks;
-
-    /// <summary>读数行标题。</summary>
-    public IObservable<string?> ResultLabel => Strings.Instance.Picking_Result;
 
     private string resultText = "—";
 

@@ -1,6 +1,7 @@
 <ex:Demo x:Class="Aura3D.Gallery.Demos.CameraDemo"
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
@@ -26,30 +27,30 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Binding IntroLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Camera_Intro}}" />
 
-        <kit:ComboRow Label="{Binding ProjectionLabel^}" Options="{Binding ProjectionOptions}"
+        <kit:ComboRow Label="{Translate {x:Static loc:Strings+Keys.Camera_Projection}}" Options="{Binding ProjectionOptions}"
                       SelectedItem="{Binding SelectedProjection}" />
 
-        <kit:Section Title="{Binding FrustumSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Camera_Frustum}}" />
 
-        <kit:SliderRow Label="{Binding FieldOfViewLabel^}" Minimum="15" Maximum="120" Format="0" ShowTicks="True"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Camera_FieldOfView}}" Minimum="15" Maximum="120" Format="0" ShowTicks="True"
                        Value="{Binding FieldOfView}" />
-        <kit:SliderRow Label="{Binding OrthographicSizeLabel^}" Minimum="0.5" Maximum="20" ShowTicks="True"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Camera_OrthographicSize}}" Minimum="0.5" Maximum="20" ShowTicks="True"
                        Value="{Binding OrthographicSize}" />
-        <kit:SliderRow Label="{Binding NearPlaneLabel^}" Minimum="0.01" Maximum="12" ShowTicks="True"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Camera_NearPlane}}" Minimum="0.01" Maximum="12" ShowTicks="True"
                        Value="{Binding NearPlane}" />
-        <kit:SliderRow Label="{Binding FarPlaneLabel^}" Minimum="2" Maximum="120" Format="0.#" ShowTicks="True"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Camera_FarPlane}}" Minimum="2" Maximum="120" Format="0.#" ShowTicks="True"
                        Value="{Binding FarPlane}" />
 
-        <kit:Section Title="{Binding FramingSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Camera_Framing}}" />
 
-        <Button Content="{Binding FitFifthBoxLabel^}" Command="{Binding FitFifthBoxCommand}" HorizontalAlignment="Stretch" />
-        <Button Content="{Binding ResetCameraLabel^}" Command="{Binding ResetCameraCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.Camera_FitFifthBox}}" Command="{Binding FitFifthBoxCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.Camera_ResetCamera}}" Command="{Binding ResetCameraCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:ToggleRow Label="{Binding RenderBackgroundLabel^}" IsChecked="{Binding RenderBackground}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Camera_RenderBackground}}" IsChecked="{Binding RenderBackground}" />
 
-        <kit:ReadoutRow Label="{Binding Box0ProjectionLabel^}" Text="{Binding ScreenReadoutText}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.Camera_Box0Projection}}" Text="{Binding ScreenReadoutText}" />
 
       </StackPanel>
     </kit:InspectorPanel>

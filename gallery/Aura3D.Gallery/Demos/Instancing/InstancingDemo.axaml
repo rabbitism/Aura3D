@@ -1,6 +1,7 @@
 <ex:Demo x:Class="Aura3D.Gallery.Demos.InstancingDemo"
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
@@ -19,27 +20,27 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Binding IntroLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Instancing_Intro}}" />
 
-        <kit:SliderRow Label="{Binding PerFieldLabel^}" Minimum="24" Maximum="20000" Format="0"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Instancing_PerField}}" Minimum="24" Maximum="20000" Format="0"
                        Value="{Binding InstanceCount}" />
 
-        <kit:ComboRow Label="{Binding UpdateModeLabel^}" Options="{Binding UpdateModeOptions}"
+        <kit:ComboRow Label="{Translate {x:Static loc:Strings+Keys.Instancing_UpdateMode}}" Options="{Binding UpdateModeOptions}"
                       SelectedItem="{Binding SelectedUpdateMode}" />
 
-        <kit:ToggleRow Label="{Binding WaveLabel^}" IsChecked="{Binding Animate}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Instancing_Wave}}" IsChecked="{Binding Animate}" />
 
-        <kit:SliderRow Label="{Binding WaveSpeedLabel^}" Minimum="0" Maximum="6" Format="0.0"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Instancing_WaveSpeed}}" Minimum="0" Maximum="6" Format="0.0"
                        Value="{Binding WaveSpeed}" />
-        <kit:SliderRow Label="{Binding WaveHeightLabel^}" Minimum="0" Maximum="6" Format="0.0"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Instancing_WaveHeight}}" Minimum="0" Maximum="6" Format="0.0"
                        Value="{Binding WaveAmount}" />
 
-        <kit:ToggleRow Label="{Binding CullingLabel^}" IsChecked="{Binding Culling}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Instancing_Culling}}" IsChecked="{Binding Culling}" />
 
-        <Button Content="{Binding RemoveFrontLabel^}" Command="{Binding RemoveFrontCommand}" HorizontalAlignment="Stretch" />
-        <Button Content="{Binding RestoreLabel^}" Command="{Binding RestoreCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.Instancing_RemoveInstances}}" Command="{Binding RemoveFrontCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.Instancing_Restore}}" Command="{Binding RestoreCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:ReadoutRow Label="{Binding CostLabel^}" Text="{Binding ReadoutText^}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.Instancing_Cost}}" Text="{Binding ReadoutText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>

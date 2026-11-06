@@ -1,6 +1,7 @@
 <ex:Demo x:Class="Aura3D.Gallery.Demos.SkyboxBackgroundDemo"
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
@@ -20,50 +21,50 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Binding IntroLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Background_Intro}}" />
 
-        <kit:Section Title="{Binding SourceSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Background_Source}}" />
 
-        <kit:ComboRow Label="{Binding SourceLabel^}" Options="{Binding SourceOptions}"
+        <kit:ComboRow Label="{Translate {x:Static loc:Strings+Keys.Background_SceneBackground}}" Options="{Binding SourceOptions}"
                       SelectedItem="{Binding SelectedSource}" />
 
-        <kit:SliderRow Label="{Binding CubeSizeLabel^}" Minimum="32" Maximum="256" Format="0"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Background_CubeSize}}" Minimum="32" Maximum="256" Format="0"
                        Value="{Binding CubeFaceSize}" />
 
-        <kit:ToggleRow Label="{Binding RenderBackgroundLabel^}" IsChecked="{Binding RenderBackground}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Background_RenderBackground}}" IsChecked="{Binding RenderBackground}" />
 
-        <kit:Hint Text="{Binding ClearNoteLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Background_ClearNote}}" />
 
-        <kit:Section Title="{Binding ShaderVariantsSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Background_ShaderVariants}}" />
 
-        <kit:ToggleRow Label="{Binding OrthographicLabel^}" IsChecked="{Binding Orthographic}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Background_Orthographic}}" IsChecked="{Binding Orthographic}" />
 
-        <kit:SliderRow Label="{Binding OrthoSizeLabel^}" Minimum="2" Maximum="40" Format="0"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Background_OrthoSize}}" Minimum="2" Maximum="40" Format="0"
                        Value="{Binding OrthoSize}" />
 
-        <kit:SliderRow Label="{Binding FieldOfViewLabel^}" Minimum="15" Maximum="120" Format="0"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Background_FieldOfView}}" Minimum="15" Maximum="120" Format="0"
                        Value="{Binding FieldOfView}" />
 
-        <kit:SliderRow Label="{Binding FarPlaneLabel^}" Minimum="5" Maximum="400" Format="0"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Background_FarPlane}}" Minimum="5" Maximum="400" Format="0"
                        Value="{Binding FarPlane}" />
 
-        <kit:Hint Text="{Binding ProjectionNoteLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Background_ProjectionNote}}" />
 
-        <kit:Section Title="{Binding CubemapIblSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Background_CubemapFeedsIbl}}" />
 
-        <kit:SliderRow Label="{Binding AmbientLabel^}" Minimum="0" Maximum="4"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Background_IblAmbientIntensity}}" Minimum="0" Maximum="4"
                        Value="{Binding IblAmbientIntensity}" />
 
-        <kit:SliderRow Label="{Binding ExposureLabel^}" Minimum="0.05" Maximum="4"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Background_ToneMappingExposure}}" Minimum="0.05" Maximum="4"
                        Value="{Binding ToneMappingExposure}" />
 
-        <kit:ToggleRow Label="{Binding SunVisibleLabel^}" IsChecked="{Binding SunVisible}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Background_KeyLightVisible}}" IsChecked="{Binding SunVisible}" />
 
-        <Button Content="{Binding RebakeIblLabel^}" Command="{Binding RebakeIblCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.Background_RebakeIbl}}" Command="{Binding RebakeIblCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:Hint Text="{Binding IblNoteLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Background_IblNote}}" />
 
-        <kit:ReadoutRow Label="{Binding IblCacheLabel^}" Text="{Binding ReadoutText^}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.Background_IblCache}}" Text="{Binding ReadoutText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>

@@ -10,7 +10,7 @@ namespace Aura3D.Gallery.Demos;
 /// 左片用引擎着色器（正常吃光照与贴图），右片用自定义的实例感知着色器对
 /// （<see cref="Kit.Shaders.InstancedColorVertex"/> + 逐实例顶点色）——覆盖顶点阶段之后，
 /// 槽位 8–11 的实例矩阵必须由自己的着色器乘进去，否则整片实例会叠在原点。
-/// MVVM 化后文案、参数与命令全在 <see cref="InstancingViewModel"/>，XAML 经绑定直连，
+/// MVVM 化后参数与命令全在 <see cref="InstancingViewModel"/>，XAML 经绑定直连，
 /// 本类只保留生命周期——组装场景（相机、灯光）、逐帧驱动读数与渲染。
 /// 两片实例场的建模与波动写法见 VM。
 /// </summary>

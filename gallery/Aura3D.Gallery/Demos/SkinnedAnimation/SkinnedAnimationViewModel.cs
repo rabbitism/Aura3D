@@ -20,9 +20,7 @@ namespace Aura3D.Gallery.Demos;
 /// <summary>
 /// 蒙皮动画页的界面状态，按 Particles/AnimationMix 的样板 MVVM 化。分工：
 /// <list type="bullet">
-///   <item><description>文案：每个标签一个 Lingua observable，XAML 用 <c>{Binding Xxx^}</c> 订阅，
-///     换语言时由绑定自动收到新值。旧 AXAML 里仅有的两个硬编码标签（TimeScale/LoopMode）
-///     补键进了 resx，en 值照抄原文、zh 值只用字体子集里已有的汉字。</description></item>
+///   <item><description>文案：AXAML 直接写 <c>{Translate}</c> 标记扩展取 Strings.Keys 键值；换语言走外壳既有的整页重挂。</description></item>
 ///   <item><description>参数：剪辑/循环模式下拉、倍率滑杆与三个开关双向绑定到这里的属性，
 ///     setter 写穿采样器与骨骼附件；剪辑下拉的选项要等 glb 的 animations 数组，由视图建场景时调
 ///     <see cref="InitializeClips"/> 回填并初选（初选写穿建第一个采样器挂上模型）。</description></item>
@@ -298,57 +296,6 @@ public sealed partial class SkinnedAnimationViewModel : ObservableObject
 
     private float torchClock;
     private double manualStepClock;
-
-    /// <summary>页首说明。</summary>
-    public IObservable<string?> IntroLabel => Strings.Instance.SkinnedAnimation_Intro;
-
-    /// <summary>「播放」分组标题。</summary>
-    public IObservable<string?> PlaybackSectionLabel => Strings.Instance.SkinnedAnimation_Playback;
-
-    /// <summary>剪辑下拉标签。</summary>
-    public IObservable<string?> ClipLabel => Strings.Instance.SkinnedAnimation_Clip;
-
-    /// <summary>时间倍率滑杆标签（旧页硬编码的 TimeScale，补键进 resx）。</summary>
-    public IObservable<string?> TimeScaleLabel => Strings.Instance.SkinnedAnimation_TimeScale;
-
-    /// <summary>循环模式下拉标签（旧页硬编码的 LoopMode，补键进 resx）。</summary>
-    public IObservable<string?> LoopModeLabel => Strings.Instance.SkinnedAnimation_LoopMode;
-
-    /// <summary>「Reset」按钮文案。</summary>
-    public IObservable<string?> ResetLabel => Strings.Instance.SkinnedAnimation_Reset;
-
-    /// <summary>「谁来推进采样器」分组标题。</summary>
-    public IObservable<string?> DriverSectionLabel => Strings.Instance.SkinnedAnimation_Driver;
-
-    /// <summary>ExternalUpdate 开关标签。</summary>
-    public IObservable<string?> ExternalUpdateLabel => Strings.Instance.SkinnedAnimation_ExternalUpdate;
-
-    /// <summary>推进权说明。</summary>
-    public IObservable<string?> DriveNoteLabel => Strings.Instance.SkinnedAnimation_DriveNote;
-
-    /// <summary>「手动推进 1/30 秒」按钮文案。</summary>
-    public IObservable<string?> AdvanceStepLabel => Strings.Instance.SkinnedAnimation_AdvanceStep;
-
-    /// <summary>「骨骼」分组标题。</summary>
-    public IObservable<string?> BonesSectionLabel => Strings.Instance.SkinnedAnimation_Bones;
-
-    /// <summary>Debug.ShowBone 开关标签。</summary>
-    public IObservable<string?> ShowBoneLabel => Strings.Instance.SkinnedAnimation_ShowBone;
-
-    /// <summary>骨骼附件开关标签。</summary>
-    public IObservable<string?> AttachmentLabel => Strings.Instance.SkinnedAnimation_Attachment;
-
-    /// <summary>握点偏航滑杆标签。</summary>
-    public IObservable<string?> AttachmentYawLabel => Strings.Instance.SkinnedAnimation_AttachmentYaw;
-
-    /// <summary>挂载说明。</summary>
-    public IObservable<string?> AttachNoteLabel => Strings.Instance.SkinnedAnimation_AttachNote;
-
-    /// <summary>骨骼挑选读数行标题。</summary>
-    public IObservable<string?> BonePickerLabel => Strings.Instance.SkinnedAnimation_BonePicker;
-
-    /// <summary>播放状态读数行标题。</summary>
-    public IObservable<string?> PlaybackStateLabel => Strings.Instance.SkinnedAnimation_PlaybackState;
 
     /// <summary>
     /// 剪辑下拉的选项（序号 · 名称 · 时长）；资产到位前是空的，建场景时由

@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// 视图层的生命周期与 GPU 资源归还，MVVM 化：计数、日志、文案与命令全在
+/// 视图层的生命周期与 GPU 资源归还，MVVM 化：计数、日志、命令全在
 /// <see cref="GpuLifecycleViewModel"/>，本类只剩生命周期——订阅五个场景事件把计数推进 VM、
 /// 组装场景（转台加四个方块是纯布景，没有参数写穿，不进 VM）、按 <c>pendingRebuild</c> 调度重建。
 /// <c>ContextRestored</c> 是本页主角：GL 句柄由引擎统一重建，本页没有自缓存的句柄，

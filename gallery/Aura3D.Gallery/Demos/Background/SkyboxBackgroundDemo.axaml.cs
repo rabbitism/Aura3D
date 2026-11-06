@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// 背景来源与天空盒页的视图：文案、参数与命令全在 <see cref="SkyboxBackgroundViewModel"/>，
+/// 背景来源与天空盒页的视图：参数与命令全在 <see cref="SkyboxBackgroundViewModel"/>，
 /// XAML 经绑定直连。本类只保留生命周期——取三份背景素材喂 VM、在渲染线程回调里组装场景
 /// （地面/方柱/反射球是纯布景，平行光住在 VM）、把两根 Settings 滑杆的值事件转写进宿主
 /// （VM 不碰 DemoContext，参照 Particles/PostProcessing 页的做法）、逐帧转球、驱动 Readout 与渲染。

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// 环境图与 IBL 页的视图：文案、参数与命令全在 <see cref="EnvironmentViewModel"/>，XAML 经绑定
+/// 环境图与 IBL 页的视图：参数与命令全在 <see cref="EnvironmentViewModel"/>，XAML 经绑定
 /// 直连。本类只保留生命周期——资产阶段取 HDRI 全景与六面天空盒喂 VM、在渲染线程回调里组装
 /// 场景（相机/地面；平行光与五颗组合球本体住在 VM）、把 VM 的三项 Settings 值事件转写进宿主
 /// （VM 不碰 DemoContext，照 PostProcessing 页的做法）、逐帧驱动自转与 Readout。

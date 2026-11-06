@@ -1,6 +1,7 @@
 <ex:Demo x:Class="Aura3D.Gallery.Demos.PointcloudMixDemo"
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
@@ -20,16 +21,16 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Binding IntroLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.PointcloudMix_Intro}}" />
 
-        <kit:Section Title="{Binding PointSettingsLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.PointcloudMix_PointSettings}}" />
 
-        <kit:SliderRow Label="{Binding PointSizeLabel^}" Minimum="1" Maximum="24" Format="0"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.PointcloudMix_PointSize}}" Minimum="1" Maximum="24" Format="0"
                        Value="{Binding PointSize}" />
 
-        <kit:ToggleRow Label="{Binding UnlitLabel^}" IsChecked="{Binding Unlit}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.PointcloudMix_Unlit}}" IsChecked="{Binding Unlit}" />
 
-        <kit:ToggleRow Label="{Binding VertexColorLabel^}" IsChecked="{Binding UseVertexColor}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.PointcloudMix_VertexColor}}" IsChecked="{Binding UseVertexColor}" />
 
       </StackPanel>
     </kit:InspectorPanel>

@@ -1,6 +1,7 @@
 <ex:Demo x:Class="Aura3D.Gallery.Demos.MaterialShadersDemo"
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
@@ -18,61 +19,61 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Binding IntroLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.MaterialShaders_Intro}}" />
 
-        <kit:Section Title="{Binding ChannelsSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.MaterialShaders_Channels}}" />
 
-        <kit:ComboRow Label="{Binding BaseColorMapLabel^}" Options="{Binding BaseColorOptions}"
+        <kit:ComboRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_BaseColorMap}}" Options="{Binding BaseColorOptions}"
                       SelectedItem="{Binding SelectedBaseColor}" />
 
-        <kit:ToggleRow Label="{Binding NormalMapLabel^}" IsChecked="{Binding ShowNormal}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_NormalMap}}" IsChecked="{Binding ShowNormal}" />
 
-        <kit:Section Title="{Binding BothStagesSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.MaterialShaders_BothStages}}" />
 
-        <kit:ToggleRow Label="{Binding UseConstantShaderLabel^}" IsChecked="{Binding UseCustomSolid}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_UseConstantShader}}" IsChecked="{Binding UseCustomSolid}" />
 
-        <kit:SliderRow Label="{Binding HueLabel^}" Minimum="0" Maximum="360" Format="0"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_Hue}}" Minimum="0" Maximum="360" Format="0"
                        Value="{Binding Hue}" />
 
-        <kit:Section Title="{Binding TintedSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.MaterialShaders_Tinted}}" />
 
-        <kit:SliderRow Label="{Binding TintStrengthLabel^}" Minimum="0" Maximum="1"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_TintStrength}}" Minimum="0" Maximum="1"
                        Value="{Binding TintStrength}" />
 
-        <kit:Section Title="{Binding ParametersSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.MaterialShaders_Parameters}}" />
 
-        <kit:SliderRow Label="{Binding StripeSpeedLabel^}" Minimum="0" Maximum="4" Format="0.0"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_StripeSpeed}}" Minimum="0" Maximum="4" Format="0.0"
                        Value="{Binding StripeSpeed}" />
 
-        <kit:SliderRow Label="{Binding FrequencyULabel^}" Minimum="0" Maximum="16" Format="0.0"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_FrequencyU}}" Minimum="0" Maximum="16" Format="0.0"
                        Value="{Binding StripeFrequencyU}" />
 
-        <kit:SliderRow Label="{Binding FrequencyVLabel^}" Minimum="0" Maximum="16" Format="0.0"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_FrequencyV}}" Minimum="0" Maximum="16" Format="0.0"
                        Value="{Binding StripeFrequencyV}" />
 
-        <kit:ComboRow Label="{Binding BlendModeLabel^}" Options="{Binding BlendModeOptions}"
+        <kit:ComboRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_BlendMode}}" Options="{Binding BlendModeOptions}"
                       SelectedItem="{Binding SelectedBlendMode}" />
 
-        <kit:SliderRow Label="{Binding AlphaCutoffLabel^}" Minimum="0" Maximum="0.95"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_AlphaCutoff}}" Minimum="0" Maximum="0.95"
                        Value="{Binding StripeCutoff}" />
 
-        <kit:ToggleRow Label="{Binding WriteTimeLabel^}" IsChecked="{Binding AnimateTime}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_WriteTime}}" IsChecked="{Binding AnimateTime}" />
 
-        <kit:Section Title="{Binding AlphaModesSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.MaterialShaders_AlphaModes}}" />
 
-        <kit:SliderRow Label="{Binding AlphaCutoffLabel^}" Minimum="0" Maximum="0.95" Format="0.00"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_AlphaCutoff}}" Minimum="0" Maximum="0.95" Format="0.00"
                        Value="{Binding AlphaCutoff}" />
 
-        <kit:ToggleRow Label="{Binding DoubleSidedLabel^}" IsChecked="{Binding DoubleSided}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_DoubleSided}}" IsChecked="{Binding DoubleSided}" />
 
-        <kit:Section Title="{Binding SceneSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.MaterialShaders_Scene}}" />
 
-        <kit:SliderRow Label="{Binding RotationSpeedLabel^}" Minimum="0" Maximum="90" Format="0"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_RotationSpeed}}" Minimum="0" Maximum="90" Format="0"
                        Value="{Binding Spin}" />
 
-        <kit:ToggleRow Label="{Binding GridLabel^}" IsChecked="{Binding ShowGrid}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_Grid}}" IsChecked="{Binding ShowGrid}" />
 
-        <kit:ReadoutRow Label="{Binding RuntimeLabel^}" Text="{Binding ReadoutText^}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_Runtime}}" Text="{Binding ReadoutText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>

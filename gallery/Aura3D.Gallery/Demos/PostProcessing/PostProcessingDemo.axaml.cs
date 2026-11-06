@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// 管线设置页的视图：文案、参数与命令全在 <see cref="PostProcessingViewModel"/>，XAML 经绑定直连。
+/// 管线设置页的视图：参数与命令全在 <see cref="PostProcessingViewModel"/>，XAML 经绑定直连。
 /// 本类只保留生命周期——建场景（相机/地面/亮度球组/点光；平行光本体住在 VM）、把 VM 的参数
 /// 事件转写进宿主的 <c>PipelineSettings</c>（VM 不碰 DemoContext，参照 Particles 页的做法）、
 /// 逐帧驱动 Readout 与渲染。页面要演示的「逐帧生效 vs 必须重建」分界见 VM 的参数注释。

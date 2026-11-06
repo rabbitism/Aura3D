@@ -1,6 +1,7 @@
 <ex:Demo x:Class="Aura3D.Gallery.Demos.EnvironmentDemo"
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
@@ -19,40 +20,40 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Binding IntroLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Environment_Intro}}" />
 
-        <kit:Section Title="{Binding MapSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Environment_Map}}" />
 
-        <kit:ComboRow Label="{Binding PanoramaLabel^}" Options="{Binding PanoramaOptions}"
+        <kit:ComboRow Label="{Translate {x:Static loc:Strings+Keys.Environment_Panorama}}" Options="{Binding PanoramaOptions}"
                       SelectedItem="{Binding SelectedPanorama}" />
 
-        <kit:SliderRow Label="{Binding CubeSizeLabel^}" Minimum="32" Maximum="256" Format="0"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Environment_CubeSize}}" Minimum="32" Maximum="256" Format="0"
                        Value="{Binding FaceSize}" />
 
-        <kit:Hint Text="{Binding FaceSizeNoteLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Environment_FaceSizeNote}}" />
 
-        <Button Content="{Binding RebakeLabel^}" Command="{Binding RebakeCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.Environment_Rebake}}" Command="{Binding RebakeCommand}" HorizontalAlignment="Stretch" />
 
-        <Button Content="{Binding ReloadLabel^}" Command="{Binding ReloadCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.Environment_Reload}}" Command="{Binding ReloadCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:Hint Text="{Binding BackgroundNoteLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Environment_BackgroundNote}}" />
 
-        <kit:Section Title="{Binding IblSplitSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Environment_IblSplit}}" />
 
-        <kit:SliderRow Label="{Binding IblAmbientLabel^}" Minimum="0" Maximum="4"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Environment_IblAmbient}}" Minimum="0" Maximum="4"
                        Value="{Binding IblAmbientIntensity}" />
 
-        <kit:ToggleRow Label="{Binding SunVisibleLabel^}" IsChecked="{Binding SunVisible}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Environment_KeyLightVisible}}" IsChecked="{Binding SunVisible}" />
 
-        <kit:SliderRow Label="{Binding ExposureLabel^}" Minimum="0.05" Maximum="4"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Environment_ToneMappingExposure}}" Minimum="0.05" Maximum="4"
                        Value="{Binding ToneMappingExposure}" />
 
-        <kit:SliderRow Label="{Binding ClampLabel^}" Minimum="0.5" Maximum="16"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Environment_BrightnessClamp}}" Minimum="0.5" Maximum="16"
                        Value="{Binding BrightnessClamp}" />
 
-        <kit:ToggleRow Label="{Binding RenderBackgroundLabel^}" IsChecked="{Binding RenderBackground}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Environment_RenderBackground}}" IsChecked="{Binding RenderBackground}" />
 
-        <kit:ReadoutRow Label="{Binding CacheStateLabel^}" Text="{Binding ReadoutText^}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.Environment_CacheState}}" Text="{Binding ReadoutText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>

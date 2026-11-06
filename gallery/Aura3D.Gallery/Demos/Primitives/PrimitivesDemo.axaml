@@ -1,6 +1,7 @@
 <ex:Demo x:Class="Aura3D.Gallery.Demos.PrimitivesDemo"
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
@@ -19,26 +20,26 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Binding IntroLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Primitives_Intro}}" />
 
-        <kit:ComboRow Label="{Binding FocusLabel^}" Options="{Binding KindOptions}"
+        <kit:ComboRow Label="{Translate {x:Static loc:Strings+Keys.Primitives_Focus}}" Options="{Binding KindOptions}"
                       SelectedItem="{Binding SelectedKind}" />
 
-        <kit:Section Title="{Binding VertexDataSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Primitives_VertexData}}" />
 
-        <kit:SliderRow Label="{Binding ColumnsLabel^}" Minimum="2" Maximum="40" Format="0"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Primitives_Columns}}" Minimum="2" Maximum="40" Format="0"
                        Value="{Binding Columns}" />
-        <kit:SliderRow Label="{Binding RowsLabel^}" Minimum="1" Maximum="24" Format="0"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Primitives_Rows}}" Minimum="1" Maximum="24" Format="0"
                        Value="{Binding Rows}" />
-        <kit:SliderRow Label="{Binding AmplitudeLabel^}" Minimum="0" Maximum="3"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Primitives_Amplitude}}" Minimum="0" Maximum="3"
                        Value="{Binding Amplitude}" />
 
-        <kit:Section Title="{Binding PointSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Primitives_PointPrimitives}}" />
 
-        <kit:SliderRow Label="{Binding PointSizeLabel^}" Minimum="1" Maximum="64" Format="0"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Primitives_PointSize}}" Minimum="1" Maximum="64" Format="0"
                        Value="{Binding PointSize}" />
 
-        <kit:ReadoutRow Label="{Binding CurrentLabel^}" Text="{Binding ReadoutText^}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.Primitives_Current}}" Text="{Binding ReadoutText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>

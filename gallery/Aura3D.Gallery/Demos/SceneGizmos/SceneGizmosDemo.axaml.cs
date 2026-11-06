@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// 场景辅助层页的视图：文案、参数与读数全在 <see cref="SceneGizmosViewModel"/>，XAML 经绑定直连。
+/// 场景辅助层页的视图：参数与读数全在 <see cref="SceneGizmosViewModel"/>，XAML 经绑定直连。
 /// 本类只保留生命周期——组装场景（相机、平行光/点光、公转轨道与对照网格体；聚光灯本体住在 VM）、
 /// 把 VM 的十个开关事件转写进宿主的 <c>PipelineSettings.Debug</c> 与 <c>Scene</c>
 /// （VM 不碰 DemoContext，参照 Particles/PostProcessing 页的做法）、逐帧驱动两盏灯公转与 Readout。

@@ -7,7 +7,7 @@ using ModelNode = Aura3D.Core.Nodes.Model;
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// 点云与模型混载页的视图，MVVM 化：文案与三个材质参数（uPointSize / uUnlit /
+/// 点云与模型混载页的视图，MVVM 化：三个材质参数（uPointSize / uUnlit /
 /// uUseVertexColor）全在 <see cref="PointcloudMixViewModel"/>，XAML 经绑定直连；
 /// 点云材质与网格也由 VM 持有（引擎默认路径，无任何着色器覆盖，所以页面不锁管线，
 /// 切到 PBR 前向/延迟或卡通风，同一份场景照常出图）。本类只保留生命周期——

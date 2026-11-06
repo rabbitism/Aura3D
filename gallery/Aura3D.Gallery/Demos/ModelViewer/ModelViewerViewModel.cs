@@ -17,8 +17,7 @@ namespace Aura3D.Gallery.Demos;
 /// <summary>
 /// glTF 模型页的界面状态，按 Particles 页的样板 MVVM 化。分工：
 /// <list type="bullet">
-///   <item><description>文案：每个标签一个 Lingua observable，XAML 用 <c>{Binding Xxx^}</c> 订阅，
-///     换语言时由绑定自动收到新值。</description></item>
+///   <item><description>文案：AXAML 直接写 <c>{Translate}</c> 标记扩展取 Strings.Keys 键值；换语言走外壳既有的整页重挂。</description></item>
 ///   <item><description>参数：模型/Clone 类型两个下拉与滑杆开关双向绑定到这里；包围盒的两个
 ///     属性写穿到当前模型节点，副本的创建、清账与共享情况统计也全在这里。</description></item>
 ///   <item><description>Readout：包围盒一行是纯模板读数，Lingua 1.1 的 format builder 组装，
@@ -244,69 +243,6 @@ public sealed partial class ModelViewerViewModel : ObservableObject
 
         ReportClone();
     }
-
-    /// <summary>页首说明。</summary>
-    public IObservable<string?> IntroLabel => Strings.Instance.ModelViewer_Intro;
-
-    /// <summary>「模型」分组标题。</summary>
-    public IObservable<string?> ModelSectionLabel => Strings.Instance.ModelViewer_Model;
-
-    /// <summary>当前模型下拉标签。</summary>
-    public IObservable<string?> CurrentModelLabel => Strings.Instance.ModelViewer_CurrentModel;
-
-    /// <summary>Fit 按钮文案。</summary>
-    public IObservable<string?> FitLabel => Strings.Instance.ModelViewer_Fit;
-
-    /// <summary>取景留白滑杆标签。</summary>
-    public IObservable<string?> FitPaddingLabel => Strings.Instance.ModelViewer_FitPadding;
-
-    /// <summary>「包围盒」分组标题。</summary>
-    public IObservable<string?> BoundingBoxSectionLabel => Strings.Instance.ModelViewer_BoundingBox;
-
-    /// <summary>包围盒外扩滑杆标签。</summary>
-    public IObservable<string?> BoxPaddingLabel => Strings.Instance.ModelViewer_BoxPadding;
-
-    /// <summary>自定义盒开关标签。</summary>
-    public IObservable<string?> CustomBoxLabel => Strings.Instance.ModelViewer_CustomBox;
-
-    /// <summary>调试框开关标签。</summary>
-    public IObservable<string?> ShowBoxLabel => Strings.Instance.ModelViewer_ShowBox;
-
-    /// <summary>包围盒两个属性的口径说明。</summary>
-    public IObservable<string?> BoxNoteLabel => Strings.Instance.ModelViewer_BoxNote;
-
-    /// <summary>「按当前盒重新取景」按钮文案。</summary>
-    public IObservable<string?> ReframeLabel => Strings.Instance.ModelViewer_Reframe;
-
-    /// <summary>包围盒读数行标题。</summary>
-    public IObservable<string?> BoxRowLabel => Strings.Instance.ModelViewer_BoundingBoxRow;
-
-    /// <summary>「三种副本」分组标题。</summary>
-    public IObservable<string?> CloneModesSectionLabel => Strings.Instance.ModelViewer_CloneModes;
-
-    /// <summary>Clone 类型下拉标签。</summary>
-    public IObservable<string?> CloneTypeLabel => Strings.Instance.ModelViewer_CloneType;
-
-    /// <summary>副本说明。</summary>
-    public IObservable<string?> CloneNoteLabel => Strings.Instance.ModelViewer_CloneNote;
-
-    /// <summary>「清掉副本」按钮文案。</summary>
-    public IObservable<string?> ClearClonesLabel => Strings.Instance.ModelViewer_ClearClones;
-
-    /// <summary>共享情况读数行标题。</summary>
-    public IObservable<string?> SharingLabel => Strings.Instance.ModelViewer_Sharing;
-
-    /// <summary>「页内按需装载」分组标题。</summary>
-    public IObservable<string?> LoadOnDemandSectionLabel => Strings.Instance.ModelViewer_LoadOnDemand;
-
-    /// <summary>装载记录行标题。</summary>
-    public IObservable<string?> LoadLogLabel => Strings.Instance.ModelViewer_LoadLog;
-
-    /// <summary>「加载器搬进来了什么」分组标题。</summary>
-    public IObservable<string?> LoaderOutputSectionLabel => Strings.Instance.ModelViewer_LoaderOutput;
-
-    /// <summary>结构统计读数行标题。</summary>
-    public IObservable<string?> StructureLabel => Strings.Instance.ModelViewer_Structure;
 
     /// <summary>
     /// 当前模型下拉的选中项。选到已装载的那档就地切换（只拨 Enable，不下载）；

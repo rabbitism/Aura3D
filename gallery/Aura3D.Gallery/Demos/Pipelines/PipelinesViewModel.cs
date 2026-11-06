@@ -13,8 +13,7 @@ namespace Aura3D.Gallery.Demos;
 /// <summary>
 /// 管线对照页的界面状态。分工：
 /// <list type="bullet">
-///   <item><description>文案：每个标签一个 Lingua observable，XAML 用 <c>{Binding Xxx^}</c> 订阅，
-///     换语言时由绑定自动收到新值，不依赖外壳整页重挂。</description></item>
+///   <item><description>文案：AXAML 直接写 <c>{Translate}</c> 标记扩展取 Strings.Keys 键值；换语言走外壳既有的整页重挂。</description></item>
 ///   <item><description>参数：滑杆/开关双向绑定到这里的属性，setter 写穿到两个灯对象；
 ///     初值即灯上真正生效的值，旧 XAML 里写死的 <c>Value="-46"</c> / <c>IsChecked="True"</c>
 ///     由绑定初始化取代。</description></item>
@@ -56,30 +55,6 @@ public sealed partial class PipelinesViewModel : ObservableObject
 
     /// <summary>灯参数变化后请求一帧重绘；视图把它接到宿主的 InvalidateRender 上。</summary>
     public event Action? FrameRequested;
-
-    /// <summary>页首说明。</summary>
-    public IObservable<string?> IntroLabel => Strings.Instance.Pipelines_Intro;
-
-    /// <summary>「灯」分组标题。</summary>
-    public IObservable<string?> LightsSectionLabel => Strings.Instance.Pipelines_Lights;
-
-    /// <summary>平行光俯角标签。</summary>
-    public IObservable<string?> LightPitchLabel => Strings.Instance.Pipelines_LightPitch;
-
-    /// <summary>平行光投影开关标签。</summary>
-    public IObservable<string?> LightShadowLabel => Strings.Instance.Pipelines_LightShadow;
-
-    /// <summary>点光可见开关标签。</summary>
-    public IObservable<string?> PointLightVisibleLabel => Strings.Instance.Pipelines_PointLightVisible;
-
-    /// <summary>「对照读数」分组标题。</summary>
-    public IObservable<string?> ReadoutSectionLabel => Strings.Instance.Pipelines_Readout;
-
-    /// <summary>通道读数行标题。</summary>
-    public IObservable<string?> ChannelsLabel => Strings.Instance.Pipelines_Channels;
-
-    /// <summary>pass 组成行标题。</summary>
-    public IObservable<string?> PassesLabel => Strings.Instance.Pipelines_Passes;
 
     /// <summary>
     /// 平行光：俯角滑杆与投影开关双向绑定写穿到这里。初值即旧页面行控件的初值（俯角 -46°、

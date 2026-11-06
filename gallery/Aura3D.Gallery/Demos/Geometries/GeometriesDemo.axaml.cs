@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// 几何体页的视图：文案、参数与读数全在 <see cref="GeometriesViewModel"/>，XAML 经绑定直连。
+/// 几何体页的视图：参数与读数全在 <see cref="GeometriesViewModel"/>，XAML 经绑定直连。
 /// 四种内置几何体（含构造参数重建与整排旋转）的引擎侧配置随整排节点一起住在 VM；
 /// 本类只保留生命周期——建场景（摆相机、铺地面、挂整排、落网格/坐标轴开关初值）、
 /// 逐帧驱动旋转与读数。全页零外部资产：棋盘纹理由 <see cref="Procedural"/> 现算。

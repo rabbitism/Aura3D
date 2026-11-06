@@ -1,6 +1,7 @@
 <ex:Demo x:Class="Aura3D.Gallery.Demos.PbrMaterialsDemo"
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
@@ -18,11 +19,11 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Binding IntroLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.PbrMaterials_Intro}}" />
 
-        <kit:ReadoutRow Label="{Binding OrderLabel^}" Text="{Binding OrderText}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.PbrMaterials_Order}}" Text="{Binding OrderText}" />
 
-        <kit:Hint Text="{Binding NoteLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.PbrMaterials_Note}}" />
 
       </StackPanel>
     </kit:InspectorPanel>

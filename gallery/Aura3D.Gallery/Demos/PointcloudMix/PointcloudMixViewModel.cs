@@ -13,8 +13,7 @@ namespace Aura3D.Gallery.Demos;
 /// <summary>
 /// 点云混合页的界面状态，MVVM 化（照 Particles 模式）。分工：
 /// <list type="bullet">
-///   <item><description>文案：每个标签一个 Lingua observable，XAML 用 <c>{Binding Xxx^}</c> 订阅，
-///     换语言时由绑定自动收到新值，不依赖外壳整页重挂。</description></item>
+///   <item><description>文案：AXAML 直接写 <c>{Translate}</c> 标记扩展取 Strings.Keys 键值；换语言走外壳既有的整页重挂。</description></item>
 ///   <item><description>参数：滑杆/开关双向绑定到这里的属性，setter 写穿到点云材质的三个普通参数
 ///     （uPointSize / uUnlit / uUseVertexColor）；初值即材质里真正生效的值，
 ///     旧页面 XAML 里写死的 <c>Value="4"</c>/<c>IsChecked="True"</c> 由绑定初始化取代。</description></item>
@@ -55,21 +54,6 @@ public sealed partial class PointcloudMixViewModel : ObservableObject
 
     /// <summary>材质参数被改后请求一帧重绘；视图把它接到宿主的 InvalidateRender 上。</summary>
     public event Action? FrameRequested;
-
-    /// <summary>页首说明。</summary>
-    public IObservable<string?> IntroLabel => Strings.Instance.PointcloudMix_Intro;
-
-    /// <summary>「点云材质」分组标题。</summary>
-    public IObservable<string?> PointSettingsLabel => Strings.Instance.PointcloudMix_PointSettings;
-
-    /// <summary>点尺寸（px）标签。</summary>
-    public IObservable<string?> PointSizeLabel => Strings.Instance.PointcloudMix_PointSize;
-
-    /// <summary>无光照开关标签。</summary>
-    public IObservable<string?> UnlitLabel => Strings.Instance.PointcloudMix_Unlit;
-
-    /// <summary>顶点色开关标签。</summary>
-    public IObservable<string?> VertexColorLabel => Strings.Instance.PointcloudMix_VertexColor;
 
     /// <summary>点云材质：三个参数就是本页的全部秘密，对比 PrimitivesDemo 里 NoLight 管线
     /// 的 Shaders.Points 覆盖——这里是引擎默认路径，所以不锁管线也能出图。</summary>

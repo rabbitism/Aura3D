@@ -17,8 +17,7 @@ namespace Aura3D.Gallery.Demos;
 /// <summary>
 /// 背景来源与天空盒页的界面状态，按 Particles/PostProcessing 页的样板 MVVM 化。分工：
 /// <list type="bullet">
-///   <item><description>文案：每个标签一个 Lingua observable，XAML 用 <c>{Binding Xxx^}</c> 订阅，
-///     换语言时由绑定自动收到新值。</description></item>
+///   <item><description>文案：AXAML 直接写 <c>{Translate}</c> 标记扩展取 Strings.Keys 键值；换语言走外壳既有的整页重挂。</description></item>
 ///   <item><description>参数：滑杆/开关/下拉双向绑定到这里的属性。相机四参数与背景来源写穿到
 ///     <see cref="AttachScene"/> 登记的场景对象上——场景建好前的拨动先落在 backing 字段里，
 ///     登记时统一补写（旧代码此时会丢写）。宿主 <see cref="PipelineSettings"/> 上的两根滑杆
@@ -178,63 +177,6 @@ public sealed partial class SkyboxBackgroundViewModel : ObservableObject
     private bool orthographic;
     private bool renderBackground = true;
     private bool sunVisible = true;
-
-    /// <summary>页首说明。</summary>
-    public IObservable<string?> IntroLabel => Strings.Instance.Background_Intro;
-
-    /// <summary>「背景来源」分组标题。</summary>
-    public IObservable<string?> SourceSectionLabel => Strings.Instance.Background_Source;
-
-    /// <summary>来源下拉标签；原文是硬编码的属性名，迁移时补的键，两语言同文。</summary>
-    public IObservable<string?> SourceLabel => Strings.Instance.Background_SceneBackground;
-
-    /// <summary>HDRI 转立方图边长滑杆标签。</summary>
-    public IObservable<string?> CubeSizeLabel => Strings.Instance.Background_CubeSize;
-
-    /// <summary>画背景开关标签。</summary>
-    public IObservable<string?> RenderBackgroundLabel => Strings.Instance.Background_RenderBackground;
-
-    /// <summary>clear 行为说明。</summary>
-    public IObservable<string?> ClearNoteLabel => Strings.Instance.Background_ClearNote;
-
-    /// <summary>「两个着色器变体」分组标题。</summary>
-    public IObservable<string?> ShaderVariantsSectionLabel => Strings.Instance.Background_ShaderVariants;
-
-    /// <summary>正交投影开关标签。</summary>
-    public IObservable<string?> OrthographicLabel => Strings.Instance.Background_Orthographic;
-
-    /// <summary>OrthographicSize 滑杆标签。</summary>
-    public IObservable<string?> OrthoSizeLabel => Strings.Instance.Background_OrthoSize;
-
-    /// <summary>FOV 滑杆标签。</summary>
-    public IObservable<string?> FieldOfViewLabel => Strings.Instance.Background_FieldOfView;
-
-    /// <summary>FarPlane 滑杆标签。</summary>
-    public IObservable<string?> FarPlaneLabel => Strings.Instance.Background_FarPlane;
-
-    /// <summary>透视/正交两分支表现不对称的说明。</summary>
-    public IObservable<string?> ProjectionNoteLabel => Strings.Instance.Background_ProjectionNote;
-
-    /// <summary>「只有立方图喂 IBL」分组标题。</summary>
-    public IObservable<string?> CubemapIblSectionLabel => Strings.Instance.Background_CubemapFeedsIbl;
-
-    /// <summary>IBL 环境光强度滑杆标签；原文是硬编码的设置项名，迁移时补的键，两语言同文。</summary>
-    public IObservable<string?> AmbientLabel => Strings.Instance.Background_IblAmbientIntensity;
-
-    /// <summary>曝光滑杆标签；同上，补键、两语言同文。</summary>
-    public IObservable<string?> ExposureLabel => Strings.Instance.Background_ToneMappingExposure;
-
-    /// <summary>平行光可见开关标签。</summary>
-    public IObservable<string?> SunVisibleLabel => Strings.Instance.Background_KeyLightVisible;
-
-    /// <summary>「重烘 IBL」按钮文案。</summary>
-    public IObservable<string?> RebakeIblLabel => Strings.Instance.Background_RebakeIbl;
-
-    /// <summary>IBL 缓存机制说明。</summary>
-    public IObservable<string?> IblNoteLabel => Strings.Instance.Background_IblNote;
-
-    /// <summary>读数行标题。</summary>
-    public IObservable<string?> IblCacheLabel => Strings.Instance.Background_IblCache;
 
     /// <summary>
     /// 背景来源下拉的选中项；换来源立即把新的 OneOf 分支写到场景背景上（场景建好之前

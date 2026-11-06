@@ -1,6 +1,7 @@
 <ex:Demo x:Class="Aura3D.Gallery.Demos.FbxAnimationDemo"
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
@@ -19,31 +20,31 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Binding IntroLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.FbxAnimation_Intro}}" />
 
-        <kit:Section Title="{Binding ClipsSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.FbxAnimation_Clips}}" />
 
-        <kit:ComboRow Label="{Binding SamplerLabel^}" Options="{Binding ClipOptions}"
+        <kit:ComboRow Label="{Translate {x:Static loc:Strings+Keys.FbxAnimation_Sampler}}" Options="{Binding ClipOptions}"
                       SelectedItem="{Binding SelectedClip}" />
 
-        <kit:Hint Text="{Binding NoSamplerNoteLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.FbxAnimation_NoSamplerNote}}" />
 
-        <kit:Section Title="{Binding SampleInterfaceSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.FbxAnimation_SampleInterface}}" />
 
-        <kit:ComboRow Label="{Binding BoneLabel^}" Options="{Binding BoneOptions}"
+        <kit:ComboRow Label="{Translate {x:Static loc:Strings+Keys.FbxAnimation_Bone}}" Options="{Binding BoneOptions}"
                       SelectedItem="{Binding SelectedBone}" />
 
-        <kit:SliderRow Label="{Binding AtSecondLabel^}" Minimum="0" Maximum="2" Format="0.00"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.FbxAnimation_AtSecond}}" Minimum="0" Maximum="2" Format="0.00"
                        Value="{Binding SampleTime}" />
 
-        <kit:Hint Text="{Binding SampleNoteLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.FbxAnimation_SampleNote}}" />
 
-        <kit:ReadoutRow Label="{Binding ResultLabel^}" Text="{Binding SampleText}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.FbxAnimation_Result}}" Text="{Binding SampleText}" />
 
-        <kit:Section Title="{Binding SkeletonLoaderSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.FbxAnimation_SkeletonLoader}}" />
 
-        <kit:ReadoutRow Label="{Binding SkeletonLabel^}" Text="{Binding SkeletonReadoutText^}" />
-        <kit:ReadoutRow Label="{Binding ClipTableLabel^}" Text="{Binding ClipsReadoutText^}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.FbxAnimation_Skeleton}}" Text="{Binding SkeletonReadoutText^}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.FbxAnimation_ClipTable}}" Text="{Binding ClipsReadoutText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>

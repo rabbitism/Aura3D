@@ -9,7 +9,7 @@ using Color = System.Drawing.Color;
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// 蒙皮动画页的视图，按 Particles/AnimationMix 的样板 MVVM 化：文案、参数、命令、采样器、
+/// 蒙皮动画页的视图，按 Particles/AnimationMix 的样板 MVVM 化：参数、命令、采样器、
 /// 骨骼附件与整支火把（四路火焰发射器、点光源）全在 <see cref="SkinnedAnimationViewModel"/>，
 /// XAML 经绑定直连；本类只保留生命周期——取资产喂模型与火焰图、在渲染线程回调里组装
 /// 相机/灯光/地面并按旧顺序登记模型与骨骼附件、逐帧驱动火光摇曳与读数。

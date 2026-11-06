@@ -14,8 +14,7 @@ namespace Aura3D.Gallery.Demos;
 /// <summary>
 /// 阴影页的界面状态，按 Particles/PostProcessing 页的样板 MVVM 化。分工：
 /// <list type="bullet">
-///   <item><description>文案：每个标签一个 Lingua observable，XAML 用 <c>{Binding Xxx^}</c> 订阅，
-///     换语言时由绑定自动收到新值。</description></item>
+///   <item><description>文案：AXAML 直接写 <c>{Translate}</c> 标记扩展取 Strings.Keys 键值；换语言走外壳既有的整页重挂。</description></item>
 ///   <item><description>参数：滑杆/开关双向绑定到这里的属性。写灯（旋转/投影开关/ShadowConfig）与
 ///     相机裁剪面的直接写穿到 VM 持有的对象；写宿主 <see cref="PipelineSettings"/> 的（CSM 三样、
 ///     平行光上限、两个调试开关）走「backing + 值事件」，由视图把新值逐项转写进 Settings。</description></item>
@@ -162,90 +161,6 @@ public sealed partial class ShadowsViewModel : ObservableObject
     private CsmShadowData? Csm => Main.GetPipelineGpuState<CsmShadowData>(nameof(CsmShadowData));
 
     private RenderTarget? SingleMap => Main.GetPipelineGpuState<RenderTarget>("ShadowMapRenderTarget");
-
-    /// <summary>页首说明。</summary>
-    public IObservable<string?> IntroLabel => Strings.Instance.Shadows_Intro;
-
-    /// <summary>「主光」分组标题。</summary>
-    public IObservable<string?> KeyLightSectionLabel => Strings.Instance.Shadows_KeyLight;
-
-    /// <summary>俯角滑杆标签。</summary>
-    public IObservable<string?> PitchLabel => Strings.Instance.Shadows_Pitch;
-
-    /// <summary>方位滑杆标签。</summary>
-    public IObservable<string?> YawLabel => Strings.Instance.Shadows_Yaw;
-
-    /// <summary>主光投影开关标签。</summary>
-    public IObservable<string?> CastShadowLabel => Strings.Instance.Shadows_KeyCastShadow;
-
-    /// <summary>显式主光开关标签。</summary>
-    public IObservable<string?> ExplicitKeyLabel => Strings.Instance.Shadows_ExplicitKey;
-
-    /// <summary>主光分组说明。</summary>
-    public IObservable<string?> KeyNoteLabel => Strings.Instance.Shadows_KeyNote;
-
-    /// <summary>「单张正交图」分组标题。</summary>
-    public IObservable<string?> SingleMapSectionLabel => Strings.Instance.Shadows_SingleMap;
-
-    /// <summary>正交框宽滑杆标签。</summary>
-    public IObservable<string?> ConfigWidthLabel => Strings.Instance.Shadows_ConfigWidth;
-
-    /// <summary>正交框高滑杆标签。</summary>
-    public IObservable<string?> ConfigHeightLabel => Strings.Instance.Shadows_ConfigHeight;
-
-    /// <summary>近裁剪面滑杆标签；原文是硬编码的设置项名，迁移时补的键，两语言同文。</summary>
-    public IObservable<string?> NearPlaneLabel => Strings.Instance.Shadows_NearPlane;
-
-    /// <summary>远裁剪面滑杆标签；同上，补键、两语言同文（相机 FarPlane 是另一个键）。</summary>
-    public IObservable<string?> ConfigFarPlaneLabel => Strings.Instance.Shadows_ConfigFarPlane;
-
-    /// <summary>单图分组说明。</summary>
-    public IObservable<string?> ConfigNoteLabel => Strings.Instance.Shadows_ConfigNote;
-
-    /// <summary>「级联」分组标题。</summary>
-    public IObservable<string?> CascadesSectionLabel => Strings.Instance.Shadows_Cascades;
-
-    /// <summary>级联数滑杆标签；补键、两语言同文。</summary>
-    public IObservable<string?> CascadeCountLabel => Strings.Instance.Shadows_CsmCascadeCount;
-
-    /// <summary>分割系数滑杆标签。</summary>
-    public IObservable<string?> SplitLambdaLabel => Strings.Instance.Shadows_SplitLambda;
-
-    /// <summary>阴影图分辨率滑杆标签；补键、两语言同文。</summary>
-    public IObservable<string?> ShadowMapResolutionLabel => Strings.Instance.Shadows_CsmShadowMapResolution;
-
-    /// <summary>相机远裁剪面滑杆标签。</summary>
-    public IObservable<string?> FarPlaneLabel => Strings.Instance.Shadows_FarPlane;
-
-    /// <summary>级联逐帧生效说明。</summary>
-    public IObservable<string?> CsmLiveNoteLabel => Strings.Instance.Shadows_CsmLiveNote;
-
-    /// <summary>wasm 宿主说明。</summary>
-    public IObservable<string?> WasmNoteLabel => Strings.Instance.Shadows_WasmNote;
-
-    /// <summary>「Reload」按钮文案；原文是硬编码英文，补键、两语言同文。</summary>
-    public IObservable<string?> ReloadLabel => Strings.Instance.Shadows_Reload;
-
-    /// <summary>「平行光上限」分组标题。</summary>
-    public IObservable<string?> LightLimitSectionLabel => Strings.Instance.Shadows_LightLimit;
-
-    /// <summary>平行光上限滑杆标签；补键、两语言同文。</summary>
-    public IObservable<string?> DirectionalLightLimitLabel => Strings.Instance.Shadows_DirectionalLightLimit;
-
-    /// <summary>上限分组说明。</summary>
-    public IObservable<string?> LimitNoteLabel => Strings.Instance.Shadows_LimitNote;
-
-    /// <summary>「调试可视化」分组标题。</summary>
-    public IObservable<string?> DebugSectionLabel => Strings.Instance.Shadows_Debug;
-
-    /// <summary>画平行光体积开关标签。</summary>
-    public IObservable<string?> DirectionalVolumeLabel => Strings.Instance.Shadows_DirectionalVolume;
-
-    /// <summary>画包围盒开关标签。</summary>
-    public IObservable<string?> BoundingBoxLabel => Strings.Instance.Shadows_BoundingBox;
-
-    /// <summary>读数行标题。</summary>
-    public IObservable<string?> ResourcesLabel => Strings.Instance.Shadows_Resources;
 
     /// <summary>主光俯角（度）；写穿到主光旋转，重绘请求经 FrameRequested 桥到视图。</summary>
     public double Pitch

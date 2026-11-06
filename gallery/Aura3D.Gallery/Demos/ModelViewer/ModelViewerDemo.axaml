@@ -1,6 +1,7 @@
 <ex:Demo x:Class="Aura3D.Gallery.Demos.ModelViewerDemo"
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
@@ -19,51 +20,51 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Binding IntroLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.ModelViewer_Intro}}" />
 
-        <kit:Section Title="{Binding ModelSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.ModelViewer_Model}}" />
 
-        <kit:ComboRow Label="{Binding CurrentModelLabel^}" Options="{Binding ModelOptions}"
+        <kit:ComboRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_CurrentModel}}" Options="{Binding ModelOptions}"
                       SelectedItem="{Binding SelectedModel}" />
 
-        <Button Content="{Binding FitLabel^}" Command="{Binding FitCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.ModelViewer_Fit}}" Command="{Binding FitCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:SliderRow Label="{Binding FitPaddingLabel^}" Minimum="0" Maximum="1"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_FitPadding}}" Minimum="0" Maximum="1"
                        Value="{Binding FitPadding}" />
 
-        <kit:Section Title="{Binding BoundingBoxSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.ModelViewer_BoundingBox}}" />
 
-        <kit:SliderRow Label="{Binding BoxPaddingLabel^}" Minimum="0" Maximum="1.5"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_BoxPadding}}" Minimum="0" Maximum="1.5"
                        Value="{Binding BoxPadding}" />
 
-        <kit:ToggleRow Label="{Binding CustomBoxLabel^}" IsChecked="{Binding CustomBox}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_CustomBox}}" IsChecked="{Binding CustomBox}" />
 
-        <kit:ToggleRow Label="{Binding ShowBoxLabel^}" IsChecked="{Binding ShowBox}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_ShowBox}}" IsChecked="{Binding ShowBox}" />
 
-        <kit:Hint Text="{Binding BoxNoteLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.ModelViewer_BoxNote}}" />
 
-        <Button Content="{Binding ReframeLabel^}" Command="{Binding FitCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.ModelViewer_Reframe}}" Command="{Binding FitCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:ReadoutRow Label="{Binding BoxRowLabel^}" Text="{Binding BoxText^}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_BoundingBoxRow}}" Text="{Binding BoxText^}" />
 
-        <kit:Section Title="{Binding CloneModesSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.ModelViewer_CloneModes}}" />
 
-        <kit:ComboRow Label="{Binding CloneTypeLabel^}" Options="{Binding CopyModeOptions}"
+        <kit:ComboRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_CloneType}}" Options="{Binding CopyModeOptions}"
                       SelectedItem="{Binding SelectedCopyMode}" />
 
-        <kit:Hint Text="{Binding CloneNoteLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.ModelViewer_CloneNote}}" />
 
-        <Button Content="{Binding ClearClonesLabel^}" Command="{Binding ClearClonesCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.ModelViewer_ClearClones}}" Command="{Binding ClearClonesCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:ReadoutRow Label="{Binding SharingLabel^}" Text="{Binding CloneText}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_Sharing}}" Text="{Binding CloneText}" />
 
-        <kit:Section Title="{Binding LoadOnDemandSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.ModelViewer_LoadOnDemand}}" />
 
-        <kit:ReadoutRow Label="{Binding LoadLogLabel^}" Text="{Binding LoadText}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_LoadLog}}" Text="{Binding LoadText}" />
 
-        <kit:Section Title="{Binding LoaderOutputSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.ModelViewer_LoaderOutput}}" />
 
-        <kit:ReadoutRow Label="{Binding StructureLabel^}" Text="{Binding StructureText}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_Structure}}" Text="{Binding StructureText}" />
 
       </StackPanel>
     </kit:InspectorPanel>

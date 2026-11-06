@@ -8,7 +8,7 @@ using Color = System.Drawing.Color;
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// 粒子系统页的视图，MVVM 试点：文案、参数与命令全在 <see cref="ParticlesViewModel"/>，
+/// 粒子系统页的视图，MVVM 试点：参数与命令全在 <see cref="ParticlesViewModel"/>，
 /// XAML 经绑定直连，本类只保留生命周期——取资产喂火焰图、在渲染线程回调里组装场景、
 /// 逐帧驱动 Readout 与渲染。三条发射路径（公告板含按寿命翻页、一次性爆发、网格模式
 /// InstancedMesh）的引擎侧配置见 VM 上的三个发射器属性。

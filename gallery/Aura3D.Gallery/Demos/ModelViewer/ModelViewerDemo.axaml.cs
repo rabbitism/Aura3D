@@ -11,7 +11,7 @@ using Color = System.Drawing.Color;
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// glTF/GLB 模型页的视图，MVVM 化：文案、参数、副本与三条读数全在 <see cref="ModelViewerViewModel"/>，
+/// glTF/GLB 模型页的视图，MVVM 化：参数、副本与三条读数全在 <see cref="ModelViewerViewModel"/>，
 /// XAML 经绑定直连；本类只保留生命周期——进页即取档的资产装载、在渲染线程回调里组装相机/灯光/
 /// 地面并登记已装载模型，以及页内按需档那条异步通道（VM 发 ModelRequested，这里取字节解码后
 /// 回灌 VM）。库里的模型分两档取：进页即取的算进该页的下载量，页内按需的不算——这是 web 端

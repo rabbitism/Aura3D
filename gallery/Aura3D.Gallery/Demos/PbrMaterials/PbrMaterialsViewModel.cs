@@ -13,8 +13,7 @@ namespace Aura3D.Gallery.Demos;
 /// <summary>
 /// PBR 材质页的界面状态，MVVM 化（模式照抄 ParticlesViewModel）。分工：
 /// <list type="bullet">
-///   <item><description>文案：每个标签一个 Lingua observable，XAML 用 <c>{Binding XxxLabel^}</c> 订阅，
-///     换语言时由绑定自动收到新值。本页没有可调参数，面板就是一段说明加一行读数。</description></item>
+///   <item><description>文案：AXAML 直接写 <c>{Translate}</c> 标记扩展取 Strings.Keys 键值；换语言走外壳既有的整页重挂。本页没有可调参数，面板就是一段说明加一行读数。</description></item>
 ///   <item><description>读数「从左到右」：材质名是资产名而非文案键，不随语言换，
 ///     所以按普通 string 属性走，三颗球建好后一次性排出来。</description></item>
 ///   <item><description>引擎模型：三颗球（含每套三张贴图到 Material 的接线与排布）住在这里，
@@ -52,15 +51,6 @@ public sealed partial class PbrMaterialsViewModel : ObservableObject
 
     /// <summary>资产阶段建好的三颗球；视图建场景时挂进场景、逐帧自转。</summary>
     public IReadOnlyList<Mesh> Spheres => spheres;
-
-    /// <summary>页首说明。</summary>
-    public IObservable<string?> IntroLabel => Strings.Instance.PbrMaterials_Intro;
-
-    /// <summary>读数行标题（「从左到右」）。</summary>
-    public IObservable<string?> OrderLabel => Strings.Instance.PbrMaterials_Order;
-
-    /// <summary>读数行下的补充说明。</summary>
-    public IObservable<string?> NoteLabel => Strings.Instance.PbrMaterials_Note;
 
     /// <summary>三颗球从左到右的材质名；非模板动态字符串，SetProperty 走普通属性即可。</summary>
     public string OrderText

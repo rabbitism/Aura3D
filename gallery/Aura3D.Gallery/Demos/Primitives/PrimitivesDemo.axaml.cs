@@ -3,7 +3,7 @@ using System.Numerics;
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// 图元页的视图：文案、参数与读数全在 <see cref="PrimitivesViewModel"/>，XAML 经绑定直连。
+/// 图元页的视图：参数与读数全在 <see cref="PrimitivesViewModel"/>，XAML 经绑定直连。
 /// 手写 <see cref="Aura3D.Core.Resources.Geometry"/> 顶点缓冲与七种
 /// <see cref="Aura3D.Core.Resources.PrimitiveType"/> 连线规则的细节随网格一起住在 VM；
 /// 本类只保留生命周期——建场景（摆相机、开网格、登记 VM 的七个网格）；读数在 VM 的

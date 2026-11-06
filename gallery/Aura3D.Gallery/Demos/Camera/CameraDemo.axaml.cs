@@ -10,7 +10,7 @@ using System.Numerics;
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// 相机页的视图：文案、参数与命令全在 <see cref="CameraViewModel"/>，XAML 经绑定直连。
+/// 相机页的视图：参数与命令全在 <see cref="CameraViewModel"/>，XAML 经绑定直连。
 /// 本类只剩生命周期——组装九个棋盘格盒子、把真相机与取景目标交给 VM、逐帧推进
 /// 十字标记与屏幕投影读数。投影/视锥/背景等可绑参数的写穿逻辑见 VM。
 /// </summary>

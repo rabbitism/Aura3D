@@ -15,8 +15,7 @@ namespace Aura3D.Gallery.Demos;
 /// <summary>
 /// 图元页的界面状态，按 Particles 页的样板 MVVM 化。分工：
 /// <list type="bullet">
-///   <item><description>文案：每个标签一个 Lingua observable，XAML 用 <c>{Binding XxxLabel^}</c> 订阅，
-///     换语言时由绑定自动收到新值，不依赖外壳整页重挂。</description></item>
+///   <item><description>文案：AXAML 直接写 <c>{Translate}</c> 标记扩展取 Strings.Keys 键值；换语言走外壳既有的整页重挂。</description></item>
 ///   <item><description>参数：滑杆/下拉双向绑定到这里的属性。列/行/波幅没有引擎对象可写穿——
 ///     它们只在顶点缓冲重建时被消费——所以 setter 的「写穿」就是按新参数把七个网格的几何体
 ///     重灌一遍；点尺寸写穿到点材质的 <c>uPointSize</c> uniform。初值即旧 XAML 行控件上
@@ -106,33 +105,6 @@ public sealed partial class PrimitivesViewModel : ObservableObject
 
     /// <summary>聚焦/重建时重算的读数。语言切换时模板换新，绑定自动收到重排后的整句。</summary>
     public LinguaFormatObservable ReadoutText { get; }
-
-    /// <summary>页首说明。</summary>
-    public IObservable<string?> IntroLabel => Strings.Instance.Primitives_Intro;
-
-    /// <summary>「聚焦图元」下拉标签。</summary>
-    public IObservable<string?> FocusLabel => Strings.Instance.Primitives_Focus;
-
-    /// <summary>「顶点数据」分组标题。</summary>
-    public IObservable<string?> VertexDataSectionLabel => Strings.Instance.Primitives_VertexData;
-
-    /// <summary>列数滑杆标签。</summary>
-    public IObservable<string?> ColumnsLabel => Strings.Instance.Primitives_Columns;
-
-    /// <summary>行数滑杆标签。</summary>
-    public IObservable<string?> RowsLabel => Strings.Instance.Primitives_Rows;
-
-    /// <summary>波幅滑杆标签。</summary>
-    public IObservable<string?> AmplitudeLabel => Strings.Instance.Primitives_Amplitude;
-
-    /// <summary>「点图元」分组标题。</summary>
-    public IObservable<string?> PointSectionLabel => Strings.Instance.Primitives_PointPrimitives;
-
-    /// <summary>点尺寸滑杆标签。</summary>
-    public IObservable<string?> PointSizeLabel => Strings.Instance.Primitives_PointSize;
-
-    /// <summary>读数行标题。</summary>
-    public IObservable<string?> CurrentLabel => Strings.Instance.Primitives_Current;
 
     /// <summary>
     /// 「聚焦图元」下拉的选中项；换一种图元就把聚焦挪过去、其余摆回相机背后。

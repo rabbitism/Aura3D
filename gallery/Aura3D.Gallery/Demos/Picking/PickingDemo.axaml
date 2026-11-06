@@ -1,6 +1,7 @@
 <ex:Demo x:Class="Aura3D.Gallery.Demos.PickingDemo"
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
@@ -27,18 +28,18 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Binding IntroLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Picking_Intro}}" />
 
-        <kit:ToggleRow Label="{Binding EnablePickingLabel^}" IsChecked="{Binding EnablePicking}" />
-        <kit:ToggleRow Label="{Binding CenterRayLabel^}" IsChecked="{Binding CenterRay}" />
-        <kit:ToggleRow Label="{Binding OccluderVisibleLabel^}" IsChecked="{Binding OccluderVisible}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Picking_EnablePicking}}" IsChecked="{Binding EnablePicking}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Picking_CenterRay}}" IsChecked="{Binding CenterRay}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Picking_OccluderVisible}}" IsChecked="{Binding OccluderVisible}" />
 
-        <kit:SliderRow Label="{Binding GridSizeLabel^}" Minimum="1" Maximum="12" Format="0"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Picking_GridSize}}" Minimum="1" Maximum="12" Format="0"
                        Value="{Binding GridSize}" />
 
-        <Button Content="{Binding ClearClicksLabel^}" Command="{Binding ClearClicksCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.Picking_ClearClicks}}" Command="{Binding ClearClicksCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:ReadoutRow Label="{Binding ResultLabel^}" Text="{Binding ResultText}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.Picking_Result}}" Text="{Binding ResultText}" />
 
       </StackPanel>
     </kit:InspectorPanel>

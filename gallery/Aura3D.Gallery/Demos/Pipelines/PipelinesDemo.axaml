@@ -1,6 +1,7 @@
 <ex:Demo x:Class="Aura3D.Gallery.Demos.PipelinesDemo"
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
@@ -19,20 +20,20 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Binding IntroLabel^}" />
+        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Pipelines_Intro}}" />
 
-        <kit:Section Title="{Binding LightsSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Pipelines_Lights}}" />
 
-        <kit:SliderRow Label="{Binding LightPitchLabel^}" Minimum="-89" Maximum="0" Format="0"
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Pipelines_LightPitch}}" Minimum="-89" Maximum="0" Format="0"
                        Value="{Binding SunPitch}" />
 
-        <kit:ToggleRow Label="{Binding LightShadowLabel^}" IsChecked="{Binding SunCastShadow}" />
-        <kit:ToggleRow Label="{Binding PointLightVisibleLabel^}" IsChecked="{Binding PointVisible}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Pipelines_LightShadow}}" IsChecked="{Binding SunCastShadow}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Pipelines_PointLightVisible}}" IsChecked="{Binding PointVisible}" />
 
-        <kit:Section Title="{Binding ReadoutSectionLabel^}" />
+        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Pipelines_Readout}}" />
 
-        <kit:ReadoutRow Label="{Binding ChannelsLabel^}" Text="{Binding ChannelsText^}" />
-        <kit:ReadoutRow Label="{Binding PassesLabel^}" Text="{Binding PassesText}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.Pipelines_Channels}}" Text="{Binding ChannelsText^}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.Pipelines_Passes}}" Text="{Binding PassesText}" />
 
       </StackPanel>
     </kit:InspectorPanel>

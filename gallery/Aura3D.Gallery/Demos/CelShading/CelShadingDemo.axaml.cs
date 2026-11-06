@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// 卡通着色页的视图：文案、参数与读数全在 <see cref="CelShadingViewModel"/>，XAML 经绑定直连。
+/// 卡通着色页的视图：参数与读数全在 <see cref="CelShadingViewModel"/>，XAML 经绑定直连。
 /// 六个通道、下划线参数与三档染色随开关/滑杆写穿到 VM 里的身体/脸两个卡通材质，
 /// 定向光、地面与角色模型也住在 VM；本类只保留生命周期——取角色资产、建场景
 /// （摆相机、挂节点、首套参数落地）、逐帧驱动、离开时清描边引用。材质参数名与通道名
