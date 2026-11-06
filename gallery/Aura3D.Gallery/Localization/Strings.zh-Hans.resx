@@ -213,6 +213,15 @@
   <data name="CelShading_FaceRenderType" xml:space="preserve"><value>RenderType=1 并打 face 标签（走 FACE_RENDER 分支）</value></data>
   <data name="CelShading_OutlineNote" xml:space="preserve"><value>这是 OutlinePass 唯一的公开旋钮。描边宽度与颜色是私有字段（2f / 1.5f / 黑），pass 实例只能从 RenderPipeline.EveryCameraRenderPasses 里按类型找出来——本页就是这么拿的。</value></data>
   <data name="CelShading_Bindings" xml:space="preserve"><value>绑定结果</value></data>
+  <data name="CelShading_RampIndex0" xml:space="preserve"><value>_RampIndex0 · _RampIndex0</value></data>
+  <data name="CelShading_RampIndex1" xml:space="preserve"><value>_RampIndex1 · _RampIndex1</value></data>
+  <data name="CelShading_RampIndex2" xml:space="preserve"><value>_RampIndex2 · _RampIndex2</value></data>
+  <data name="CelShading_RampIndex3" xml:space="preserve"><value>_RampIndex3 · _RampIndex3</value></data>
+  <data name="CelShading_RampIndex4" xml:space="preserve"><value>_RampIndex4 · _RampIndex4</value></data>
+  <data name="CelShading_DirectionalLight" xml:space="preserve"><value>定向光</value></data>
+  <data name="CelShading_YawSpeed" xml:space="preserve"><value>偏航速度（度/秒）</value></data>
+  <data name="CelShading_OutlineAmbient" xml:space="preserve"><value>OutlinePass.AmbientIntensity</value></data>
+  <data name="CelShading_SettingsAmbient" xml:space="preserve"><value>Settings.AmbientIntensity</value></data>
   <data name="Environment_Intro" xml:space="preserve"><value>辐照度与预滤波反射各烘一次，结果挂在相机节点的两个 GPU 状态上，之后每帧直接复用。换 Background 时 Scene 的 setter 会通知管线（OnBackgroundChanged）自动作废这两张缓存，下一帧用新图重烘，所以换环境图不需要手动干预。「立刻重烘」按钮留给剩下的一种情况：背景资源引用没换、但内容被原地改过，或者想强制重算对比——它调 Invalidate() 把帧缓冲清零。</value></data>
   <data name="Environment_Panorama" xml:space="preserve"><value>全景图</value></data>
   <data name="Environment_CubeSize" xml:space="preserve"><value>立方图边长</value></data>
@@ -418,6 +427,8 @@
   <data name="Shadows_Reload" xml:space="preserve"><value>Reload</value></data>
   <data name="SkinnedAnimation_Intro" xml:space="preserve"><value>剪辑名与时长都来自 glb 里实际的 animations 数组，不是写死的：这个模型带 4 条，其中 TPose 那条正好能用来核对绑定姿势。</value></data>
   <data name="SkinnedAnimation_Clip" xml:space="preserve"><value>剪辑</value></data>
+  <data name="SkinnedAnimation_TimeScale" xml:space="preserve"><value>时间缩放</value></data>
+  <data name="SkinnedAnimation_LoopMode" xml:space="preserve"><value>循环模式</value></data>
   <data name="SkinnedAnimation_Reset" xml:space="preserve"><value>Reset（回到 0 秒）</value></data>
   <data name="SkinnedAnimation_ExternalUpdate" xml:space="preserve"><value>ExternalUpdate（Model.Update 不再推进采样器）</value></data>
   <data name="SkinnedAnimation_DriveNote" xml:space="preserve"><value>Model.Update 里只有一句：采样器非空且 ExternalUpdate 为假时才 Update(delta)。勾上它就是把推进权交回演示页，然后靠下面的按钮自己喂固定步长——骨骼会停在原地，这就是那条早退分支的证据。</value></data>

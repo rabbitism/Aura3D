@@ -213,6 +213,15 @@
   <data name="CelShading_FaceRenderType" xml:space="preserve"><value>RenderType=1 with the face tag (takes the FACE_RENDER branch)</value></data>
   <data name="CelShading_OutlineNote" xml:space="preserve"><value>This is OutlinePass's only public knob. Outline width and colour are private fields (2f / 1.5f / black), and the pass instance can only be found by type in RenderPipeline.EveryCameraRenderPasses, which is exactly how this page gets it.</value></data>
   <data name="CelShading_Bindings" xml:space="preserve"><value>Binding result</value></data>
+  <data name="CelShading_RampIndex0" xml:space="preserve"><value>_RampIndex0 · _RampIndex0</value></data>
+  <data name="CelShading_RampIndex1" xml:space="preserve"><value>_RampIndex1 · _RampIndex1</value></data>
+  <data name="CelShading_RampIndex2" xml:space="preserve"><value>_RampIndex2 · _RampIndex2</value></data>
+  <data name="CelShading_RampIndex3" xml:space="preserve"><value>_RampIndex3 · _RampIndex3</value></data>
+  <data name="CelShading_RampIndex4" xml:space="preserve"><value>_RampIndex4 · _RampIndex4</value></data>
+  <data name="CelShading_DirectionalLight" xml:space="preserve"><value>Directional Light</value></data>
+  <data name="CelShading_YawSpeed" xml:space="preserve"><value>Yaw Speed (deg/s)</value></data>
+  <data name="CelShading_OutlineAmbient" xml:space="preserve"><value>OutlinePass.AmbientIntensity</value></data>
+  <data name="CelShading_SettingsAmbient" xml:space="preserve"><value>Settings.AmbientIntensity</value></data>
   <data name="Environment_Intro" xml:space="preserve"><value>Irradiance and prefiltered reflections are each baked once and parked in two GPU-state slots on the camera node, then reused every frame. Assigning a new Background notifies the pipeline (OnBackgroundChanged), which invalidates both caches automatically - the next frame rebakes from the new map, so switching environments needs no manual step. The rebake button covers the remaining case: the resource reference stayed the same but its content changed in place, or you want to force a recomputation - it calls Invalidate() to zero the frame buffers.</value></data>
   <data name="Environment_Panorama" xml:space="preserve"><value>Panorama</value></data>
   <data name="Environment_CubeSize" xml:space="preserve"><value>Cubemap edge length</value></data>
@@ -418,6 +427,8 @@
   <data name="Shadows_Reload" xml:space="preserve"><value>Reload</value></data>
   <data name="SkinnedAnimation_Intro" xml:space="preserve"><value>Clip names and durations come from the glb's actual animations array, not from constants: this model carries four, and the TPose one is exactly what you need to check the bind pose against.</value></data>
   <data name="SkinnedAnimation_Clip" xml:space="preserve"><value>Clip</value></data>
+  <data name="SkinnedAnimation_TimeScale" xml:space="preserve"><value>TimeScale</value></data>
+  <data name="SkinnedAnimation_LoopMode" xml:space="preserve"><value>LoopMode</value></data>
   <data name="SkinnedAnimation_Reset" xml:space="preserve"><value>Reset (back to 0 s)</value></data>
   <data name="SkinnedAnimation_ExternalUpdate" xml:space="preserve"><value>ExternalUpdate (Model.Update stops advancing the sampler)</value></data>
   <data name="SkinnedAnimation_DriveNote" xml:space="preserve"><value>Model.Update contains a single statement: the sampler is advanced only when it is non-null and ExternalUpdate is false. Checking it hands control back to this page, and the button below feeds a fixed step — the skeleton holds still, which is the evidence for that early-out branch.</value></data>

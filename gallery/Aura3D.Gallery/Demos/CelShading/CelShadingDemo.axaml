@@ -2,14 +2,14 @@
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
-         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
-         x:DataType="demos:CelShadingDemo">
+         x:DataType="demos:CelShadingViewModel">
 
   <!--
-    卡通着色页。视口 + 右侧浮在上面的检视面板，参数行全在这里声明。
-    通道开关与 ramp 行的 Tag 是材质参数名，代码里按 Tag 回到 plugged / numbers 字典。
+    卡通着色页。文案与参数全部绑定 CelShadingViewModel——标签是 Lingua observable
+    （^ 绑定，换语言自动生效），通道开关与滑杆值走双向绑定写穿到身体/脸两个卡通材质。
+    视图 code-behind 只剩生命周期：取角色资产、装场景、逐帧 Tick。
   -->
   <Panel>
 
@@ -18,80 +18,79 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.CelShading_Intro}}" />
+        <kit:Hint Text="{Binding IntroLabel^}" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.CelShading_Channels}}" />
+        <kit:Section Title="{Binding ChannelsSectionLabel^}" />
 
-        <kit:ToggleRow Tag="BaseColor" Label="{Translate {x:Static loc:Strings+Keys.CelShading_BaseColor}}" IsChecked="True" Toggled="OnChannelToggled" />
-        <kit:ToggleRow Tag="Normal" Label="{Translate {x:Static loc:Strings+Keys.CelShading_Normal}}" IsChecked="False" Toggled="OnChannelToggled" />
-        <kit:ToggleRow Tag="ILM" Label="{Translate {x:Static loc:Strings+Keys.CelShading_Ilm}}" IsChecked="True" Toggled="OnChannelToggled" />
-        <kit:ToggleRow Tag="ShadowRamp" Label="{Translate {x:Static loc:Strings+Keys.CelShading_ShadowRamp}}" IsChecked="True" Toggled="OnChannelToggled" />
-        <kit:ToggleRow Tag="SDF" Label="{Translate {x:Static loc:Strings+Keys.CelShading_Sdf}}" IsChecked="True" Toggled="OnChannelToggled" />
-        <kit:ToggleRow Tag="SpecularRamp" Label="{Translate {x:Static loc:Strings+Keys.CelShading_SpecularRamp}}" IsChecked="False" Toggled="OnChannelToggled" />
+        <kit:ToggleRow Label="{Binding BaseColorLabel^}" IsChecked="{Binding BaseColorPlugged}" />
+        <kit:ToggleRow Label="{Binding NormalLabel^}" IsChecked="{Binding NormalPlugged}" />
+        <kit:ToggleRow Label="{Binding IlmLabel^}" IsChecked="{Binding IlmPlugged}" />
+        <kit:ToggleRow Label="{Binding ShadowRampLabel^}" IsChecked="{Binding ShadowRampPlugged}" />
+        <kit:ToggleRow Label="{Binding SdfLabel^}" IsChecked="{Binding SdfPlugged}" />
+        <kit:ToggleRow Label="{Binding SpecularRampLabel^}" IsChecked="{Binding SpecularRampPlugged}" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.CelShading_HalfLambert}}" />
+        <kit:Section Title="{Binding HalfLambertSectionLabel^}" />
 
-        <kit:SliderRow Tag="_GreyFac" Label="{Translate {x:Static loc:Strings+Keys.CelShading_GreyFac}}" Minimum="0.05" Maximum="2" Value="0.8"
-                       ValueChanged="OnNumberChanged" />
-        <kit:SliderRow Tag="_DarkFac" Label="{Translate {x:Static loc:Strings+Keys.CelShading_DarkFac}}" Minimum="-1" Maximum="1" Value="0.15"
-                       ValueChanged="OnNumberChanged" />
-        <kit:SliderRow Tag="_BrightFac" Label="{Translate {x:Static loc:Strings+Keys.CelShading_BrightFac}}" Minimum="0" Maximum="1" Value="0.72"
-                       ValueChanged="OnNumberChanged" />
-        <kit:SliderRow Tag="_BrightAreaShadowFac" Label="{Translate {x:Static loc:Strings+Keys.CelShading_BrightAreaShadowFac}}" Minimum="0" Maximum="1" Value="0.85"
-                       ValueChanged="OnNumberChanged" />
+        <kit:SliderRow Label="{Binding GreyFacLabel^}" Minimum="0.05" Maximum="2"
+                       Value="{Binding GreyFac}" />
+        <kit:SliderRow Label="{Binding DarkFacLabel^}" Minimum="-1" Maximum="1"
+                       Value="{Binding DarkFac}" />
+        <kit:SliderRow Label="{Binding BrightFacLabel^}" Minimum="0" Maximum="1"
+                       Value="{Binding BrightFac}" />
+        <kit:SliderRow Label="{Binding BrightAreaShadowFacLabel^}" Minimum="0" Maximum="1"
+                       Value="{Binding BrightAreaShadowFac}" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.CelShading_RampRows}}" />
+        <kit:Section Title="{Binding RampRowsSectionLabel^}" />
 
-        <kit:SliderRow Tag="_RampIndex0" Label="_RampIndex0 · _RampIndex0" Minimum="0" Maximum="5" Value="0"
-                       ValueChanged="OnNumberChanged" />
-        <kit:SliderRow Tag="_RampIndex1" Label="_RampIndex1 · _RampIndex1" Minimum="0" Maximum="5" Value="1"
-                       ValueChanged="OnNumberChanged" />
-        <kit:SliderRow Tag="_RampIndex2" Label="_RampIndex2 · _RampIndex2" Minimum="0" Maximum="5" Value="2"
-                       ValueChanged="OnNumberChanged" />
-        <kit:SliderRow Tag="_RampIndex3" Label="_RampIndex3 · _RampIndex3" Minimum="0" Maximum="5" Value="3"
-                       ValueChanged="OnNumberChanged" />
-        <kit:SliderRow Tag="_RampIndex4" Label="_RampIndex4 · _RampIndex4" Minimum="0" Maximum="5" Value="4"
-                       ValueChanged="OnNumberChanged" />
+        <kit:SliderRow Label="{Binding RampIndex0Label^}" Minimum="0" Maximum="5"
+                       Value="{Binding RampIndex0}" />
+        <kit:SliderRow Label="{Binding RampIndex1Label^}" Minimum="0" Maximum="5"
+                       Value="{Binding RampIndex1}" />
+        <kit:SliderRow Label="{Binding RampIndex2Label^}" Minimum="0" Maximum="5"
+                       Value="{Binding RampIndex2}" />
+        <kit:SliderRow Label="{Binding RampIndex3Label^}" Minimum="0" Maximum="5"
+                       Value="{Binding RampIndex3}" />
+        <kit:SliderRow Label="{Binding RampIndex4Label^}" Minimum="0" Maximum="5"
+                       Value="{Binding RampIndex4}" />
 
-        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.CelShading_RampRowsNote}}" />
+        <kit:Hint Text="{Binding RampRowsNoteLabel^}" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.CelShading_TintSlots}}" />
+        <kit:Section Title="{Binding TintSlotsSectionLabel^}" />
 
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.CelShading_LightAreaTint}}" Minimum="0" Maximum="2" Value="1.15"
-                       ValueChanged="OnLightTintChanged" />
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.CelShading_DarkShadow}}" Minimum="0" Maximum="2" Value="0.55"
-                       ValueChanged="OnDarkTintChanged" />
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.CelShading_CoolShadow}}" Minimum="0" Maximum="2" Value="0.45"
-                       ValueChanged="OnCoolDarkChanged" />
+        <kit:SliderRow Label="{Binding LightAreaTintLabel^}" Minimum="0" Maximum="2"
+                       Value="{Binding LightAreaTint}" />
+        <kit:SliderRow Label="{Binding DarkShadowLabel^}" Minimum="0" Maximum="2"
+                       Value="{Binding DarkShadowTint}" />
+        <kit:SliderRow Label="{Binding CoolShadowLabel^}" Minimum="0" Maximum="2"
+                       Value="{Binding CoolShadowTint}" />
 
-        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.CelShading_CoolShadowNote}}" />
+        <kit:Hint Text="{Binding CoolShadowNoteLabel^}" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.CelShading_FaceOnly}}" />
+        <kit:Section Title="{Binding FaceOnlySectionLabel^}" />
 
-        <kit:SliderRow Tag="_FaceShadowOffset" Label="{Translate {x:Static loc:Strings+Keys.CelShading_FaceShadowOffset}}" Minimum="-1" Maximum="1" Value="0.1"
-                       ValueChanged="OnNumberChanged" />
-        <kit:SliderRow Tag="_FaceShadowTransitionSoftness" Label="{Translate {x:Static loc:Strings+Keys.CelShading_FaceShadowSoftness}}" Minimum="0.01" Maximum="1" Value="0.15"
-                       ValueChanged="OnNumberChanged" />
+        <kit:SliderRow Label="{Binding FaceShadowOffsetLabel^}" Minimum="-1" Maximum="1"
+                       Value="{Binding FaceShadowOffset}" />
+        <kit:SliderRow Label="{Binding FaceShadowSoftnessLabel^}" Minimum="0.01" Maximum="1"
+                       Value="{Binding FaceShadowSoftness}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.CelShading_FaceRenderType}}" IsChecked="True"
-                       Toggled="OnFaceRenderToggled" />
+        <kit:ToggleRow Label="{Binding FaceRenderTypeLabel^}" IsChecked="{Binding FaceRender}" />
 
-        <kit:Section Title="Directional Light" />
+        <kit:Section Title="{Binding DirectionalLightSectionLabel^}" />
 
-        <kit:SliderRow Label="Yaw Speed (deg/s)" Minimum="0" Maximum="90" Value="20"
-                       ValueChanged="OnSunSpeedChanged" />
+        <kit:SliderRow Label="{Binding YawSpeedLabel^}" Minimum="0" Maximum="90"
+                       Value="{Binding SunYawSpeed}" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.CelShading_OutlinePass}}" />
+        <kit:Section Title="{Binding OutlinePassSectionLabel^}" />
 
-        <kit:SliderRow Label="OutlinePass.AmbientIntensity" Minimum="0" Maximum="1" Value="0.1"
-                       ValueChanged="OnOutlineAmbientChanged" />
+        <kit:SliderRow Label="{Binding OutlineAmbientLabel^}" Minimum="0" Maximum="1"
+                       Value="{Binding OutlineAmbient}" />
 
-        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.CelShading_OutlineNote}}" />
+        <kit:Hint Text="{Binding OutlineNoteLabel^}" />
 
-        <kit:SliderRow x:Name="SettingsAmbientRow" Label="Settings.AmbientIntensity" Minimum="0" Maximum="2"
-                       ValueChanged="OnSettingsAmbientChanged" />
+        <kit:SliderRow Label="{Binding SettingsAmbientLabel^}" Minimum="0" Maximum="2"
+                       Value="{Binding SettingsAmbient}" />
 
-        <kit:ReadoutRow x:Name="Readout" Label="{Translate {x:Static loc:Strings+Keys.CelShading_Bindings}}" />
+        <kit:ReadoutRow Label="{Binding BindingsLabel^}" Text="{Binding ReadoutText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>
