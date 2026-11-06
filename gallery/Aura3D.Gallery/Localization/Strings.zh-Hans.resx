@@ -261,6 +261,7 @@
   <data name="Hism_MoveEveryFrame" xml:space="preserve"><value>逐帧搬动实例</value></data>
   <data name="Hism_MovesPerSecond" xml:space="preserve"><value>每秒搬动次数</value></data>
   <data name="Hism_GroupCulling" xml:space="preserve"><value>按组视锥剔除</value></data>
+  <data name="Hism_Clear" xml:space="preserve"><value>清空</value></data>
   <data name="Hism_Refill" xml:space="preserve"><value>重新铺满</value></data>
   <data name="Hism_OctreeState" xml:space="preserve"><value>八叉树状态</value></data>
   <data name="Instancing_Intro" xml:space="preserve"><value>两片实例数相同，右片是逐实例顶点色：它的顶点着色器自带 INSTANCED_MESH 分支，所以同一个材质既能挂普通 Mesh（走 uniform 分支）也能挂 InstancedMesh（走属性分支）。逐实例属性的长度必须正好等于实例数，因此本页总是先立实例再挂属性。</value></data>

@@ -1,16 +1,9 @@
 using Aura3D.Avalonia;
-using Aura3D.Core.Geometries;
 using Aura3D.Core.Nodes;
-using Aura3D.Core.Resources;
-using Aura3D.Core.Scenes;
-using Aura3D.Gallery.Kit;
 using Aura3D.Gallery.Localization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Interactivity;
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -18,34 +11,47 @@ using System.Threading.Tasks;
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// 拾取：<see cref="Aura3DViewBase.ObjectPicked"/> 事件、<see cref="Aura3DViewBase.PickAt"/> 全命中列表、
-/// <see cref="Aura3DViewBase.PickClosestAt"/> 最近命中，以及实例拾取带回的
-/// <see cref="PickResult.InstanceIndex"/>。
-/// 传入的坐标是 DIP（Avalonia 的逻辑像素），视图内部才乘 <c>RenderScaling</c> 换算成像素，
-/// 所以 <c>e.GetPosition(view)</c> 可以直接用，不必自己乘缩放。
-/// 视口上的命中点标记与参数行的排版都在 <c>PickingDemo.axaml</c> 里，视图事件的订阅仍留在 <see cref="ViewAttached"/>。
+/// 拾取页的视图：文案、参数与命令全在 <see cref="PickingViewModel"/>，XAML 经绑定直连。
+/// 拾取是强视图交互，留在本类——<see cref="ViewAttached"/> 里订阅 ObjectPicked、自挂
+/// PointerPressed 按点击位置现算全命中，Update 里按「中心射线」开关逐帧从视口正中拾取，
+/// 结果都推进 VM 的报告方法；坐标是 DIP（视图内部才乘 RenderScaling），<c>e.GetPosition(view)</c>
+/// 直接用。视口上的命中点标记画在 XAML 的 Overlay Canvas 上。五个目标球、挡板与实例
+/// 方阵是 VM 持有的引擎模型；相机与灯是纯布景，仍在 BuildScene 里组装。
 /// </summary>
 public sealed partial class PickingDemo : Demo
 {
-    private const int GridSize = 6;
-
-    private readonly List<Mesh> targets = [];
+    private readonly PickingViewModel viewModel = new();
 
     private Aura3DView? view;
-    private InstancedMesh? field;
-    private Mesh? blocker;
 
+    // 「中心射线」开关的视图侧影子：逐帧 Update 与 PointerPressed 都要读它判定走哪条拾取路径，
+    // 经 CenterRayToggled 事件从 VM 转写过来，避免这两处每次去摸 VM 的属性。
     private bool centerMode;
-    private int lastHitCount;
-    private int clickCount;
 
     /// <summary>
-    /// 建页：装配 XAML。视口开关的初值与引擎默认一致，无需再对齐运行时状态。
+    /// 建页：装配 XAML 并把 DataContext 换成 VM（顶替基类的 DataContext=this），再接好
+    /// 三条事件桥——EnablePicking 写视图属性、中心射线进影子变量、结果/挡板/方阵变化排重绘。
     /// </summary>
     /// <param name="context">宿主环境。</param>
     public PickingDemo(DemoContext context) : base(context)
     {
         InitializeComponent();
+
+        // 顶替基类的 DataContext=this：页面绑定从此指向 VM。
+        DataContext = viewModel;
+
+        // EnablePicking 是视图属性（Aura3DViewBase），VM 不碰 view 对象，经事件转写；
+        // 视图尚未 attach 时先不落笔，ViewAttached 里会按 VM 当前值统一对齐。
+        viewModel.EnablePickingToggled += value =>
+        {
+            if (view != null)
+                view.EnablePicking = value;
+        };
+
+        viewModel.CenterRayToggled += value => centerMode = value;
+
+        // 拾到结果、挡板可见与方阵边长变化都要排一帧重绘（等价旧处理器里的 InvalidateRender）。
+        viewModel.FrameRequested += () => Context.InvalidateRender();
     }
 
     /// <inheritdoc />
@@ -53,14 +59,14 @@ public sealed partial class PickingDemo : Demo
     {
         view = created;
 
-        created.ObjectPicked += (_, e) =>
-        {
-            clickCount++;
+        // 对齐：构造到 attach 之间若有人拨过 EnablePicking，这里按 VM 的当前值补写一次
+        // （同 Particles 页对 ShowBounds 的做法），旧页这一段会被静默丢写。
+        created.EnablePicking = viewModel.EnablePicking;
 
-            Report(e.Node, e.WorldPosition, e.Distance, e.InstanceIndex, "ObjectPicked");
-        };
+        // ObjectPicked 只回最近一个命中，且事件参数里没有屏幕坐标；
+        // 全命中列表要靠下面的 PointerPressed 按点击位置现算。
+        created.ObjectPicked += (_, e) => viewModel.ReportObjectPicked(e.PickResult);
 
-        // 自己再挂一个 PointerPressed：事件参数里没有屏幕坐标，而全命中列表要按点击位置现算。
         created.PointerPressed += OnPointerPressed;
     }
 
@@ -81,40 +87,12 @@ public sealed partial class PickingDemo : Demo
 
         scene.AddNode(light);
 
-        for (int i = 0; i < 5; i++)
-        {
-            var mesh = new Mesh
-            {
-                Name = $"Target{i}",
-                Geometry = new SphereGeometry(0.8f, 32, 18),
-                Material = new Material(),
-            };
+        // 目标球、挡板与实例方阵都是 VM 持有的引擎模型（开关/滑杆的写穿目标），这里只做挂接。
+        foreach (var target in viewModel.Targets)
+            scene.AddNode(target);
 
-            mesh.Material.SetTexture("BaseColor", Procedural.Checker(128, 3 + i));
-            mesh.Position = new Vector3((i - 2) * 2.3f, 1.2f, -1f);
-
-            scene.AddNode(mesh);
-            targets.Add(mesh);
-        }
-
-        // 一块半透明挡板横在球体前面：同一次点击会同时命中它和后面的球，
-        // 用来区分 PickAt（全命中）与 PickClosestAt（最近）。
-        var blockerMaterial = new Material { BlendMode = BlendMode.Translucent };
-
-        blockerMaterial.SetTexture("BaseColor", Procedural.SoftDot(128, 0.8f));
-
-        blocker = new Mesh
-        {
-            Name = "Blocker",
-            Geometry = new PlaneGeometry(13f, 6f),
-            Material = blockerMaterial,
-        };
-
-        blocker.Position = new Vector3(0, 2.4f, 3f);
-
-        scene.AddNode(blocker);
-
-        BuildField(scene, GridSize);
+        scene.AddNode(viewModel.Blocker);
+        scene.AddNode(viewModel.Field);
     }
 
     /// <inheritdoc />
@@ -132,12 +110,13 @@ public sealed partial class PickingDemo : Demo
 
             PlaceMarker(center);
 
+            // 顺序照旧：先报告后登记命中数——命中行里的「该点命中 N 个」落后一帧，与旧代码一致。
             if (closest != null)
-                Report(closest.Node, closest.WorldPosition, closest.Distance, closest.InstanceIndex, "PickAt");
+                viewModel.ReportPick(closest, "PickAt");
             else
-                Readout.Text = Strings.Keys.Picking_NoCenterHit.T();
+                viewModel.ReportCenterMiss();
 
-            lastHitCount = hits.Count;
+            viewModel.NoteHitCount(hits.Count);
         }
 
         Context.RequestFrame();
@@ -152,31 +131,6 @@ public sealed partial class PickingDemo : Demo
         view = null;
     }
 
-    private void OnEnablePickingToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        if (view != null)
-            view.EnablePicking = e.ValueAs<bool>();
-    }
-
-    private void OnCenterModeToggled(object? sender, InspectorValueChangedEventArgs e) =>
-        centerMode = e.ValueAs<bool>();
-
-    private void OnBlockerToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        if (blocker != null)
-            blocker.Enable = e.ValueAs<bool>();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnFieldSizeChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        if (Context.Scene != null && field != null)
-            SetFieldCount(Context.Scene, (int)e.ValueAs<double>());
-    }
-
-    private void OnResetClickCount(object? sender, RoutedEventArgs e) => clickCount = 0;
-
     private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (view == null || centerMode)
@@ -188,77 +142,16 @@ public sealed partial class PickingDemo : Demo
 
         PlaceMarker(position);
 
-        lastHitCount = hits.Count;
+        // 点击路径与中心射线相反：先登记命中数再报告，报告里的 N 即本次点击的真实值。
+        viewModel.NoteHitCount(hits.Count);
 
         if (closest != null)
-            Report(closest.Node, closest.WorldPosition, closest.Distance, closest.InstanceIndex, Strings.Keys.Picking_SourceClick.T());
+            viewModel.ReportPick(closest, Strings.Keys.Picking_SourceClick.T());
     }
 
     private void PlaceMarker(Point position)
     {
         Canvas.SetLeft(Marker, position.X - Marker.Width / 2);
         Canvas.SetTop(Marker, position.Y - Marker.Height / 2);
-    }
-
-    private void Report(Node node, Vector3 worldPosition, float distance, int? instanceIndex, string source)
-    {
-        Readout.Text = Strings.Keys.Picking_HitReadout.Format(
-            source,
-            node.Name,
-            distance,
-            worldPosition.X,
-            worldPosition.Y,
-            worldPosition.Z,
-            instanceIndex?.ToString() ?? "—",
-            lastHitCount,
-            clickCount);
-
-        Context.InvalidateRender();
-    }
-
-    private void BuildField(Scene scene, int size)
-    {
-        var source = new Mesh
-        {
-            Name = "FieldCube",
-            Geometry = new BoxGeometry(0.34f, 0.34f, 0.34f),
-            Material = new Material(),
-        };
-
-        source.Material.SetTexture("BaseColor", Procedural.VerticalGradient(width: 8, height: 64));
-
-        field = InstancedMesh.FromMesh(source);
-
-        SetFieldCount(scene, size);
-    }
-
-    private void SetFieldCount(Scene scene, int size)
-    {
-        if (field == null)
-            return;
-
-        var transforms = new List<Matrix4x4>(size * size);
-
-        for (int x = 0; x < size; x++)
-        {
-            for (int z = 0; z < size; z++)
-            {
-                var position = new Vector3(
-                    (x - (size - 1) / 2f) * 0.55f,
-                    0.18f,
-                    (z - (size - 1) / 2f) * 0.55f + 4f);
-
-                transforms.Add(
-                    Matrix4x4.CreateScale(1f, 1f + ((x + z) % 4) * 0.5f, 1f)
-                    * Matrix4x4.CreateTranslation(position));
-            }
-        }
-
-        if (!scene.Nodes.Contains(field))
-            scene.AddNode(field);
-
-        field.SetInstances(transforms);
-
-        Context.InvalidateRender();
     }
 }

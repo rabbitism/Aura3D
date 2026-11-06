@@ -2,14 +2,15 @@
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
-         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
-         x:DataType="demos:PrimitivesDemo">
+         x:DataType="demos:PrimitivesViewModel">
 
   <!--
     图元页。整页就是这两层：视口 + 浮在右侧的检视面板。
     本页锁死 NoLight：顶点色与点精灵的着色器只覆盖了 NoLightPass。
+    文案与参数全部绑定 PrimitivesViewModel——标签是 Lingua observable（^ 绑定，换语言自动生效），
+    行控件值走双向绑定写穿到 VM 里的网格与材质；code-behind 只剩生命周期。
   -->
   <Panel>
 
@@ -18,26 +19,26 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Primitives_Intro}}" />
+        <kit:Hint Text="{Binding IntroLabel^}" />
 
-        <kit:ComboRow x:Name="FocusRow" Label="{Translate {x:Static loc:Strings+Keys.Primitives_Focus}}" Options="{Binding KindOptions}"
-                      SelectionChanged="OnFocusChanged" />
+        <kit:ComboRow Label="{Binding FocusLabel^}" Options="{Binding KindOptions}"
+                      SelectedItem="{Binding SelectedKind}" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Primitives_VertexData}}" />
+        <kit:Section Title="{Binding VertexDataSectionLabel^}" />
 
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Primitives_Columns}}" Minimum="2" Maximum="40" Value="12" Format="0"
-                       ValueChanged="OnColumnsChanged" />
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Primitives_Rows}}" Minimum="1" Maximum="24" Value="6" Format="0"
-                       ValueChanged="OnRowsChanged" />
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Primitives_Amplitude}}" Minimum="0" Maximum="3" Value="0.9"
-                       ValueChanged="OnWaveChanged" />
+        <kit:SliderRow Label="{Binding ColumnsLabel^}" Minimum="2" Maximum="40" Format="0"
+                       Value="{Binding Columns}" />
+        <kit:SliderRow Label="{Binding RowsLabel^}" Minimum="1" Maximum="24" Format="0"
+                       Value="{Binding Rows}" />
+        <kit:SliderRow Label="{Binding AmplitudeLabel^}" Minimum="0" Maximum="3"
+                       Value="{Binding Amplitude}" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Primitives_PointPrimitives}}" />
+        <kit:Section Title="{Binding PointSectionLabel^}" />
 
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Primitives_PointSize}}" Minimum="1" Maximum="64" Value="12" Format="0"
-                       ValueChanged="OnPointSizeChanged" />
+        <kit:SliderRow Label="{Binding PointSizeLabel^}" Minimum="1" Maximum="64" Format="0"
+                       Value="{Binding PointSize}" />
 
-        <kit:ReadoutRow x:Name="CurrentReadout" Label="{Translate {x:Static loc:Strings+Keys.Primitives_Current}}" />
+        <kit:ReadoutRow Label="{Binding CurrentLabel^}" Text="{Binding ReadoutText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>

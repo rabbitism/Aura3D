@@ -4,11 +4,12 @@
          xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
-         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
-         x:DataType="demos:HismDemo">
+         x:DataType="demos:HismViewModel">
 
   <!--
-    HISM 页。整页就是这两层：视口 + 浮在右侧的检视面板。
+    HISM 页：MVVM 化。文案与参数全部绑定 HismViewModel——标签是 Lingua observable
+    （^ 绑定，换语言自动生效），行控件值走双向绑定写穿到八叉树分组对象。
+    视图 code-behind 只剩生命周期：装场景、逐帧驱动。
   -->
   <Panel>
 
@@ -17,29 +18,29 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Hism_Intro}}" />
+        <kit:Hint Text="{Binding IntroLabel^}" />
 
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Hism_InstanceCount}}" Minimum="1000" Maximum="120000" Value="12000" Format="0"
-                       ValueChanged="OnInstanceCountChanged" />
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Hism_PerGroup}}" Minimum="64" Maximum="4096" Value="512" Format="0"
-                       ValueChanged="OnMaxPerGroupChanged" />
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Hism_MaxDepth}}" Minimum="1" Maximum="9" Value="6" Format="0"
-                       ValueChanged="OnMaxDepthChanged" />
+        <kit:SliderRow Label="{Binding InstanceCountLabel^}" Minimum="1000" Maximum="120000" Format="0"
+                       Value="{Binding InstanceCount}" />
+        <kit:SliderRow Label="{Binding PerGroupLabel^}" Minimum="64" Maximum="4096" Format="0"
+                       Value="{Binding MaxPerGroup}" />
+        <kit:SliderRow Label="{Binding MaxDepthLabel^}" Minimum="1" Maximum="9" Format="0"
+                       Value="{Binding MaxDepth}" />
 
-        <kit:ComboRow x:Name="MoveModeRow" Label="{Translate {x:Static loc:Strings+Keys.Hism_MoveMode}}" Options="{Binding MoveModes}"
-                      SelectionChanged="OnMoveModeChanged" />
+        <kit:ComboRow Label="{Binding MoveModeLabel^}" Options="{Binding MoveModeOptions}"
+                      SelectedItem="{Binding SelectedMoveMode}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Hism_MoveEveryFrame}}" IsChecked="False" Toggled="OnJitterToggled" />
+        <kit:ToggleRow Label="{Binding MoveEveryFrameLabel^}" IsChecked="{Binding MoveEveryFrame}" />
 
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Hism_MovesPerSecond}}" Minimum="1" Maximum="240" Value="30" Format="0"
-                       ValueChanged="OnJitterSpeedChanged" />
+        <kit:SliderRow Label="{Binding MovesPerSecondLabel^}" Minimum="1" Maximum="240" Format="0"
+                       Value="{Binding MovesPerSecond}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Hism_GroupCulling}}" IsChecked="True" Toggled="OnGroupCullingToggled" />
+        <kit:ToggleRow Label="{Binding GroupCullingLabel^}" IsChecked="{Binding GroupCulling}" />
 
-        <Button Content="ClearInstances" Click="OnClearClick" HorizontalAlignment="Stretch" />
-        <Button Content="{Translate {x:Static loc:Strings+Keys.Hism_Refill}}" Click="OnRefillClick" HorizontalAlignment="Stretch" />
+        <Button Content="{Binding ClearLabel^}" Command="{Binding ClearInstancesCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Binding RefillLabel^}" Command="{Binding RefillCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:ReadoutRow x:Name="OctreeReadout" Label="{Translate {x:Static loc:Strings+Keys.Hism_OctreeState}}" />
+        <kit:ReadoutRow Label="{Binding OctreeStateLabel^}" Text="{Binding ReadoutText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>

@@ -261,6 +261,7 @@
   <data name="Hism_MoveEveryFrame" xml:space="preserve"><value>Move instances every frame</value></data>
   <data name="Hism_MovesPerSecond" xml:space="preserve"><value>Moves per second</value></data>
   <data name="Hism_GroupCulling" xml:space="preserve"><value>Per-group frustum culling</value></data>
+  <data name="Hism_Clear" xml:space="preserve"><value>Clear</value></data>
   <data name="Hism_Refill" xml:space="preserve"><value>Refill</value></data>
   <data name="Hism_OctreeState" xml:space="preserve"><value>Octree state</value></data>
   <data name="Instancing_Intro" xml:space="preserve"><value>Both fields hold the same instance count; the right one uses per-instance vertex colours. Its vertex shader carries an INSTANCED_MESH branch, so one material serves both a plain Mesh (uniform branch) and an InstancedMesh (attribute branch). Per-instance attribute arrays must be exactly the instance count long, so this page always creates the instances before attaching the attributes.</value></data>

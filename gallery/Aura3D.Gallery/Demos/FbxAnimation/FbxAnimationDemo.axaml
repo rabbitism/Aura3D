@@ -2,14 +2,15 @@
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
-         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
-         x:DataType="demos:FbxAnimationDemo">
+         x:DataType="demos:FbxAnimationViewModel">
 
   <!--
-    FBX 动作库页（ufbx，纯托管所以四端通用）。整页就是这两层：视口 + 浮在右侧的检视面板。
-    剪辑条数与骨骼名单要等资产取回后才定，这两处在代码里回填。
+    FBX 动作库页（ufbx，纯托管所以四端通用）。MVVM 化：文案、剪辑/骨骼下拉、取样滑杆与三条读数
+    全部绑定 FbxAnimationViewModel——标签是 Lingua observable（^ 绑定，换语言自动生效），
+    行控件值走双向绑定写穿到 VM 里的模型节点与采样器。骨骼名单要等资产取回后才定，
+    由视图建场景时经 PrepareBones 补齐；整页就是视口 + 浮在右侧的检视面板两层。
   -->
   <Panel>
 
@@ -18,31 +19,31 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.FbxAnimation_Intro}}" />
+        <kit:Hint Text="{Binding IntroLabel^}" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.FbxAnimation_Clips}}" />
+        <kit:Section Title="{Binding ClipsSectionLabel^}" />
 
-        <kit:ComboRow x:Name="ClipRow" Label="{Translate {x:Static loc:Strings+Keys.FbxAnimation_Sampler}}" Options="{Binding ClipOptions}"
-                      SelectionChanged="OnClipChanged" />
+        <kit:ComboRow Label="{Binding SamplerLabel^}" Options="{Binding ClipOptions}"
+                      SelectedItem="{Binding SelectedClip}" />
 
-        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.FbxAnimation_NoSamplerNote}}" />
+        <kit:Hint Text="{Binding NoSamplerNoteLabel^}" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.FbxAnimation_SampleInterface}}" />
+        <kit:Section Title="{Binding SampleInterfaceSectionLabel^}" />
 
-        <kit:ComboRow x:Name="BoneRow" Label="{Translate {x:Static loc:Strings+Keys.FbxAnimation_Bone}}" Options="{Binding BoneOptions}"
-                      SelectionChanged="OnBoneChanged" />
+        <kit:ComboRow Label="{Binding BoneLabel^}" Options="{Binding BoneOptions}"
+                      SelectedItem="{Binding SelectedBone}" />
 
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.FbxAnimation_AtSecond}}" Minimum="0" Maximum="2" Value="0" Format="0.00"
-                       ValueChanged="OnSampleTimeChanged" />
+        <kit:SliderRow Label="{Binding AtSecondLabel^}" Minimum="0" Maximum="2" Format="0.00"
+                       Value="{Binding SampleTime}" />
 
-        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.FbxAnimation_SampleNote}}" />
+        <kit:Hint Text="{Binding SampleNoteLabel^}" />
 
-        <kit:ReadoutRow x:Name="SampleReadout" Label="{Translate {x:Static loc:Strings+Keys.FbxAnimation_Result}}" />
+        <kit:ReadoutRow Label="{Binding ResultLabel^}" Text="{Binding SampleText}" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.FbxAnimation_SkeletonLoader}}" />
+        <kit:Section Title="{Binding SkeletonLoaderSectionLabel^}" />
 
-        <kit:ReadoutRow x:Name="SkeletonReadout" Label="{Translate {x:Static loc:Strings+Keys.FbxAnimation_Skeleton}}" />
-        <kit:ReadoutRow x:Name="ClipsReadout" Label="{Translate {x:Static loc:Strings+Keys.FbxAnimation_ClipTable}}" />
+        <kit:ReadoutRow Label="{Binding SkeletonLabel^}" Text="{Binding SkeletonReadoutText^}" />
+        <kit:ReadoutRow Label="{Binding ClipTableLabel^}" Text="{Binding ClipsReadoutText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>

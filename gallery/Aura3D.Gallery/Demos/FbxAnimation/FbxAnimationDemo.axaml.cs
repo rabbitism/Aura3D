@@ -2,66 +2,33 @@ using Aura3D.Core.Geometries;
 using Aura3D.Core.Nodes;
 using Aura3D.Core.Resources;
 using Aura3D.Gallery.Kit;
-using Aura3D.Gallery.Localization;
-using Avalonia.Collections;
-using Irihi.Lingua;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
-using ModelNode = Aura3D.Core.Nodes.Model;
+using Color = System.Drawing.Color;
 
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// ufbx 这条路：FBX 动作库的标准用法——模型文件只给骨骼，动作文件用同一个
-/// <see cref="Skeleton"/> 实例去 <c>LoadAnimations</c>，拿到的剪辑就挂在同一副骨架上。
-/// 加载器是纯托管的 <c>FbxLoader</c>，没有原生库，所以这页在浏览器端也成立。
-/// 参数行的排版全在 <c>FbxAnimationDemo.axaml</c> 里，这里只剩场景组装与回调。
+/// FBX 动作库页的视图，MVVM 化：文案、剪辑/骨骼/取样参数与三条读数全在
+/// <see cref="FbxAnimationViewModel"/>，XAML 经绑定直连；本类只保留生命周期——
+/// 取回模型与动作文件喂给 VM（同一 Skeleton 实例挂外接剪辑，ufbx 路的标准用法）、
+/// 在渲染线程回调里组装相机/灯光/地面并登记模型节点。加载器是纯托管的 FbxLoader，
+/// 没有原生库，所以这页在浏览器端也成立。
 /// </summary>
 public sealed partial class FbxAnimationDemo : Demo
 {
-    // 标签与动作文件一一对应：ufbx 报的剪辑名是文件里的 take 名，这两个文件都存成 "Unreal Take"，
-    // 当不了选项文字，所以标签按「哪个文件来的」给；剪辑表与采样读数仍照实读文件里的名与时长。
-    // 第 0 项「不挂采样器」是需要翻译的界面文字。
-    private static readonly (string Label, string AssetKey)[] MotionFiles =
-    [
-        ("Idle_Rifle_Hip", "FbxIdle"),
-        ("Jog_Fwd_Rifle", "FbxJogFwd"),
-    ];
-
-    private static readonly string[] ClipNames = [.. MotionFiles.Select(file => file.Label)];
-
-    private ModelNode? model;
-    private readonly List<Animation> clips = [];
-    private readonly Dictionary<string, Animation> byLabel = [];
-
-    private AnimationSampler? sampler;
-    private int clipIndex = 1;
-    private string boneName = string.Empty;
-    private float sampleTime;
-
-    /// <summary>当前选中项的身份：第 0 项是「不挂采样器」，其余是文件里的剪辑名。</summary>
-    private string ClipLabel => (string)ClipOptions[clipIndex];
-
-    /// <summary>「挂上的动作」下拉的选项，供 XAML 绑定（ComboRow.Options 是 IList）。</summary>
-    public IList ClipOptions { get; } =
-        ClipNames.Prepend(Strings.Keys.FbxAnimation_NoSampler.T()).ToList();
-
-    /// <summary>骨骼名单：资产到位前是空的，<see cref="BuildScene"/> 里就地补齐。</summary>
-    public AvaloniaList<string> BoneOptions { get; } = [];
+    private readonly FbxAnimationViewModel viewModel = new();
 
     /// <summary>
-    /// 建页：装配 XAML，并把动作下拉的选中项对齐到字段的初值。
+    /// 建页：装配 XAML 并把 DataContext 换成 VM。仍须显式赋值——外壳继承下来的
+    /// DataContext 优先于默认值；基类先设的「页面自身」在这里被 VM 顶替。
     /// </summary>
     /// <param name="context">宿主环境。</param>
     public FbxAnimationDemo(DemoContext context) : base(context)
     {
         InitializeComponent();
 
-        ClipRow.SelectedItem = ClipOptions[clipIndex];
+        DataContext = viewModel;
     }
 
     /// <inheritdoc />
@@ -71,20 +38,12 @@ public sealed partial class FbxAnimationDemo : Demo
 
         loaded.Name = "SK_Mannequin";
 
-        model = loaded;
+        viewModel.SetModel(loaded);
 
         // 两个动作文件都传同一个 Skeleton：返回的剪辑直接就是这副骨架的，不需要重定向。
-        foreach (var (label, key) in MotionFiles)
-        {
-            var found = await assets.FbxAnimationsAsync(key, model.Skeleton);
-
-            foreach (var animation in found)
-            {
-                clips.Add(animation);
-
-                byLabel[label] = animation;
-            }
-        }
+        // 标签与键的对照表在 VM 上，这里只按它循环。
+        foreach (var (label, key) in FbxAnimationViewModel.MotionFiles)
+            viewModel.AddMotionClips(label, await assets.FbxAnimationsAsync(key, loaded.Skeleton));
     }
 
     /// <inheritdoc />
@@ -92,14 +51,14 @@ public sealed partial class FbxAnimationDemo : Demo
     {
         var scene = Context.Scene!;
 
-        if (model == null)
+        if (viewModel.Model == null)
             return;
 
         scene.ShowGrid = true;
         scene.MainCamera.Position = new Vector3(38f, 42f, 62f);
         scene.MainCamera.LookAt(new Vector3(0, 40f, 0));
 
-        var light = new DirectionalLight { LightColor = System.Drawing.Color.White };
+        var light = new DirectionalLight { LightColor = Color.White };
 
         light.RotationDegrees = new Vector3(-42f, -24f, 0);
 
@@ -116,143 +75,23 @@ public sealed partial class FbxAnimationDemo : Demo
 
         scene.AddNode(ground);
 
-        scene.AddNode(model);
+        scene.AddNode(viewModel.Model);
 
-        boneName = PickBone();
+        // 挂初选剪辑、补骨骼名单并回填初选（旧 BuildScene 的中段）。必须在 fit 之前——
+        // 采样器构造时立即算第一帧姿势，模型的包围盒跟着姿势走。
+        viewModel.PrepareBones();
 
-        ApplyClip();
-
-        scene.MainCamera.FitToBoundingBox(model.BoundingBox, 0.25f);
+        scene.MainCamera.FitToBoundingBox(viewModel.Model.BoundingBox, 0.25f);
 
         // fit 只框到模型，收紧的 far 会把 600×600 地面裁掉一大半；抬到 1000 盖住初始视角能看到的地。
         scene.MainCamera.FarPlane = 1000f;
-
-        // 骨骼名单与剪辑条数都要等资产到位，XAML 里只有空壳，这里补齐绑定读的那份集合并回填初选。
-        BoneOptions.Clear();
-
-        foreach (var name in model.Skeleton?.Bones.Select(b => b.Name) ?? [])
-            BoneOptions.Add(name);
-
-        BoneRow.SelectedItem = boneName;
-
-        Report();
     }
 
     /// <inheritdoc />
     public override void Update(double deltaTime)
     {
+        viewModel.Tick();
+
         Context.RequestFrame();
-    }
-
-    private void OnClipChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        clipIndex = Math.Max(0, ClipOptions.IndexOf((string)e.Value!));
-
-        ApplyClip();
-
-        Report();
-    }
-
-    private void OnBoneChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        boneName = (string)e.Value!;
-
-        ReportSample();
-    }
-
-    private void OnSampleTimeChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        sampleTime = (float)e.ValueAs<double>();
-
-        ReportSample();
-    }
-
-    private void ApplyClip()
-    {
-        if (model == null)
-            return;
-
-        if (clipIndex == 0)
-        {
-            model.AnimationSampler = null;
-            sampler = null;
-
-            return;
-        }
-
-        if (!byLabel.TryGetValue(ClipLabel, out var animation))
-            return;
-
-        sampler = new AnimationSampler(animation) { TimeScale = 1f, LoopMode = LoopMode.Loop };
-
-        model.AnimationSampler = sampler;
-    }
-
-    private string PickBone()
-    {
-        var names = model?.Skeleton?.Bones.Select(b => b.Name).ToList() ?? [];
-
-        return names.FirstOrDefault(n => n.Contains("Head", StringComparison.OrdinalIgnoreCase))
-               ?? names.FirstOrDefault(n => n.Contains("Spine", StringComparison.OrdinalIgnoreCase))
-               ?? names.FirstOrDefault()
-               ?? string.Empty;
-    }
-
-    private void ReportSample()
-    {
-        var animation = clips.Count > 0
-            ? byLabel.GetValueOrDefault(ClipLabel) ?? clips[0]
-            : null;
-
-        if (animation == null || string.IsNullOrEmpty(boneName))
-        {
-            SampleReadout.Text = Strings.Keys.FbxAnimation_NoClip.T();
-
-            return;
-        }
-
-        var matrix = animation.Sample(boneName, sampleTime);
-
-        SampleReadout.Text = Strings.Keys.FbxAnimation_SampleReadout.Format(
-            animation.Name,
-            sampleTime,
-            boneName,
-            matrix.Translation.X,
-            matrix.Translation.Y,
-            matrix.Translation.Z,
-            animation.Channels.Count);
-    }
-
-    private void ReportSkeleton()
-    {
-        var skeleton = model?.Skeleton;
-
-        if (skeleton == null)
-            return;
-
-        var retargeted = clips.Count > 0 && ReferenceEquals(clips[0].Skeleton, skeleton);
-
-        SkeletonReadout.Text = Strings.Keys.FbxAnimation_SkeletonReadout.Format(
-            skeleton.Bones.Count,
-            skeleton.Root?.Name ?? "-",
-            skeleton.GetBoneIndexMap().Count,
-            retargeted
-                ? Strings.Keys.FbxAnimation_SkeletonSame.T()
-                : Strings.Keys.FbxAnimation_SkeletonDiff.T());
-    }
-
-    private void Report()
-    {
-        var table = string.Join(Strings.Keys.FbxAnimation_ListSeparator.T(), clips.Select(c => $"{c.Name}({c.Duration:0.##}s)"));
-
-        ClipsReadout.Text = Strings.Keys.FbxAnimation_ClipTableReadout.Format(
-            ClipLabel,
-            clips.Count,
-            table.Length > 0 ? table : Strings.Keys.FbxAnimation_None.T(),
-            sampler?.BonesTransform.Count ?? 0);
-
-        ReportSkeleton();
-
-        ReportSample();
     }
 }
