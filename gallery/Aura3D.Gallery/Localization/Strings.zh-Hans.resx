@@ -318,6 +318,7 @@
   <data name="Particles_Replay" xml:space="preserve"><value>再放一次（Stop→Play）</value></data>
   <data name="Particles_DebrisRate" xml:space="preserve"><value>发射速率 /s</value></data>
   <data name="Particles_SpinSpeed" xml:space="preserve"><value>自转速度</value></data>
+  <data name="Particles_MeshScale" xml:space="preserve"><value>碎块网格缩放</value></data>
   <data name="Particles_MaxParticles" xml:space="preserve"><value>单发射器上限 MaxParticles</value></data>
   <data name="Particles_ApplyMaxParticles" xml:space="preserve"><value>让 MaxParticles 生效（重开碎块）</value></data>
   <data name="Particles_BlendMode" xml:space="preserve"><value>公告板 BlendMode</value></data>
@@ -469,7 +470,7 @@
   <data name="Particles_TextureFlame" xml:space="preserve"><value>火焰 8×8 翻页图（文件）</value></data>
   <data name="Particles_RendererBillboard" xml:space="preserve"><value>公告板</value></data>
   <data name="Particles_NoTextureHint" xml:space="preserve"><value>（无贴图，画程序化圆点）</value></data>
-  <data name="Particles_Readout" xml:space="preserve"><value>存活 {0} 个 · 喷泉 {1} · 爆发 {2}（播完={3}） · 碎块 {4}（走 {5}） · 播放中={6} · 喷泉贴图 {7}，翻页 {8:0}×{9:0}</value></data>  <data name="PostProcessing_MatrixReadout" xml:space="preserve"><value>管线 {0} · 曝光{1} 环境光{2} IBL 强度{3} FXAA✓ 剔除✓ CSM{4} · 点光上限 {5}（场景 2 盏） · 级联 {6} × {7} · {8}</value></data>
+  <data name="Particles_Readout" xml:space="preserve"><value>存活 {0} 个 · 喷泉 {1} · 爆发 {2}（播完={3}） · 碎块 {4}（走 {5}） · 播放中={6} · 喷泉贴图 {7}，翻页 {8:0}×{9:0}{10}</value></data>  <data name="PostProcessing_MatrixReadout" xml:space="preserve"><value>管线 {0} · 曝光{1} 环境光{2} IBL 强度{3} FXAA✓ 剔除✓ CSM{4} · 点光上限 {5}（场景 2 盏） · 级联 {6} × {7} · {8}</value></data>
   <data name="PostProcessing_ExposureNoTone" xml:space="preserve"><value>× 无 ToneMappingPass</value></data>
   <data name="PostProcessing_CsmNoShadowMap" xml:space="preserve"><value>× 无 ShadowMapPass</value></data>
   <data name="PostProcessing_HintRebuilt" xml:space="preserve"><value>上一项改动已在重建后生效</value></data>

@@ -318,6 +318,7 @@
   <data name="Particles_Replay" xml:space="preserve"><value>Play again (Stop then Play)</value></data>
   <data name="Particles_DebrisRate" xml:space="preserve"><value>Emission rate (per s)</value></data>
   <data name="Particles_SpinSpeed" xml:space="preserve"><value>Spin speed</value></data>
+  <data name="Particles_MeshScale" xml:space="preserve"><value>Chunk mesh scale</value></data>
   <data name="Particles_MaxParticles" xml:space="preserve"><value>MaxParticles per emitter</value></data>
   <data name="Particles_ApplyMaxParticles" xml:space="preserve"><value>Apply MaxParticles (restart the debris)</value></data>
   <data name="Particles_BlendMode" xml:space="preserve"><value>Billboard BlendMode</value></data>
@@ -469,7 +470,7 @@
   <data name="Particles_TextureFlame" xml:space="preserve"><value>Flame 8x8 flipbook (from file)</value></data>
   <data name="Particles_RendererBillboard" xml:space="preserve"><value>billboard</value></data>
   <data name="Particles_NoTextureHint" xml:space="preserve"><value>(no texture: procedural dots)</value></data>
-  <data name="Particles_Readout" xml:space="preserve"><value>alive {0} · fountain {1} · burst {2} (finished={3}) · debris {4} (via {5}) · playing={6} · fountain texture {7}, flipbook {8:0}x{9:0}</value></data>  <data name="PostProcessing_MatrixReadout" xml:space="preserve"><value>Pipeline {0} · Exposure {1} Ambient {2} IBL intensity {3} FXAA✓ Culling✓ CSM {4} · Point light limit {5} (2 in scene) · Cascades {6} × {7} · {8}</value></data>
+  <data name="Particles_Readout" xml:space="preserve"><value>alive {0} · fountain {1} · burst {2} (finished={3}) · debris {4} (via {5}) · playing={6} · fountain texture {7}, flipbook {8:0}x{9:0}{10}</value></data>  <data name="PostProcessing_MatrixReadout" xml:space="preserve"><value>Pipeline {0} · Exposure {1} Ambient {2} IBL intensity {3} FXAA✓ Culling✓ CSM {4} · Point light limit {5} (2 in scene) · Cascades {6} × {7} · {8}</value></data>
   <data name="PostProcessing_ExposureNoTone" xml:space="preserve"><value>× no ToneMappingPass</value></data>
   <data name="PostProcessing_CsmNoShadowMap" xml:space="preserve"><value>× no ShadowMapPass</value></data>
   <data name="PostProcessing_HintRebuilt" xml:space="preserve"><value>Previous change took effect after the rebuild</value></data>
