@@ -3,78 +3,42 @@ using Aura3D.Core.Math;
 using Aura3D.Core.Nodes;
 using Aura3D.Core.Resources;
 using Aura3D.Gallery.Kit;
-using Avalonia.Interactivity;
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
-using Aura3D.Gallery.Localization;
+using Color = System.Drawing.Color;
 using ModelNode = Aura3D.Core.Nodes.Model;
 
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// 两种把多条剪辑合成一个姿势的采样器：<see cref="AnimationGraph"/> 按谓词在节点间切换并做 <c>BlendTime</c>
-/// 交叉淡入；<see cref="AnimationBlendSpace"/> 按 (x,y) 轴值做反距离加权。两者都实现
-/// <see cref="IAnimationSampler"/>，所以挂法与单条剪辑完全一样——<c>Model.Update</c> 分不出区别。
-/// 模型用 KayKit 骷髅武士（CC0，95 条剪辑）：它有侧移与后退步态，混合空间才能真的沿两个轴 blend；
-/// Soldier 只有前向的 Idle/Walk/Run，摆不出 2D 的采样点。
-/// 参数行的排版全在 <c>AnimationMixDemo.axaml</c> 里，这里只剩场景组装与回调。
+/// 动画混合页的视图，MVVM 化：参数、命令、两套采样器与剪辑字典全在
+/// <see cref="AnimationMixViewModel"/>，XAML 经绑定直连；本类只保留生命周期——取资产喂模型、
+/// 在渲染线程回调里组装相机/灯光/地面、按旧顺序登记两份模型并挂骨骼附件。
+/// <see cref="Kit.BlendSpacePad"/> 是强视图交互控件，也留在这里：拖动回调把轴值推进 VM，
+/// 扫掠/Reset 产生的新轴值在每帧 Update 里经 <c>SetAxis</c> 回显滑块（只挪滑块、不发事件，
+/// 不会回流成一次「拖动」）。
 /// </summary>
 public sealed partial class AnimationMixDemo : Demo
 {
-    // 状态机的三个状态，按数组顺序循环：Idle → Walking → Running → Walking → Idle
-    private static readonly string[] StateClips = ["Idle", "Walking_A", "Running_A"];
-
-    // 混合空间的采样点摆成十字，两轴都是 [-1,1]：竖轴前后、横轴左右，原点静止。
-    // 端点放跑、半程放走——KayKit 没有后退跑和侧移走，所以下端点只能用后退走顶上，
-    // 左右半程也没有对应的走路剪辑，只能空着
-    private static readonly (string Clip, Vector2 Point)[] BlendSamples =
-    [
-        ("Idle", new Vector2(0f, 0f)),
-        ("Running_A", new Vector2(0f, 1f)),
-        ("Walking_A", new Vector2(0f, 0.5f)),
-        ("Walking_Backwards", new Vector2(0f, -1f)),
-        ("Running_Strafe_Left", new Vector2(-1f, 0f)),
-        ("Running_Strafe_Right", new Vector2(1f, 0f)),
-    ];
-
-    private ModelNode? idleRunModel;
-    private ModelNode? blendModel;
-    private AnimationGraph? graph;
-    private AnimationBlendSpace? blendSpace;
-
-    private readonly Dictionary<string, Animation> byName = [];
-    private readonly List<AnimationGraphNode> graphNodes = [];
-
-    private int blendPoints;
-
-    private int stateIndex;
-    private bool autoToggle = true;
-    private double toggleSeconds = 2.5;
-    private double clock;
-    private float graphBlendTime = 0.6f;
-
-    private float axisX;
-    private float axisY;
-    private float idwPower = 2f;
-
-    // 速度轴自动扫掠：X 在 0(静止)→1(跑步)→0 之间余弦往返，直接演示连续过渡
-    private bool autoSweep = true;
-    private double sweepPeriod = 8;
-    private double sweepClock;
+    private readonly AnimationMixViewModel viewModel = new();
 
     /// <summary>
-    /// 建页：装配 XAML。参数行的初值就是上面这些字段的默认值，因此 XAML 里写的是字面量，无需回写。
+    /// 建页：装配 XAML 并把 DataContext 换成 VM。仍须显式赋值——外壳继承下来的
+    /// DataContext 优先于默认值；基类先设的「页面自身」在这里被 VM 顶替。
+    /// 编辑板上的采样点摆位与 VM 的 BlendSamples 一一对应，标签就是剪辑名。
     /// </summary>
     /// <param name="context">宿主环境。</param>
     public AnimationMixDemo(DemoContext context) : base(context)
     {
         InitializeComponent();
 
-        // 编辑板上的采样点摆位与 BlendSamples 一一对应，标签就是剪辑名
-        BlendPad.SetSamples(BlendSamples.Select(s => new Kit.BlendSpacePad.SamplePoint(s.Point.X, s.Point.Y, s.Clip)));
+        DataContext = viewModel;
+
+        viewModel.FrameRequested += () => Context.RequestFrame();
+
+        BlendPad.SetSamples(AnimationMixViewModel.BlendSamples.Select(
+            s => new BlendSpacePad.SamplePoint(s.Point.X, s.Point.Y, s.Clip)));
     }
 
     /// <inheritdoc />
@@ -82,12 +46,7 @@ public sealed partial class AnimationMixDemo : Demo
     {
         var (model, animations) = await assets.ModelWithAnimationsAsync("KayKitWarrior");
 
-        model.Name = "WarriorGraph";
-
-        idleRunModel = model;
-
-        foreach (var animation in animations)
-            byName[animation.Name] = animation;
+        viewModel.SetWarrior(model, animations);
     }
 
     /// <inheritdoc />
@@ -95,7 +54,9 @@ public sealed partial class AnimationMixDemo : Demo
     {
         var scene = Context.Scene!;
 
-        if (idleRunModel?.Skeleton == null)
+        var warrior = viewModel.WarriorModel;
+
+        if (warrior?.Skeleton == null)
             return;
 
         scene.ShowGrid = true;
@@ -104,7 +65,7 @@ public sealed partial class AnimationMixDemo : Demo
         // 30×30 地面 + 拉远余量，抬过默认 far 100。
         scene.MainCamera.FarPlane = 120f;
 
-        var light = new DirectionalLight { LightColor = System.Drawing.Color.White };
+        var light = new DirectionalLight { LightColor = Color.White };
 
         light.RotationDegrees = new Vector3(-40f, -20f, 0);
 
@@ -121,204 +82,49 @@ public sealed partial class AnimationMixDemo : Demo
 
         scene.AddNode(ground);
 
-        idleRunModel.Position = new Vector3(-1.9f, 0, 0);
+        warrior.Position = new Vector3(-1.9f, 0, 0);
 
-        scene.AddNode(idleRunModel);
+        scene.AddNode(warrior);
 
-        BuildGraph();
+        viewModel.BuildGraph();
 
         // 右半边是同一条模型的克隆：SharedResource 连骨骼都共用，两个采样器各写自己的 BoneMatrixBuffer。
-        blendModel = idleRunModel.Clone(CopyType.SharedResource);
-        blendModel.Name = "WarriorBlend";
-        blendModel.Position = new Vector3(1.9f, 0, 0);
+        var blendModel = viewModel.CreateBlendClone();
 
-        scene.AddNode(blendModel);
+        if (blendModel != null)
+        {
+            blendModel.Position = new Vector3(1.9f, 0, 0);
 
-        BuildBlendSpace();
+            scene.AddNode(blendModel);
+        }
+
+        viewModel.BuildBlendSpace();
 
         // KayKit 的头盔不是蒙皮网格、只是静态挂在 head 骨骼节点下，而引擎的节点树不随动画更新，
         // 骨骼一动头盔就留在原地。显式把它转成 BoneAttachment 跟随骨骼；克隆要在 attach 之前做，
         // 两份模型各自处理一遍。
-        AttachRigidMeshesToBones(idleRunModel);
-        AttachRigidMeshesToBones(blendModel);
+        AttachRigidMeshesToBones(warrior);
+
+        if (blendModel != null)
+            AttachRigidMeshesToBones(blendModel);
     }
 
     /// <inheritdoc />
     public override void Update(double deltaTime)
     {
-        clock += deltaTime;
+        viewModel.Tick(deltaTime);
 
-        if (autoToggle && clock > toggleSeconds)
-        {
-            clock = 0;
-
-            AdvanceState();
-        }
-
-        if (autoSweep)
-        {
-            sweepClock = (sweepClock + deltaTime) % sweepPeriod;
-
-            // 沿竖轴余弦往返：0(静止) → 0.5(走路) → 1(前进跑) 再回来；
-            // SetAxis 只挪编辑板滑块、不发事件
-            axisY = (1f - (float)Math.Cos(2 * Math.PI * sweepClock / sweepPeriod)) / 2f;
-
-            BlendPad.SetAxis(axisX, axisY);
-        }
-
-        GraphReadout.Text =
-            $"{(graph == null ? Strings.Keys.AnimationMix_NoGraph.T() : $"CurrentWeight={graph.CurrentWeight:0.###}")} · " +
-            Strings.Keys.AnimationMix_GraphReadout.Format(StateClips[stateIndex], graphBlendTime);
-
-        BlendReadout.Text = Strings.Keys.AnimationMix_BlendReadout.Format(
-            axisX, axisY, idwPower, blendPoints, blendSpace?.BonesTransform.Count ?? 0);
+        // 扫掠/Reset 改过的轴值统一在这里回显编辑板：SetAxis 只挪滑块、不发事件；
+        // 拖动路径写进 VM 的值与滑块位置一致，这一句对它是幂等的。
+        BlendPad.SetAxis(viewModel.AxisX, viewModel.AxisY);
 
         Context.RequestFrame();
     }
 
-    private void OnAutoToggleToggled(object? sender, InspectorValueChangedEventArgs e) =>
-        autoToggle = e.ValueAs<bool>();
-
-    private void OnIntervalChanged(object? sender, InspectorValueChangedEventArgs e) =>
-        toggleSeconds = (float)e.ValueAs<double>();
-
-    private void OnBlendTimeChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        graphBlendTime = (float)e.ValueAs<double>();
-
-        foreach (var node in graphNodes)
-            node.BlendTime = graphBlendTime;
-
-        Context.InvalidateRender();
-    }
-
-    private void OnManualSwitch(object? sender, RoutedEventArgs e)
-    {
-        AdvanceState();
-
-        Context.InvalidateRender();
-    }
-
-    // 沿 Idle → Walking → Running → Idle 的环推进一格：谓词读的就是这个字段
-    private void AdvanceState() => stateIndex = (stateIndex + 1) % StateClips.Length;
-
-    // 编辑板拖动：用户接管轴值；开着扫掠时先关掉，否则下一帧滑块就被扫掠值拽回去
-    private void OnPadAxisChanged(object? sender, (double X, double Y) e)
-    {
-        axisX = (float)e.X;
-        axisY = (float)e.Y;
-
-        if (autoSweep)
-        {
-            autoSweep = false;
-
-            AutoSweepToggle.IsChecked = false;
-        }
-
-        ApplyAxis();
-    }
-
-    private void OnIdwPowerChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        idwPower = (float)e.ValueAs<double>();
-
-        if (blendSpace != null)
-            blendSpace.IdwPower = idwPower;
-
-        Context.InvalidateRender();
-    }
-
-    private void OnResetAxis(object? sender, RoutedEventArgs e)
-    {
-        blendSpace?.Reset();
-
-        axisX = 0;
-        axisY = 0;
-
-        BlendPad.SetAxis(0, 0);
-
-        sweepClock = 0;
-
-        Context.InvalidateRender();
-    }
-
-    private void OnAutoSweepToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        autoSweep = e.ValueAs<bool>();
-
-        if (autoSweep)
-        {
-            // 从静止重新开始一个完整的 静止→跑→静止 循环
-            sweepClock = 0;
-        }
-    }
-
-    private void OnSweepPeriodChanged(object? sender, InspectorValueChangedEventArgs e) =>
-        sweepPeriod = Math.Max(1, (float)e.ValueAs<double>());
-
-    private void BuildGraph()
-    {
-        if (idleRunModel?.Skeleton == null)
-            return;
-
-        if (!byName.TryGetValue(StateClips[0], out var idle) ||
-            !byName.TryGetValue(StateClips[1], out var walk) ||
-            !byName.TryGetValue(StateClips[2], out var run))
-            return;
-
-        var idleNode = new AnimationGraphNode(new AnimationSampler(idle)) { BlendTime = graphBlendTime };
-        var walkNode = new AnimationGraphNode(new AnimationSampler(walk)) { BlendTime = graphBlendTime };
-        var runNode = new AnimationGraphNode(new AnimationSampler(run)) { BlendTime = graphBlendTime };
-
-        // 状态环：Idle → Walking → Running → Walking → Idle。转移条件就是「目标态是不是自己」。
-        idleNode.AddNextNode((_, _) => stateIndex == 1, walkNode);
-        walkNode.AddNextNode((_, _) => stateIndex == 2, runNode);
-        walkNode.AddNextNode((_, _) => stateIndex == 0, idleNode);
-        runNode.AddNextNode((_, _) => stateIndex == 1, walkNode);
-
-        graphNodes.Clear();
-        graphNodes.Add(idleNode);
-        graphNodes.Add(walkNode);
-        graphNodes.Add(runNode);
-
-        graph = new AnimationGraph(idleRunModel.Skeleton, idleNode);
-
-        idleRunModel.AnimationSampler = graph;
-    }
-
-    private void BuildBlendSpace()
-    {
-        if (blendModel?.Skeleton == null)
-            return;
-
-        blendSpace = new AnimationBlendSpace(blendModel.Skeleton) { IdwPower = idwPower };
-
-        foreach (var (clip, point) in BlendSamples)
-            AddPoint(clip, point);
-
-        blendSpace.InitializePose();
-
-        blendModel.AnimationSampler = blendSpace;
-
-        ApplyAxis();
-    }
-
-    private void AddPoint(string name, Vector2 at)
-    {
-        if (blendSpace == null || !byName.TryGetValue(name, out var animation))
-            return;
-
-        blendSpace.AddAnimationSampler(at, new AnimationSampler(animation));
-
-        blendPoints++;
-    }
-
-    private void ApplyAxis()
-    {
-        blendSpace?.SetAxis(axisX, axisY);
-
-        Context.InvalidateRender();
-    }
+    // 编辑板拖动：用户接管轴值。关扫掠与写穿混合空间都在 VM 的 SetAxisFromPad 里，
+    // 这里只做事件转发，让指针交互留在视图层。
+    private void OnPadAxisChanged(object? sender, (double X, double Y) e) =>
+        viewModel.SetAxisFromPad(e.X, e.Y);
 
     /// <summary>
     /// 把「没有蒙皮属性、但挂在骨骼节点下」的 mesh（KayKit 的头盔就是这种）转成 <see cref="BoneAttachment"/>：
@@ -391,11 +197,15 @@ public sealed partial class AnimationMixDemo : Demo
     {
         var result = Matrix4x4.Identity;
 
-        while (node != null && !ReferenceEquals(node, root))
-        {
-            result *= node.LocalTransform;
+        // 入参保持非空口径；向上走的游标用可空类型——根之上就是 null，
+        // 否则 node = node.Parent 会吃一条可空警告（Node.Parent 声明为 Node?）
+        Node? cursor = node;
 
-            node = node.Parent;
+        while (cursor != null && !ReferenceEquals(cursor, root))
+        {
+            result *= cursor.LocalTransform;
+
+            cursor = cursor.Parent;
         }
 
         return result;

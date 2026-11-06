@@ -1,15 +1,17 @@
 <ex:Demo x:Class="Aura3D.Gallery.Demos.SkinnedAnimationDemo"
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-         xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
+         xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
-         x:DataType="demos:SkinnedAnimationDemo">
+         x:DataType="demos:SkinnedAnimationViewModel">
 
   <!--
-    蒙皮动画与骨骼挂载页。整页两层：视口 + 浮在右侧的检视面板。
-    参数行的排版全在这里，剪辑下拉的选项要到场景组装时才填（动画来自 glb 文件）。
+    蒙皮动画与骨骼挂载页。MVVM 化：文案、参数与命令全在 SkinnedAnimationViewModel——
+    标签是 Lingua observable（^ 绑定，换语言自动生效），行控件值走双向绑定写穿采样器
+    与骨骼附件。剪辑下拉的选项要到场景组装时才填（动画来自 glb 文件），两条读数
+    由视图逐帧 Tick 重读。
   -->
   <Panel>
 
@@ -22,41 +24,39 @@
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_Playback}}" />
 
-        <kit:ComboRow x:Name="ClipCombo" Label="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_Clip}}" SelectionChanged="OnClipChanged" />
+        <kit:ComboRow Label="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_Clip}}" Options="{Binding ClipOptions}"
+                      SelectedItem="{Binding SelectedClip}" />
 
-        <kit:SliderRow Label="TimeScale" Minimum="0" Maximum="3" Value="1" Format="0.00"
-                       ValueChanged="OnTimeScaleChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_TimeScale}}" Minimum="0" Maximum="3" Format="0.00"
+                       Value="{Binding TimeScale}" />
 
-        <kit:ComboRow x:Name="LoopModeCombo" Label="LoopMode" Options="{Binding LoopModeOptions}"
-                      SelectionChanged="OnLoopModeChanged" />
+        <kit:ComboRow Label="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_LoopMode}}" Options="{Binding LoopModeOptions}"
+                      SelectedItem="{Binding SelectedLoopMode}" />
 
-        <Button Content="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_Reset}}" Click="OnReset" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_Reset}}" Command="{Binding ResetCommand}" HorizontalAlignment="Stretch" />
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_Driver}}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_ExternalUpdate}}" IsChecked="False"
-                       Toggled="OnExternalUpdateToggled" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_ExternalUpdate}}" IsChecked="{Binding ExternalUpdate}" />
 
         <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_DriveNote}}" />
 
-        <Button Content="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_AdvanceStep}}" Click="OnManualStep" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_AdvanceStep}}" Command="{Binding AdvanceStepCommand}" HorizontalAlignment="Stretch" />
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_Bones}}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_ShowBone}}" IsChecked="True"
-                       Toggled="OnShowBoneToggled" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_ShowBone}}" IsChecked="{Binding ShowBone}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_Attachment}}" IsChecked="True"
-                       Toggled="OnAttachmentToggled" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_Attachment}}" IsChecked="{Binding ShowAttachment}" />
 
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_AttachmentYaw}}" Minimum="-180" Maximum="180" Value="0" Format="0"
-                       ValueChanged="OnAttachmentYawChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_AttachmentYaw}}" Minimum="-180" Maximum="180" Format="0"
+                       Value="{Binding AttachmentYaw}" />
 
         <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_AttachNote}}" />
 
-        <kit:ReadoutRow x:Name="BoneReadout" Label="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_BonePicker}}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_BonePicker}}" Text="{Binding BoneReadoutText^}" />
 
-        <kit:ReadoutRow x:Name="Readout" Label="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_PlaybackState}}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.SkinnedAnimation_PlaybackState}}" Text="{Binding PlaybackReadoutText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>

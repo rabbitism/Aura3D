@@ -1,15 +1,17 @@
 <ex:Demo x:Class="Aura3D.Gallery.Demos.PostProcessingDemo"
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-         xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
+         xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
-         x:DataType="demos:PostProcessingDemo">
+         x:DataType="demos:PostProcessingViewModel">
 
   <!--
-    管线设置页：视口 + 右侧检视浮层。
-    这里所有滑杆与开关的初值都取自 PipelineSettings，XAML 不写死，改由构造函数回填。
+    管线设置页：MVVM 化（样板见 Particles 页）。文案与参数全部绑定 PostProcessingViewModel——
+    标签是 Lingua observable（^ 绑定，换语言自动生效），行控件值双向绑定到 VM；
+    宿主的 PipelineSettings 只有视图够得着，VM 的值事件在 code-behind 里逐项转写进去。
+    视图 code-behind 只剩生命周期：建场景、转写参数、逐帧 Tick。
   -->
   <Panel>
 
@@ -22,43 +24,43 @@
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.PostProcessing_ToneMapping}}" />
 
-        <kit:SliderRow x:Name="ExposureRow" Label="ToneMappingExposure" Minimum="0.05" Maximum="4" ShowTicks="True"
-                       ValueChanged="OnExposureChanged" />
-        <kit:SliderRow x:Name="BrightnessClampRow" Label="BrightnessClamp" Minimum="0.5" Maximum="16" ShowTicks="True"
-                       ValueChanged="OnBrightnessClampChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_ToneMappingExposure}}" Minimum="0.05" Maximum="4" ShowTicks="True"
+                       Value="{Binding ToneMappingExposure}" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_BrightnessClamp}}" Minimum="0.5" Maximum="16" ShowTicks="True"
+                       Value="{Binding BrightnessClamp}" />
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.PostProcessing_Ambient}}" />
 
-        <kit:SliderRow x:Name="AmbientRow" Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_AmbientIntensity}}" Minimum="0" Maximum="2" ShowTicks="True"
-                       ValueChanged="OnAmbientIntensityChanged" />
-        <kit:SliderRow x:Name="IblAmbientRow" Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_IblAmbient}}" Minimum="0" Maximum="4" ShowTicks="True"
-                       ValueChanged="OnIblAmbientIntensityChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_AmbientIntensity}}" Minimum="0" Maximum="2" ShowTicks="True"
+                       Value="{Binding AmbientIntensity}" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_IblAmbient}}" Minimum="0" Maximum="4" ShowTicks="True"
+                       Value="{Binding IblAmbientIntensity}" />
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.PostProcessing_Post}}" />
 
-        <kit:ToggleRow x:Name="FxaaRow" Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_Fxaa}}" Toggled="OnFxaaToggled" />
-        <kit:ToggleRow x:Name="CullingRow" Label="EnableFrustumCulling" Toggled="OnCullingToggled" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_Fxaa}}" IsChecked="{Binding EnableFxaa}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_FrustumCulling}}" IsChecked="{Binding EnableFrustumCulling}" />
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.PostProcessing_Rebuild}}" />
 
-        <kit:SliderRow x:Name="DirectionalLimitRow" Label="DirectionalLightLimit" Minimum="1" Maximum="10" Format="0" ShowTicks="True"
-                       ValueChanged="OnDirectionalLimitChanged" />
-        <kit:SliderRow x:Name="PointLimitRow" Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_PointLightLimit}}" Minimum="1" Maximum="10" Format="0" ShowTicks="True"
-                       ValueChanged="OnPointLimitChanged" />
-        <kit:SliderRow x:Name="SpotLimitRow" Label="SpotLightLimit" Minimum="1" Maximum="10" Format="0" ShowTicks="True"
-                       ValueChanged="OnSpotLimitChanged" />
-        <kit:SliderRow x:Name="CascadeCountRow" Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_CsmCascadeCount}}" Minimum="1" Maximum="4" Format="0" ShowTicks="True"
-                       ValueChanged="OnCascadeCountChanged" />
-        <kit:SliderRow x:Name="SplitLambdaRow" Label="CsmSplitLambda" Minimum="0" Maximum="1" ShowTicks="True"
-                       ValueChanged="OnSplitLambdaChanged" />
-        <kit:SliderRow x:Name="MapResolutionRow" Label="CsmShadowMapResolution" Minimum="256" Maximum="4096" Format="0" ShowTicks="True"
-                       ValueChanged="OnMapResolutionChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_DirectionalLightLimit}}" Minimum="1" Maximum="10" Format="0" ShowTicks="True"
+                       Value="{Binding DirectionalLightLimit}" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_PointLightLimit}}" Minimum="1" Maximum="10" Format="0" ShowTicks="True"
+                       Value="{Binding PointLightLimit}" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_SpotLightLimit}}" Minimum="1" Maximum="10" Format="0" ShowTicks="True"
+                       Value="{Binding SpotLightLimit}" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_CsmCascadeCount}}" Minimum="1" Maximum="4" Format="0" ShowTicks="True"
+                       Value="{Binding CsmCascadeCount}" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_CsmSplitLambda}}" Minimum="0" Maximum="1" ShowTicks="True"
+                       Value="{Binding CsmSplitLambda}" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_CsmShadowMapResolution}}" Minimum="256" Maximum="4096" Format="0" ShowTicks="True"
+                       Value="{Binding CsmShadowMapResolution}" />
 
-        <Button Content="{Translate {x:Static loc:Strings+Keys.PostProcessing_Reload}}" Click="OnReload" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.PostProcessing_Reload}}" Command="{Binding ReloadCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_CastShadow}}" IsChecked="True" Toggled="OnCastShadowToggled" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_CastShadow}}" IsChecked="{Binding CastShadow}" />
 
-        <kit:ReadoutRow x:Name="MatrixReadout" Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_Matrix}}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.PostProcessing_Matrix}}" Text="{Binding ReadoutText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>

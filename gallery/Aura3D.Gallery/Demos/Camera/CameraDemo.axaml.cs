@@ -3,50 +3,38 @@ using Aura3D.Core.Geometries;
 using Aura3D.Core.Resources;
 using Aura3D.Gallery.Kit;
 using Avalonia.Controls;
-using Avalonia.Interactivity;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Numerics;
-using System.Threading.Tasks;
-using Aura3D.Gallery.Localization;
 
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// 相机能做的事：透视/正交切换、视锥参数、<see cref="Camera.LookAt"/>、
-/// <see cref="Camera.FitToBoundingBox"/> 与 <see cref="Camera.WorldToScreen"/>。
-/// 屏幕投影的读数配画面左上角那个十字标记，能直接验证 <c>WorldToScreen</c> 的坐标原点与 Y 方向。
-/// 参数行与十字标记的排版全在 <c>CameraDemo.axaml</c> 里，这里只剩场景组装与回调。
+/// 相机页的视图：参数与命令全在 <see cref="CameraViewModel"/>，XAML 经绑定直连。
+/// 本类只剩生命周期——组装九个棋盘格盒子、把真相机与取景目标交给 VM、逐帧推进
+/// 十字标记与屏幕投影读数。投影/视锥/背景等可绑参数的写穿逻辑见 VM。
 /// </summary>
 public sealed partial class CameraDemo : Demo
 {
+    private readonly CameraViewModel viewModel = new();
+
     private readonly List<Mesh> boxes = [];
 
     private Mesh? focusTarget;
     private Node? markerRoot;
-    private ProjectionType projection = ProjectionType.Perspective;
-    private double fieldOfView = 60;
-    private double orthographicSize = 4;
-    private double nearPlane = 0.1;
-    private double farPlane = 100;
-
-    /// <summary>投影方式下拉的选项，XAML 里以 <c>Options="{Binding ProjectionOptions}"</c> 取用。</summary>
-    public IList ProjectionOptions { get; } = new List<ProjectionType>
-    {
-        ProjectionType.Perspective,
-        ProjectionType.Orthographic,
-    };
 
     /// <summary>
-    /// 建页：装配 XAML，并把下拉的选中项对齐到本页真正生效的投影方式。
+    /// 建页：装配 XAML 并把 DataContext 换成 VM。仍须显式赋值——外壳继承下来的
+    /// DataContext 优先于默认值；基类先设的「页面自身」在这里被 VM 顶替。
     /// </summary>
     /// <param name="context">宿主环境。</param>
     public CameraDemo(DemoContext context) : base(context)
     {
         InitializeComponent();
 
-        ProjectionRow.SelectedItem = projection;
+        DataContext = viewModel;
+
+        viewModel.FrameRequested += () => Context.RequestFrame();
     }
 
     /// <inheritdoc />
@@ -90,7 +78,10 @@ public sealed partial class CameraDemo : Demo
         focusTarget = boxes[4];
         markerRoot = boxes[0];
 
-        ApplyProjection();
+        // 相机从这里交给 VM：视锥与背景意图一次性写穿（等价旧页 BuildScene 末尾的 ApplyProjection），
+        // 之后行控件经绑定直写这台相机。
+        viewModel.AttachCamera(scene.MainCamera);
+        viewModel.SetFocusTarget(focusTarget);
 
         scene.MainCamera.Position = new Vector3(7f, 6f, 9f);
         scene.MainCamera.LookAt(new Vector3(0, 1f, 0));
@@ -117,7 +108,9 @@ public sealed partial class CameraDemo : Demo
         {
             Overlay.IsVisible = false;
 
-            ScreenReadout.Text = Strings.Keys.Camera_BehindCamera.T();
+            // 点在相机背后：没有坐标可摆，读数换成「相机背后」那句。
+            viewModel.SetScreenProjection(null, camera.Width, camera.Height);
+            viewModel.Tick();
 
             return;
         }
@@ -128,84 +121,13 @@ public sealed partial class CameraDemo : Demo
 
         // WorldToScreen 返回的是设备像素，覆盖层用逻辑像素，所以除回 ScreenScale；
         // Y 轴方向由引擎负责，这里直接按左上角摆放标记。
-        Canvas.SetLeft(Crosshair, screen.Value.X / scale - 8);
-        Canvas.SetTop(Crosshair, screen.Value.Y / scale - 8);
+        var point = screen.Value / scale;
 
-        ScreenReadout.Text = Strings.Keys.Camera_ScreenReadout.Format(
-            screen.Value.X / scale, screen.Value.Y / scale, camera.Width, camera.Height);
-    }
+        Canvas.SetLeft(Crosshair, point.X - 8);
+        Canvas.SetTop(Crosshair, point.Y - 8);
 
-    private void OnProjectionChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        projection = (ProjectionType)e.Value!;
-
-        ApplyProjection();
-    }
-
-    private void OnFieldOfViewChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        fieldOfView = e.ValueAs<double>();
-
-        ApplyProjection();
-    }
-
-    private void OnOrthographicSizeChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        orthographicSize = e.ValueAs<double>();
-
-        ApplyProjection();
-    }
-
-    private void OnNearChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        nearPlane = e.ValueAs<double>();
-
-        ApplyProjection();
-    }
-
-    private void OnFarChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        farPlane = e.ValueAs<double>();
-
-        ApplyProjection();
-    }
-
-    private void OnFitClicked(object? sender, RoutedEventArgs e)
-    {
-        if (focusTarget?.BoundingBox is { } box)
-        {
-            Context.Scene?.MainCamera.FitToBoundingBox(box, 0.25f);
-
-            ApplyProjection();
-        }
-    }
-
-    private void OnResetClicked(object? sender, RoutedEventArgs e)
-    {
-        Context.Scene?.MainCamera.Position = new Vector3(7, 6, 9);
-        Context.Scene?.MainCamera.LookAt(new Vector3(0, 1, 0));
-    }
-
-    private void OnRenderBackgroundToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        if (Context.Scene != null)
-            Context.Scene.MainCamera.IsRenderBackground = e.ValueAs<bool>();
-
-        Context.InvalidateRender();
-    }
-
-    private void ApplyProjection()
-    {
-        var camera = Context.Scene?.MainCamera;
-
-        if (camera == null)
-            return;
-
-        camera.ProjectionType = projection;
-        camera.FieldOfView = (float)fieldOfView;
-        camera.OrthographicSize = (float)orthographicSize;
-        camera.SetClippingPlanes((float)nearPlane, (float)farPlane);
-
-        Context.InvalidateRender();
+        // 读数与十字标记共用同一份逻辑坐标，VM 负责按当前语言排成一句话。
+        viewModel.SetScreenProjection(point, camera.Width, camera.Height);
+        viewModel.Tick();
     }
 }

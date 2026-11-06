@@ -1,84 +1,57 @@
 using Aura3D.Core.Geometries;
 using Aura3D.Core.Nodes;
-using Aura3D.Core.Renderers;
 using Aura3D.Core.Resources;
 using Aura3D.Gallery.Kit;
-using Aura3D.Gallery.Localization;
-using Avalonia.Interactivity;
-using Irihi.Lingua;
-using System;
-using System.Collections;
-using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// 背景的两条绘制分支：<c>Scene.Background</c> 是 <c>OneOf&lt;CubeTexture, Texture&gt;</c>，
-/// BackgroundPass 按分支号走两条完全不同的路——立方图按视线方向采样天空盒，普通图铺满窗口拉伸。
-/// 四种背景全部来自文件资产，和 ibl-environment 页的程序化全景图互为对照。
-/// 参数行的排版全在 <c>SkyboxBackgroundDemo.axaml</c> 里，这里只剩场景组装与回调。
+/// 背景来源与天空盒页的视图：参数与命令全在 <see cref="SkyboxBackgroundViewModel"/>，
+/// XAML 经绑定直连。本类只保留生命周期——取三份背景素材喂 VM、在渲染线程回调里组装场景
+/// （地面/方柱/反射球是纯布景，平行光住在 VM）、把两根 Settings 滑杆的值事件转写进宿主
+/// （VM 不碰 DemoContext，参照 Particles/PostProcessing 页的做法）、逐帧转球、驱动 Readout 与渲染。
+/// 背景的两条绘制分支（立方图按视线采样、平面图铺满窗口拉伸）与投影参数的不对称口径
+/// 见检视面板里的说明行。
 /// </summary>
 public sealed partial class SkyboxBackgroundDemo : Demo
 {
-    private const string IrradianceKey = "IrradianceMap";
-    private const string PrefilterKey = "PrefilteredEnvironmentMap";
-
-    private static readonly LinguaKey[] SourceKeys =
-    [
-        Strings.Keys.Background_SourceEngineDefault,
-        Strings.Keys.Background_SourceCubeMap,
-        Strings.Keys.Background_SourceHdr,
-        Strings.Keys.Background_SourceFlat,
-    ];
-
-    /// <summary>背景来源下拉的选项集合，供 XAML 的 <c>Options="{Binding SourceOptions}"</c> 绑定。</summary>
-    public IList SourceOptions { get; } = SourceKeys.Select(k => k.T()).ToList();
-
-    private int sourceIndex = 1;
-    private uint cubeFaceSize = 128;
-
-    private bool orthographic;
-    private float orthoSize = 12f;
-    private float fieldOfView = 75f;
-    private float farPlane = 100f;
-
-    private CubeTexture fileCube = null!;
-    private Texture hdrPanorama = null!;
-    private Texture flatImage = null!;
+    private readonly SkyboxBackgroundViewModel viewModel;
 
     private Mesh? ball;
-    private DirectionalLight? sun;
 
     /// <summary>
-    /// 建页：装配 XAML，并把参数行的初值对齐到引擎里真正生效的那一份。
+    /// 建页：先按宿主当前状态建 VM（两根 Settings 滑杆的初值取自宿主），装配 XAML 后把
+    /// DataContext 换成 VM。仍须显式赋值——外壳继承下来的 DataContext 优先于默认值；
+    /// 基类先设的「页面自身」在这里被 VM 顶替。
     /// </summary>
     /// <param name="context">宿主环境。</param>
     public SkyboxBackgroundDemo(DemoContext context) : base(context)
     {
+        viewModel = new(context.Settings);
+
         InitializeComponent();
 
-        var settings = Context.Settings;
+        // 顶替基类的 DataContext=this：页面绑定从此指向 VM。
+        DataContext = viewModel;
 
-        SourceCombo.SelectedItem = SourceOptions[sourceIndex];
-        CubeFaceRow.Value = cubeFaceSize;
-        OrthoSizeRow.Value = orthoSize;
-        FovRow.Value = fieldOfView;
-        FarPlaneRow.Value = farPlane;
-        AmbientRow.Value = settings.IblAmbientIntensity;
-        ExposureRow.Value = settings.ToneMappingExposure;
+        // 宿主的 PipelineSettings 只有视图够得着：两根滑杆的新值经事件逐项转写进去
+        //（取 float 的口径与旧处理器一致），随后的重绘请求走下面的 FrameRequested。
+        viewModel.IblAmbientIntensityChanged += value => Context.Settings.IblAmbientIntensity = (float)value;
+        viewModel.ToneMappingExposureChanged += value => Context.Settings.ToneMappingExposure = (float)value;
+
+        viewModel.FrameRequested += () => Context.InvalidateRender();
     }
 
     /// <inheritdoc />
     public override async Task LoadAssetsAsync(AssetBatch assets)
     {
         // 六面按 CubeMapFace 顺序取，helper 内部用的就是 AssetManifest.SkyboxKeys。
-        fileCube = await assets.CubeTextureAsync();
-
-        hdrPanorama = await assets.HdrTextureAsync("Hdr1k");
-
-        flatImage = await assets.TextureAsync("BackgroundJpg");
+        viewModel.SetBackgroundAssets(
+            await assets.CubeTextureAsync(),
+            await assets.HdrTextureAsync("Hdr1k"),
+            await assets.TextureAsync("BackgroundJpg"));
     }
 
     /// <inheritdoc />
@@ -89,18 +62,11 @@ public sealed partial class SkyboxBackgroundDemo : Demo
         scene.MainCamera.Position = new Vector3(0, 3.2f, 13f);
         scene.MainCamera.LookAt(new Vector3(0, 1.4f, 0));
 
-        ApplyCamera(scene.MainCamera);
-        ApplyBackground(scene);
+        // 相机四参数、背景与画背景开关在登记时统一写穿（旧 BuildScene 里的
+        // ApplyCamera + ApplyBackground 挪进了 VM）。
+        viewModel.AttachScene(scene);
 
-        sun = new DirectionalLight
-        {
-            LightColor = System.Drawing.Color.White,
-            Irradiance = 60000,
-        };
-
-        sun.RotationDegrees = new Vector3(-42f, -18f, 0);
-
-        scene.AddNode(sun);
+        scene.AddNode(viewModel.Sun);
 
         var ground = new Mesh
         {
@@ -151,7 +117,8 @@ public sealed partial class SkyboxBackgroundDemo : Demo
 
         scene.AddNode(ball);
 
-        Report();
+        // 旧代码在这里还调一次 Report() 预填读数；现在读数是 VM 的 observable，
+        // 同一回调里随后的 Update 会先调 Tick()，显示时机不变。
     }
 
     /// <inheritdoc />
@@ -161,191 +128,8 @@ public sealed partial class SkyboxBackgroundDemo : Demo
         if (ball != null)
             ball.RotationDegrees = new Vector3(0, ball.RotationDegrees.Y + 10f * (float)deltaTime, 0);
 
-        Report();
+        viewModel.Tick();
 
         Context.RequestFrame();
-    }
-
-    private void OnSourceChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        sourceIndex = Math.Max(0, SourceOptions.IndexOf((string)e.Value!));
-
-        if (Context.Scene != null)
-            ApplyBackground(Context.Scene);
-
-        Report();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnCubeFaceChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        cubeFaceSize = (uint)Math.Round(e.ValueAs<double>() / 32) * 32;
-
-        if (Context.Scene != null)
-            ApplyBackground(Context.Scene);
-
-        Report();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnRenderBackgroundToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        var camera = Context.Scene?.MainCamera;
-
-        if (camera != null)
-            camera.IsRenderBackground = e.ValueAs<bool>();
-
-        Report();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnOrthographicToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        orthographic = e.ValueAs<bool>();
-
-        ApplyCameraIfNeeded();
-    }
-
-    private void OnOrthoSizeChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        orthoSize = (float)e.ValueAs<double>();
-
-        ApplyCameraIfNeeded();
-    }
-
-    private void OnFovChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        fieldOfView = (float)e.ValueAs<double>();
-
-        ApplyCameraIfNeeded();
-    }
-
-    private void OnFarPlaneChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        farPlane = (float)e.ValueAs<double>();
-
-        ApplyCameraIfNeeded();
-    }
-
-    private void OnIblAmbientChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.IblAmbientIntensity = (float)e.ValueAs<double>();
-
-        Report();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnExposureChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.ToneMappingExposure = (float)e.ValueAs<double>();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnSunVisibleToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        if (sun != null)
-            sun.Enable = e.ValueAs<bool>();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnRebake(object? sender, RoutedEventArgs e)
-    {
-        InvalidateIblCaches();
-
-        Context.InvalidateRender();
-    }
-
-    private void ApplyBackground(Aura3D.Core.Scenes.Scene scene)
-    {
-        switch (sourceIndex)
-        {
-            case 1:
-                scene.Background = fileCube;
-                break;
-            case 2:
-                scene.Background = HDRIToCubeTextureConverter.ConvertFromTexture(hdrPanorama, cubeFaceSize);
-                break;
-            case 3:
-                scene.Background = flatImage;
-                break;
-            default:
-                // 引擎在 Scene 构造里就把这张纯色图当默认背景，分支号走 T1。
-                scene.Background = Texture.CreateFromColor(System.Drawing.Color.AliceBlue);
-                break;
-        }
-    }
-
-    private void ApplyCameraIfNeeded()
-    {
-        var camera = Context.Scene?.MainCamera;
-
-        if (camera == null)
-            return;
-
-        ApplyCamera(camera);
-
-        Report();
-
-        Context.InvalidateRender();
-    }
-
-    private void ApplyCamera(Camera camera)
-    {
-        camera.ProjectionType = orthographic ? ProjectionType.Orthographic : ProjectionType.Perspective;
-        camera.OrthographicSize = orthoSize;
-        camera.FieldOfView = fieldOfView;
-        camera.FarPlane = farPlane;
-    }
-
-    private void InvalidateIblCaches()
-    {
-        var camera = Context.Scene?.MainCamera;
-
-        if (camera == null)
-            return;
-
-        foreach (var key in new[] { IrradianceKey, PrefilterKey })
-        {
-            if (camera.GetPipelineGpuState<CubeRenderTarget>(key) is { } target)
-                target.Invalidate();
-        }
-    }
-
-    private void Report()
-    {
-        var scene = Context.Scene;
-
-        if (scene == null)
-            return;
-
-        var camera = scene.MainCamera;
-
-        var branch = scene.Background.IsT0
-            ? Strings.Keys.Background_BranchCube.Format(scene.Background.AsT0.Width, scene.Background.AsT0.Height)
-            : scene.Background.IsT1
-                ? Strings.Keys.Background_BranchImage.Format(scene.Background.AsT1.Width, scene.Background.AsT1.Height)
-                : Strings.Keys.Background_BranchNone.T();
-
-        var variant = camera.ProjectionType == ProjectionType.Orthographic
-            ? Strings.Keys.Background_VariantOrtho.Format(camera.OrthographicSize)
-            : Strings.Keys.Background_VariantPersp.Format(camera.FieldOfView);
-
-        var irradiance = camera.GetPipelineGpuState<CubeRenderTarget>(IrradianceKey);
-        var prefilter = camera.GetPipelineGpuState<CubeRenderTarget>(PrefilterKey);
-
-        Readout.Text = Strings.Keys.Background_Readout.Format(
-            SourceOptions[sourceIndex],
-            branch,
-            variant,
-            camera.FarPlane,
-            camera.IsRenderBackground ? Strings.Keys.Background_RenderOn.T() : Strings.Keys.Background_RenderOff.T(),
-            irradiance?.FrameBufferId ?? 0,
-            prefilter?.FrameBufferId ?? 0);
     }
 }

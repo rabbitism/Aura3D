@@ -179,8 +179,13 @@
   <data name="Background_RebakeIbl" xml:space="preserve"><value>重烘 IBL（换来源会自动重烘；背景资源内容被原地改过时用）</value></data>
   <data name="Background_IblNote" xml:space="preserve"><value>辐照度与预滤波反射只认立方图那一支：Background 不是 CubeTexture 时退到引擎自带的默认立方图（IrradianceMapPass 里读 RenderPipeline.DefaultIblAmbientCubeTexture）。两份结果缓存在相机节点上，FrameBufferId 非 0 就直接复用，所以本页在四种来源之间来回切时球面反射不会跟着变——要么按上面的按钮 Invalidate，要么 Reload。缓存机制的完整演示在 ibl-environment 页。</value></data>
   <data name="Background_IblCache" xml:space="preserve"><value>背景分支与 IBL 缓存</value></data>
+  <data name="Background_SceneBackground" xml:space="preserve"><value>Scene.Background</value></data>
+  <data name="Background_IblAmbientIntensity" xml:space="preserve"><value>IblAmbientIntensity</value></data>
+  <data name="Background_ToneMappingExposure" xml:space="preserve"><value>ToneMappingExposure</value></data>
   <data name="Camera_Intro" xml:space="preserve"><value>正交投影没有近大远小，用来量尺寸；透视投影改 FieldOfView 会同时改变垂直视野与纵横比效果。近/远裁剪面拉到物体之间就能看见截面——这是视锥剔除之外另一层「看不见」。</value></data>
   <data name="Camera_Projection" xml:space="preserve"><value>投影方式</value></data>
+  <data name="Camera_FieldOfView" xml:space="preserve"><value>视场角 °</value></data>
+  <data name="Camera_OrthographicSize" xml:space="preserve"><value>正交尺寸</value></data>
   <data name="Camera_NearPlane" xml:space="preserve"><value>近裁剪面</value></data>
   <data name="Camera_FarPlane" xml:space="preserve"><value>远裁剪面</value></data>
   <data name="Camera_FitFifthBox" xml:space="preserve"><value>FitToBoundingBox（第 5 个盒子）</value></data>
@@ -208,6 +213,15 @@
   <data name="CelShading_FaceRenderType" xml:space="preserve"><value>RenderType=1 并打 face 标签（走 FACE_RENDER 分支）</value></data>
   <data name="CelShading_OutlineNote" xml:space="preserve"><value>这是 OutlinePass 唯一的公开旋钮。描边宽度与颜色是私有字段（2f / 1.5f / 黑），pass 实例只能从 RenderPipeline.EveryCameraRenderPasses 里按类型找出来——本页就是这么拿的。</value></data>
   <data name="CelShading_Bindings" xml:space="preserve"><value>绑定结果</value></data>
+  <data name="CelShading_RampIndex0" xml:space="preserve"><value>_RampIndex0 · _RampIndex0</value></data>
+  <data name="CelShading_RampIndex1" xml:space="preserve"><value>_RampIndex1 · _RampIndex1</value></data>
+  <data name="CelShading_RampIndex2" xml:space="preserve"><value>_RampIndex2 · _RampIndex2</value></data>
+  <data name="CelShading_RampIndex3" xml:space="preserve"><value>_RampIndex3 · _RampIndex3</value></data>
+  <data name="CelShading_RampIndex4" xml:space="preserve"><value>_RampIndex4 · _RampIndex4</value></data>
+  <data name="CelShading_DirectionalLight" xml:space="preserve"><value>定向光</value></data>
+  <data name="CelShading_YawSpeed" xml:space="preserve"><value>偏航速度（度/秒）</value></data>
+  <data name="CelShading_OutlineAmbient" xml:space="preserve"><value>OutlinePass.AmbientIntensity</value></data>
+  <data name="CelShading_SettingsAmbient" xml:space="preserve"><value>Settings.AmbientIntensity</value></data>
   <data name="Environment_Intro" xml:space="preserve"><value>辐照度与预滤波反射各烘一次，结果挂在相机节点的两个 GPU 状态上，之后每帧直接复用。换 Background 时 Scene 的 setter 会通知管线（OnBackgroundChanged）自动作废这两张缓存，下一帧用新图重烘，所以换环境图不需要手动干预。「立刻重烘」按钮留给剩下的一种情况：背景资源引用没换、但内容被原地改过，或者想强制重算对比——它调 Invalidate() 把帧缓冲清零。</value></data>
   <data name="Environment_Panorama" xml:space="preserve"><value>全景图</value></data>
   <data name="Environment_CubeSize" xml:space="preserve"><value>立方图边长</value></data>
@@ -259,6 +273,7 @@
   <data name="Hism_MoveEveryFrame" xml:space="preserve"><value>逐帧搬动实例</value></data>
   <data name="Hism_MovesPerSecond" xml:space="preserve"><value>每秒搬动次数</value></data>
   <data name="Hism_GroupCulling" xml:space="preserve"><value>按组视锥剔除</value></data>
+  <data name="Hism_Clear" xml:space="preserve"><value>清空</value></data>
   <data name="Hism_Refill" xml:space="preserve"><value>重新铺满</value></data>
   <data name="Hism_OctreeState" xml:space="preserve"><value>八叉树状态</value></data>
   <data name="Instancing_Intro" xml:space="preserve"><value>两片实例数相同，右片是逐实例顶点色：它的顶点着色器自带 INSTANCED_MESH 分支，所以同一个材质既能挂普通 Mesh（走 uniform 分支）也能挂 InstancedMesh（走属性分支）。逐实例属性的长度必须正好等于实例数，因此本页总是先立实例再挂属性。</value></data>
@@ -272,7 +287,9 @@
   <data name="Instancing_Restore" xml:space="preserve"><value>恢复满量</value></data>
   <data name="Instancing_Cost" xml:space="preserve"><value>代价</value></data>
   <data name="MaterialShaders_Intro" xml:space="preserve"><value>自定义着色器按 pass 的类名作键挂到材质上（本页全部覆盖 LightPass），可以只换片元、顶点沿用引擎实现。材质参数按同名 uniform 绑定，注意：写参数会抬高材质的 Version，让带自定义着色器的材质重编译——所以逐帧改 uniform 默认关着。</value></data>
+  <data name="MaterialShaders_AlphaCutoff" xml:space="preserve"><value>alphaCutoff</value></data>
   <data name="MaterialShaders_BaseColorMap" xml:space="preserve"><value>BaseColor 贴图</value></data>
+  <data name="MaterialShaders_BlendMode" xml:space="preserve"><value>BlendMode</value></data>
   <data name="MaterialShaders_NormalMap" xml:space="preserve"><value>Normal 通道（切线空间法线）</value></data>
   <data name="MaterialShaders_UseConstantShader" xml:space="preserve"><value>用自定义常量色着色器</value></data>
   <data name="MaterialShaders_Hue" xml:space="preserve"><value>色相 °</value></data>
@@ -353,6 +370,13 @@
   <data name="PostProcessing_Reload" xml:space="preserve"><value>Reload：把上面这组应用下去</value></data>
   <data name="PostProcessing_CastShadow" xml:space="preserve"><value>平行光投影 CastShadow</value></data>
   <data name="PostProcessing_Matrix" xml:space="preserve"><value>当前管线的生效矩阵</value></data>
+  <data name="PostProcessing_ToneMappingExposure" xml:space="preserve"><value>ToneMappingExposure</value></data>
+  <data name="PostProcessing_BrightnessClamp" xml:space="preserve"><value>BrightnessClamp</value></data>
+  <data name="PostProcessing_FrustumCulling" xml:space="preserve"><value>EnableFrustumCulling</value></data>
+  <data name="PostProcessing_DirectionalLightLimit" xml:space="preserve"><value>DirectionalLightLimit</value></data>
+  <data name="PostProcessing_SpotLightLimit" xml:space="preserve"><value>SpotLightLimit</value></data>
+  <data name="PostProcessing_CsmSplitLambda" xml:space="preserve"><value>CsmSplitLambda</value></data>
+  <data name="PostProcessing_CsmShadowMapResolution" xml:space="preserve"><value>CsmShadowMapResolution</value></data>
   <data name="Primitives_Intro" xml:space="preserve"><value>七种图元共用同一批顶点，只是 GPU 连线规则不同。改「列/行/波幅」会真的重建顶点缓冲；选中某一种图元后其余会被摆到画面外，方便单独看清连线方式。</value></data>
   <data name="Primitives_Focus" xml:space="preserve"><value>聚焦图元</value></data>
   <data name="Primitives_Columns" xml:space="preserve"><value>列数（每行顶点）</value></data>
@@ -395,8 +419,16 @@
   <data name="Shadows_DirectionalVolume" xml:space="preserve"><value>光源体积：平行光</value></data>
   <data name="Shadows_BoundingBox" xml:space="preserve"><value>包围盒</value></data>
   <data name="Shadows_Resources" xml:space="preserve"><value>实际生效的阴影资源</value></data>
+  <data name="Shadows_NearPlane" xml:space="preserve"><value>NearPlane</value></data>
+  <data name="Shadows_ConfigFarPlane" xml:space="preserve"><value>FarPlane</value></data>
+  <data name="Shadows_CsmCascadeCount" xml:space="preserve"><value>CsmCascadeCount</value></data>
+  <data name="Shadows_CsmShadowMapResolution" xml:space="preserve"><value>CsmShadowMapResolution</value></data>
+  <data name="Shadows_DirectionalLightLimit" xml:space="preserve"><value>DirectionalLightLimit</value></data>
+  <data name="Shadows_Reload" xml:space="preserve"><value>Reload</value></data>
   <data name="SkinnedAnimation_Intro" xml:space="preserve"><value>剪辑名与时长都来自 glb 里实际的 animations 数组，不是写死的：这个模型带 4 条，其中 TPose 那条正好能用来核对绑定姿势。</value></data>
   <data name="SkinnedAnimation_Clip" xml:space="preserve"><value>剪辑</value></data>
+  <data name="SkinnedAnimation_TimeScale" xml:space="preserve"><value>时间缩放</value></data>
+  <data name="SkinnedAnimation_LoopMode" xml:space="preserve"><value>循环模式</value></data>
   <data name="SkinnedAnimation_Reset" xml:space="preserve"><value>Reset（回到 0 秒）</value></data>
   <data name="SkinnedAnimation_ExternalUpdate" xml:space="preserve"><value>ExternalUpdate（Model.Update 不再推进采样器）</value></data>
   <data name="SkinnedAnimation_DriveNote" xml:space="preserve"><value>Model.Update 里只有一句：采样器非空且 ExternalUpdate 为假时才 Update(delta)。勾上它就是把推进权交回演示页，然后靠下面的按钮自己喂固定步长——骨骼会停在原地，这就是那条早退分支的证据。</value></data>
@@ -427,6 +459,8 @@
   <data name="Environment_Readout" xml:space="preserve"><value>背景 {0} · 全景选项 {1} · 请求面大小 {2} · IrradianceMap fbo={3} PrefilteredMap fbo={4} · IBL 强度 {5:0.00} 曝光 {6:0.00} · {7}</value></data>
   <data name="Environment_Rebaked" xml:space="preserve"><value>已手动强制重烘</value></data>
   <data name="Environment_NotRebaked" xml:space="preserve"><value>未手动重烘（换图时引擎会自动重烘）</value></data>
+  <data name="Environment_ToneMappingExposure" xml:space="preserve"><value>ToneMappingExposure</value></data>
+  <data name="Environment_BrightnessClamp" xml:space="preserve"><value>BrightnessClamp</value></data>
   <data name="MaterialShaders_MapChecker" xml:space="preserve"><value>棋盘</value></data>
   <data name="MaterialShaders_MapSoftDot" xml:space="preserve"><value>柔光点</value></data>
   <data name="MaterialShaders_MapGradient" xml:space="preserve"><value>竖向渐变</value></data>

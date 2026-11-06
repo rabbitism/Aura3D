@@ -1,19 +1,20 @@
 <ex:Demo x:Class="Aura3D.Gallery.Demos.PickingDemo"
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
-         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
-         x:DataType="demos:PickingDemo">
+         x:DataType="demos:PickingViewModel">
 
   <!--
-    拾取页。视口之上盖一层不参与命中的 Canvas，用来画命中点标记；
-    视图事件（ObjectPicked）与逐帧中心射线仍在代码里，参数行的排版全在这份 XAML 里。
+    拾取页：文案、参数与命令绑定 PickingViewModel——标签是 Lingua observable（^ 绑定，
+    换语言自动生效），开关/滑杆双向绑定写穿到 VM（视图属性类开关经事件桥由 code-behind 转写）。
+    视口之上盖一层不参与命中的 Canvas 画命中点标记；ObjectPicked 与逐帧中心射线留在 code-behind。
   -->
   <Panel>
 
-    <kit:DemoView x:Name="View" Pipeline="BlinnPhong" EnablePicking="True" />
+    <kit:DemoView x:Name="View" Pipeline="BlinnPhong" />
 
     <Canvas x:Name="Overlay" IsHitTestVisible="False">
       <Ellipse x:Name="Marker"
@@ -29,16 +30,16 @@
 
         <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Picking_Intro}}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Picking_EnablePicking}}" IsChecked="True" Toggled="OnEnablePickingToggled" />
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Picking_CenterRay}}" IsChecked="False" Toggled="OnCenterModeToggled" />
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Picking_OccluderVisible}}" IsChecked="True" Toggled="OnBlockerToggled" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Picking_EnablePicking}}" IsChecked="{Binding EnablePicking}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Picking_CenterRay}}" IsChecked="{Binding CenterRay}" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Picking_OccluderVisible}}" IsChecked="{Binding OccluderVisible}" />
 
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Picking_GridSize}}" Minimum="1" Maximum="12" Value="6" Format="0"
-                       ValueChanged="OnFieldSizeChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Picking_GridSize}}" Minimum="1" Maximum="12" Format="0"
+                       Value="{Binding GridSize}" />
 
-        <Button Content="{Translate {x:Static loc:Strings+Keys.Picking_ClearClicks}}" Click="OnResetClickCount" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.Picking_ClearClicks}}" Command="{Binding ClearClicksCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:ReadoutRow x:Name="Readout" Label="{Translate {x:Static loc:Strings+Keys.Picking_Result}}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.Picking_Result}}" Text="{Binding ResultText}" />
 
       </StackPanel>
     </kit:InspectorPanel>

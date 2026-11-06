@@ -1,15 +1,17 @@
 <ex:Demo x:Class="Aura3D.Gallery.Demos.EnvironmentDemo"
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-         xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
+         xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
-         x:DataType="demos:EnvironmentDemo">
+         x:DataType="demos:EnvironmentViewModel">
 
   <!--
-    环境图与 IBL 页。整页两层：视口 + 浮在右侧的检视面板。
-    参数行的排版全在这里，代码只剩场景组装与回调。
+    环境图与 IBL 页：MVVM 化（样板见 Particles/PostProcessing 页）。文案与参数全部绑定
+    EnvironmentViewModel——标签是 Lingua observable（^ 绑定，换语言自动生效），行控件值
+    双向绑定写穿到场景/引擎对象；写宿主 Settings 的三项经 VM 值事件在 code-behind 转写。
+    视图 code-behind 只剩生命周期：取资产、装场景、逐帧自转与 Tick。
   -->
   <Panel>
 
@@ -22,38 +24,36 @@
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Environment_Map}}" />
 
-        <kit:ComboRow x:Name="PanoramaCombo" Label="{Translate {x:Static loc:Strings+Keys.Environment_Panorama}}" Options="{Binding PanoramaOptions}"
-                      SelectionChanged="OnPanoramaChanged" />
+        <kit:ComboRow Label="{Translate {x:Static loc:Strings+Keys.Environment_Panorama}}" Options="{Binding PanoramaOptions}"
+                      SelectedItem="{Binding SelectedPanorama}" />
 
-        <kit:SliderRow x:Name="FaceSizeRow" Label="{Translate {x:Static loc:Strings+Keys.Environment_CubeSize}}" Minimum="32" Maximum="256" Format="0"
-                       ValueChanged="OnFaceSizeChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Environment_CubeSize}}" Minimum="32" Maximum="256" Format="0"
+                       Value="{Binding FaceSize}" />
 
         <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Environment_FaceSizeNote}}" />
 
-        <Button Content="{Translate {x:Static loc:Strings+Keys.Environment_Rebake}}" Click="OnRebake" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.Environment_Rebake}}" Command="{Binding RebakeCommand}" HorizontalAlignment="Stretch" />
 
-        <Button Content="{Translate {x:Static loc:Strings+Keys.Environment_Reload}}" Click="OnReload" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.Environment_Reload}}" Command="{Binding ReloadCommand}" HorizontalAlignment="Stretch" />
 
         <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Environment_BackgroundNote}}" />
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Environment_IblSplit}}" />
 
-        <kit:SliderRow x:Name="AmbientRow" Label="{Translate {x:Static loc:Strings+Keys.Environment_IblAmbient}}" Minimum="0" Maximum="4"
-                       ValueChanged="OnIblAmbientChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Environment_IblAmbient}}" Minimum="0" Maximum="4"
+                       Value="{Binding IblAmbientIntensity}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Environment_KeyLightVisible}}" IsChecked="True"
-                       Toggled="OnSunVisibleToggled" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Environment_KeyLightVisible}}" IsChecked="{Binding SunVisible}" />
 
-        <kit:SliderRow x:Name="ExposureRow" Label="ToneMappingExposure" Minimum="0.05" Maximum="4"
-                       ValueChanged="OnExposureChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Environment_ToneMappingExposure}}" Minimum="0.05" Maximum="4"
+                       Value="{Binding ToneMappingExposure}" />
 
-        <kit:SliderRow x:Name="ClampRow" Label="BrightnessClamp" Minimum="0.5" Maximum="16"
-                       ValueChanged="OnBrightnessClampChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Environment_BrightnessClamp}}" Minimum="0.5" Maximum="16"
+                       Value="{Binding BrightnessClamp}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Environment_RenderBackground}}" IsChecked="True"
-                       Toggled="OnRenderBackgroundToggled" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Environment_RenderBackground}}" IsChecked="{Binding RenderBackground}" />
 
-        <kit:ReadoutRow x:Name="Readout" Label="{Translate {x:Static loc:Strings+Keys.Environment_CacheState}}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.Environment_CacheState}}" Text="{Binding ReadoutText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>

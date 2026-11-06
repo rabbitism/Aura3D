@@ -1,15 +1,17 @@
 <ex:Demo x:Class="Aura3D.Gallery.Demos.ModelViewerDemo"
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-         xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
+         xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
-         x:DataType="demos:ModelViewerDemo">
+         x:DataType="demos:ModelViewerViewModel">
 
   <!--
-    glTF 模型页。视口 + 右侧检视面板，参数行全在这里声明。
-    两个下拉的 Options 绑到本页暴露的 IList 属性，选中项在建页时按当前状态设初值。
+    glTF 模型页：MVVM 化。文案与参数全部绑定 ModelViewerViewModel——标签是 Lingua observable
+    （^ 绑定，换语言自动生效），行控件值走双向绑定写穿到 VM 里的模型节点/副本逻辑。
+    视图 code-behind 只剩生命周期：进页即取档的资产、渲染线程回调里组装场景、逐帧 Tick，
+    以及按需档「VM 发请求 → 视图下载解码 → 回灌 VM」的那条异步通道。
   -->
   <Panel>
 
@@ -22,49 +24,47 @@
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.ModelViewer_Model}}" />
 
-        <kit:ComboRow x:Name="ModelRow" Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_CurrentModel}}" Options="{Binding ModelLabels}"
-                      SelectionChanged="OnModelChanged" />
+        <kit:ComboRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_CurrentModel}}" Options="{Binding ModelOptions}"
+                      SelectedItem="{Binding SelectedModel}" />
 
-        <Button Content="{Translate {x:Static loc:Strings+Keys.ModelViewer_Fit}}" Click="OnFit" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.ModelViewer_Fit}}" Command="{Binding FitCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_FitPadding}}" Minimum="0" Maximum="1" Value="0.12"
-                       ValueChanged="OnPaddingChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_FitPadding}}" Minimum="0" Maximum="1"
+                       Value="{Binding FitPadding}" />
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.ModelViewer_BoundingBox}}" />
 
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_BoxPadding}}" Minimum="0" Maximum="1.5" Value="0"
-                       ValueChanged="OnBoxPaddingChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_BoxPadding}}" Minimum="0" Maximum="1.5"
+                       Value="{Binding BoxPadding}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_CustomBox}}" IsChecked="False"
-                       Toggled="OnCustomBoxToggled" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_CustomBox}}" IsChecked="{Binding CustomBox}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_ShowBox}}" IsChecked="True"
-                       Toggled="OnShowBoxToggled" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_ShowBox}}" IsChecked="{Binding ShowBox}" />
 
         <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.ModelViewer_BoxNote}}" />
 
-        <Button Content="{Translate {x:Static loc:Strings+Keys.ModelViewer_Reframe}}" Click="OnFit" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.ModelViewer_Reframe}}" Command="{Binding FitCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:ReadoutRow x:Name="BoxReadout" Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_BoundingBoxRow}}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_BoundingBoxRow}}" Text="{Binding BoxText^}" />
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.ModelViewer_CloneModes}}" />
 
-        <kit:ComboRow x:Name="CopyModeRow" Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_CloneType}}" Options="{Binding CopyModeOptions}"
-                      SelectionChanged="OnCopyModeChanged" />
+        <kit:ComboRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_CloneType}}" Options="{Binding CopyModeOptions}"
+                      SelectedItem="{Binding SelectedCopyMode}" />
 
         <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.ModelViewer_CloneNote}}" />
 
-        <Button Content="{Translate {x:Static loc:Strings+Keys.ModelViewer_ClearClones}}" Click="OnClearClones" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.ModelViewer_ClearClones}}" Command="{Binding ClearClonesCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:ReadoutRow x:Name="CloneReadout" Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_Sharing}}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_Sharing}}" Text="{Binding CloneText}" />
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.ModelViewer_LoadOnDemand}}" />
 
-        <kit:ReadoutRow x:Name="LoadReadout" Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_LoadLog}}" Text="{Translate {x:Static loc:Strings+Keys.ModelViewer_LoadHint}}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_LoadLog}}" Text="{Binding LoadText}" />
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.ModelViewer_LoaderOutput}}" />
 
-        <kit:ReadoutRow x:Name="StructureReadout" Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_Structure}}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_Structure}}" Text="{Binding StructureText}" />
 
       </StackPanel>
     </kit:InspectorPanel>

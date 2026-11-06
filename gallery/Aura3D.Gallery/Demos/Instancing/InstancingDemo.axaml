@@ -1,15 +1,17 @@
 <ex:Demo x:Class="Aura3D.Gallery.Demos.InstancingDemo"
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
-         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
-         x:DataType="demos:InstancingDemo">
+         x:DataType="demos:InstancingViewModel">
 
   <!--
-    实例化页。整页就是这两层：视口 + 浮在右侧的检视面板。
+    实例化页：MVVM 化。整页就是这两层：视口 + 浮在右侧的检视面板。
     本页锁死 BlinnPhong：右片的实例感知着色器只覆盖 LightPass 的实例分支。
+    文案与参数全部绑定 InstancingViewModel——标签是 Lingua observable（^ 绑定，换语言自动生效），
+    行控件值走双向绑定写穿到两片 InstancedMesh。视图 code-behind 只剩生命周期：装场景、逐帧驱动。
   -->
   <Panel>
 
@@ -20,26 +22,25 @@
 
         <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Instancing_Intro}}" />
 
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Instancing_PerField}}" Minimum="24" Maximum="20000" Value="1200" Format="0"
-                       ValueChanged="OnInstanceCountChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Instancing_PerField}}" Minimum="24" Maximum="20000" Format="0"
+                       Value="{Binding InstanceCount}" />
 
-        <kit:ComboRow x:Name="UpdateModeRow" Label="{Translate {x:Static loc:Strings+Keys.Instancing_UpdateMode}}" Options="{Binding UpdateModes}"
-                      SelectionChanged="OnUpdateModeChanged" />
+        <kit:ComboRow Label="{Translate {x:Static loc:Strings+Keys.Instancing_UpdateMode}}" Options="{Binding UpdateModeOptions}"
+                      SelectedItem="{Binding SelectedUpdateMode}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Instancing_Wave}}" IsChecked="True" Toggled="OnAnimateToggled" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Instancing_Wave}}" IsChecked="{Binding Animate}" />
 
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Instancing_WaveSpeed}}" Minimum="0" Maximum="6" Value="1.1" Format="0.0"
-                       ValueChanged="OnWaveSpeedChanged" />
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Instancing_WaveHeight}}" Minimum="0" Maximum="6" Value="1.6" Format="0.0"
-                       ValueChanged="OnWaveAmountChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Instancing_WaveSpeed}}" Minimum="0" Maximum="6" Format="0.0"
+                       Value="{Binding WaveSpeed}" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Instancing_WaveHeight}}" Minimum="0" Maximum="6" Format="0.0"
+                       Value="{Binding WaveAmount}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Instancing_Culling}}" IsChecked="True"
-                       Toggled="OnCullingToggled" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Instancing_Culling}}" IsChecked="{Binding Culling}" />
 
-        <Button Content="{Translate {x:Static loc:Strings+Keys.Instancing_RemoveInstances}}" Click="OnRemoveFrontClick" HorizontalAlignment="Stretch" />
-        <Button Content="{Translate {x:Static loc:Strings+Keys.Instancing_Restore}}" Click="OnRestoreClick" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.Instancing_RemoveInstances}}" Command="{Binding RemoveFrontCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.Instancing_Restore}}" Command="{Binding RestoreCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:ReadoutRow x:Name="CostReadout" Label="{Translate {x:Static loc:Strings+Keys.Instancing_Cost}}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.Instancing_Cost}}" Text="{Binding ReadoutText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>

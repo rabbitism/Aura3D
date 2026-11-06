@@ -3,45 +3,68 @@ using Aura3D.Core.Nodes;
 using Aura3D.Core.Resources;
 using Aura3D.Core.Scenes;
 using Aura3D.Gallery.Kit;
-using Aura3D.Gallery.Localization;
 using System.Numerics;
 using System.Threading.Tasks;
 
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// 场景辅助层：<see cref="Scene.Grid"/>、<see cref="Scene.AxisGizmo"/> 与
-/// <c>PipelineSettings.Debug</c> 的八个开关全部出自同一条 DebugDrawPass。
-/// 总开关 <c>Debug.Enable</c> 关掉后细分项一律无效，因此外壳默认把它打开，本页只翻细分项。
-/// 参数行的排版全在 <c>SceneGizmosDemo.axaml</c> 里，这里只剩场景组装与回调。
+/// 场景辅助层页的视图：参数与读数全在 <see cref="SceneGizmosViewModel"/>，XAML 经绑定直连。
+/// 本类只保留生命周期——组装场景（相机、平行光/点光、公转轨道与对照网格体；聚光灯本体住在 VM）、
+/// 把 VM 的十个开关事件转写进宿主的 <c>PipelineSettings.Debug</c> 与 <c>Scene</c>
+/// （VM 不碰 DemoContext，参照 Particles/PostProcessing 页的做法）、逐帧驱动两盏灯公转与 Readout。
+/// 网格/坐标轴/DebugDrawPass 八个开关全部出自同一条 DebugDrawPass：总开关 <c>Debug.Enable</c>
+/// 关掉后细分项一律无效，外壳默认已把它打开（DemoContext 构造时），本页只翻细分项。
 /// </summary>
 public sealed partial class SceneGizmosDemo : Demo
 {
-    private Node? lightOrbit;
-    private SpotLight? spot;
+    private readonly SceneGizmosViewModel viewModel = new();
 
-    private double gridHalfWidth = 12;
-    private double gridDivisions = 12;
-    private double axisLength = 2.5;
-    private double arrowheadSize = 0.35;
-    private double orbitSpeed = 24;
-    private double spotCone = 24;
+    private Node? lightOrbit;
     private double orbitDegrees;
 
     /// <summary>
-    /// 建页：装配 XAML，并把调试开关对齐到面板上画出来的那一组值。
+    /// 建页：装配 XAML 后把 DataContext 换成 VM。仍须显式赋值——外壳继承下来的
+    /// DataContext 优先于默认值；基类先设的「页面自身」在这里被 VM 顶替。
     /// </summary>
     /// <param name="context">宿主环境。</param>
     public SceneGizmosDemo(DemoContext context) : base(context)
     {
         InitializeComponent();
 
+        // 顶替基类的 DataContext=this：页面绑定从此指向 VM。
+        DataContext = viewModel;
+
+        // 开关转写：DebugDrawPass 的细分开关住在宿主 PipelineSettings.Debug 上，只有视图够得着。
+        viewModel.ShowBoundingBoxToggled += value => Context.Settings.Debug.ShowBoundingBox = value;
+        viewModel.ShowDirectionalLightToggled += value => Context.Settings.Debug.ShowDirectionalLight = value;
+        viewModel.ShowPointLightToggled += value => Context.Settings.Debug.ShowPointLight = value;
+        viewModel.ShowSpotLightToggled += value => Context.Settings.Debug.ShowSpotLight = value;
+        viewModel.ShowCameraToggled += value => Context.Settings.Debug.ShowCamera = value;
+        viewModel.ShowParticleBoundsToggled += value => Context.Settings.Debug.ShowParticleBounds = value;
+        viewModel.ShowBoneToggled += value => Context.Settings.Debug.ShowBone = value;
+        viewModel.DebugEnableToggled += value => Context.Settings.Debug.Enable = value;
+
+        // 网格/坐标轴开关的真值在 Scene 上；场景未建时跳过，与旧 SetGridEnabled 的守卫同口径。
+        viewModel.ShowGridToggled += value => SetGridEnabled(value);
+        viewModel.ShowAxisToggled += value => SetAxisEnabled(value);
+
+        // 开关拨动与锥角变化都要排一帧重绘——等价于旧处理器里逐个调的 InvalidateRender。
+        viewModel.FrameRequested += Context.InvalidateRender;
+
+        // 初值对齐：把面板画出来的勾选态写回宿主设置，免得面板与真值不符（等价于旧构造函数里
+        // 的三行赋值；其余细分项两边都是 false，一并写上让口径统一）。Debug.Enable 外壳
+        // 本来就已打开，这里是显式重申。
         var debug = Context.Settings.Debug;
 
-        // XAML 里点光、聚光与总开关画的是勾选态，这里把设置同步成一样的，免得面板与真值不符。
-        debug.Enable = true;
-        debug.ShowPointLight = true;
-        debug.ShowSpotLight = true;
+        debug.Enable = viewModel.DebugEnable;
+        debug.ShowBoundingBox = viewModel.ShowBoundingBox;
+        debug.ShowDirectionalLight = viewModel.ShowDirectionalLight;
+        debug.ShowPointLight = viewModel.ShowPointLight;
+        debug.ShowSpotLight = viewModel.ShowSpotLight;
+        debug.ShowCamera = viewModel.ShowCamera;
+        debug.ShowParticleBounds = viewModel.ShowParticleBounds;
+        debug.ShowBone = viewModel.ShowBone;
     }
 
     /// <inheritdoc />
@@ -55,8 +78,12 @@ public sealed partial class SceneGizmosDemo : Demo
         scene.MainCamera.Position = new Vector3(0, 4.2f, 12f);
         scene.MainCamera.LookAt(new Vector3(0, 1.6f, 0));
 
-        scene.ShowGrid = true;
-        scene.ShowAxisGizmo = true;
+        // 网格/坐标轴场景默认全关，开关初值从 VM 对齐（等价于旧页写死的两个 true）；
+        // 边长/分隔数/轴长/箭头这批参数由 AttachGizmos 登记后统一落一次。
+        scene.ShowGrid = viewModel.ShowGrid;
+        scene.ShowAxisGizmo = viewModel.ShowAxes;
+
+        viewModel.AttachGizmos(scene.Grid, scene.AxisGizmo);
 
         var directional = new DirectionalLight { LightColor = System.Drawing.Color.White };
 
@@ -73,29 +100,14 @@ public sealed partial class SceneGizmosDemo : Demo
 
         point.Position = new Vector3(-3f, 3.4f, 2f);
 
-        var spot = new SpotLight
-        {
-            LightColor = System.Drawing.Color.PowderBlue,
-            LuminousIntensity = 6000,
-            InnerConeAngleDegree = (float)(spotCone * 0.6),
-            OuterConeAngleDegree = (float)spotCone,
-            AttenuationRadius = 12f,
-        };
-
-        this.spot = spot;
-
-        spot.Position = new Vector3(3.4f, 6f, 3f);
-        spot.RotationDegrees = new Vector3(-108f, 12f, 0);
-
         lightOrbit = new Node { Name = "LightOrbit" };
 
         scene.AddNode(lightOrbit);
 
         lightOrbit.AddChild(point, AttachToParentRule.KeepLocal);
-        lightOrbit.AddChild(spot, AttachToParentRule.KeepLocal);
 
-        ApplyGrid();
-        ApplyAxis();
+        // 聚光灯本体住在 VM（锥角滑杆要写穿它），这里只负责挂进公转轨道。
+        lightOrbit.AddChild(viewModel.Spot, AttachToParentRule.KeepLocal);
 
         AddMesh(scene, "Box", new BoxGeometry(1.6f, 1.6f, 1.6f), new Vector3(-2.6f, 1.1f, -0.6f));
         AddMesh(scene, "Sphere", new SphereGeometry(0.95f, 36, 20), new Vector3(0f, 1.1f, -0.6f));
@@ -109,185 +121,29 @@ public sealed partial class SceneGizmosDemo : Demo
     /// <inheritdoc />
     public override void Update(double deltaTime)
     {
-        if (lightOrbit != null && orbitSpeed > 0)
+        // 公转：转速为 0 时既不转也不请求帧，保持旧页「按需渲染」的口径；转速读 VM 的滑杆值。
+        if (lightOrbit != null && viewModel.LightOrbitSpeed > 0)
         {
-            orbitDegrees += orbitSpeed * deltaTime;
+            orbitDegrees += viewModel.LightOrbitSpeed * deltaTime;
 
             lightOrbit.RotationDegrees = new Vector3(0, (float)orbitDegrees, 0);
 
             Context.RequestFrame();
         }
 
-        var debug = Context.Settings.Debug;
-        var grid = Context.Scene?.Grid;
-        var axis = Context.Scene?.AxisGizmo;
-
-        DebugReadout.Text = Strings.Keys.SceneGizmos_DebugReadout.Format(
-            debug.Enable,
-            debug.ShowBoundingBox,
-            debug.ShowDirectionalLight,
-            debug.ShowPointLight,
-            debug.ShowSpotLight,
-            debug.ShowCamera,
-            grid?.Enable == true,
-            grid?.Size,
-            grid?.Divisions,
-            axis?.AxisLength,
-            axis?.ArrowheadSize);
-    }
-
-    private void OnShowGridToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        SetGridEnabled(e.ValueAs<bool>());
-
-        Context.InvalidateRender();
-    }
-
-    private void OnShowAxisToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        SetAxisEnabled(e.ValueAs<bool>());
-
-        Context.InvalidateRender();
-    }
-
-    private void OnGridSizeChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        gridHalfWidth = e.ValueAs<double>();
-
-        ApplyGrid();
-    }
-
-    private void OnGridDivisionsChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        gridDivisions = e.ValueAs<double>();
-
-        ApplyGrid();
-    }
-
-    private void OnAxisLengthChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        axisLength = e.ValueAs<double>();
-
-        ApplyAxis();
-    }
-
-    private void OnArrowheadSizeChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        arrowheadSize = e.ValueAs<double>();
-
-        ApplyAxis();
-    }
-
-    private void OnShowBoundingBoxToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.Debug.ShowBoundingBox = e.ValueAs<bool>();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnShowDirectionalLightToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.Debug.ShowDirectionalLight = e.ValueAs<bool>();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnShowPointLightToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.Debug.ShowPointLight = e.ValueAs<bool>();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnShowSpotLightToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.Debug.ShowSpotLight = e.ValueAs<bool>();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnShowCameraToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.Debug.ShowCamera = e.ValueAs<bool>();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnShowParticleBoundsToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.Debug.ShowParticleBounds = e.ValueAs<bool>();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnShowBoneToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.Debug.ShowBone = e.ValueAs<bool>();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnDebugEnableToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.Debug.Enable = e.ValueAs<bool>();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnOrbitSpeedChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        orbitSpeed = e.ValueAs<double>();
-    }
-
-    private void OnSpotConeChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        spotCone = e.ValueAs<double>();
-
-        if (spot != null)
-        {
-            spot.OuterConeAngleDegree = (float)spotCone;
-            spot.InnerConeAngleDegree = (float)(spotCone * 0.6);
-        }
-
-        Context.InvalidateRender();
+        viewModel.Tick();
     }
 
     private void SetGridEnabled(bool on)
     {
         if (Context.Scene != null)
             Context.Scene.ShowGrid = on;
-
-        Context.InvalidateRender();
     }
 
     private void SetAxisEnabled(bool on)
     {
         if (Context.Scene != null)
             Context.Scene.ShowAxisGizmo = on;
-
-        Context.InvalidateRender();
-    }
-
-    private void ApplyGrid()
-    {
-        var grid = Context.Scene?.Grid;
-
-        if (grid == null)
-            return;
-
-        grid.Size = (float)gridHalfWidth;
-        grid.Divisions = (int)gridDivisions;
-    }
-
-    private void ApplyAxis()
-    {
-        var axis = Context.Scene?.AxisGizmo;
-
-        if (axis == null)
-            return;
-
-        axis.AxisLength = (float)axisLength;
-        axis.ArrowheadSize = (float)arrowheadSize;
     }
 
     private static Mesh AddMesh(Scene scene, string name, Geometry geometry, Vector3 position)

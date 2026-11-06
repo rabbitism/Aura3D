@@ -1,10 +1,7 @@
 using Aura3D.Core.Geometries;
 using Aura3D.Core.Nodes;
-using Aura3D.Core.Renderers;
 using Aura3D.Core.Resources;
 using Aura3D.Gallery.Kit;
-using Aura3D.Gallery.Localization;
-using Avalonia.Interactivity;
 using System;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -12,48 +9,55 @@ using System.Threading.Tasks;
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// 阴影：主平行光走级联（CSM），其余平行光与没有级联支持的管线走单张正交图。
-/// 这页把两条路径的参数分开，并直接从挂在灯上的 <see cref="CsmShadowData"/> 读回真实生效的分辨率与级联数。
-/// 参数行的排版全在 <c>ShadowsDemo.axaml</c> 里，这里只剩场景组装与回调。
+/// 阴影页的视图：参数与命令全在 <see cref="ShadowsViewModel"/>，XAML 经绑定直连。
+/// 本类只保留生命周期——在渲染线程回调里组装场景（相机/地面/立柱/球；两盏方向光本体住在 VM）、
+/// 把 VM 的 Settings 值事件逐项转写进宿主的 <c>PipelineSettings</c>（VM 不碰 DemoContext，照抄
+/// PostProcessing 页的做法）、逐帧驱动 Readout 与渲染。主光级联（CSM）与单张正交图两条路径的
+/// 参数分界见 VM 的属性注释。
 /// </summary>
 public sealed partial class ShadowsDemo : Demo
 {
-    private DirectionalLight? main;
-    private DirectionalLight? second;
+    private readonly ShadowsViewModel viewModel;
+
     private Node? casters;
 
-    private float pitch = -34;
-    private float yaw = -22;
-
-    // ShadowConfig 的初值取自引擎默认，检视面板因此在建场景之前也能显示真值。
-    private float shadowWidth = 50;
-    private float shadowHeight = 50;
-    private float shadowNear = 0.1f;
-    private float shadowFar = 50f;
-
     /// <summary>
-    /// 建页：装配 XAML，并把参数行的初值对齐到引擎里真正生效的那一份。
+    /// 建页：先按宿主当前状态建 VM（参数初值对齐 Settings 与引擎默认、Readout 记住当前管线），
+    /// 装配 XAML 后把 DataContext 换成 VM。仍须显式赋值——外壳继承下来的 DataContext
+    /// 优先于默认值；基类先设的「页面自身」在这里被 VM 顶替。
     /// </summary>
     /// <param name="context">宿主环境。</param>
     public ShadowsDemo(DemoContext context) : base(context)
     {
+        viewModel = new(context.Settings, context.RequestedPipeline);
+
         InitializeComponent();
 
-        var settings = Context.Settings;
+        // 顶替基类的 DataContext=this：页面绑定从此指向 VM。
+        DataContext = viewModel;
 
-        ShadowWidthRow.Value = shadowWidth;
-        ShadowHeightRow.Value = shadowHeight;
-        ShadowNearRow.Value = shadowNear;
-        ShadowFarRow.Value = shadowFar;
+        // 参数转写：宿主的 PipelineSettings 只有视图够得着。VM 的每个写穿属性把新值经事件
+        // 送过来，这里逐项写进 Settings——与旧的 ValueChanged/Toggled 处理器逐行等价
+        // （含取 float/int 与按 256 取整的口径）。
+        viewModel.CsmCascadeCountChanged += value => Context.Settings.CsmCascadeCount = (int)Math.Round(value);
+        viewModel.CsmSplitLambdaChanged += value => Context.Settings.CsmSplitLambda = (float)value;
+        viewModel.CsmShadowMapResolutionChanged += value =>
+            Context.Settings.CsmShadowMapResolution = (int)Math.Round(value / 256) * 256;
+        viewModel.DirectionalLightLimitChanged += value =>
+            Context.Settings.DirectionalLightLimit = (int)Math.Round(value);
+        viewModel.ShowDirectionalLightToggled += value => Context.Settings.Debug.ShowDirectionalLight = value;
+        viewModel.ShowBoundingBoxToggled += value => Context.Settings.Debug.ShowBoundingBox = value;
 
-        CascadeCountRow.Value = settings.CsmCascadeCount;
-        SplitLambdaRow.Value = settings.CsmSplitLambda;
-        MapResolutionRow.Value = settings.CsmShadowMapResolution;
-        LightLimitRow.Value = settings.DirectionalLightLimit;
+        // 面板里这两个开关画的是勾选态，这里把设置同步成一样的，免得面板与真值不符
+        // （旧构造函数里那两句硬编码 true 的等价物，初值改从 VM 读）。
+        Context.Settings.Debug.ShowDirectionalLight = viewModel.ShowDirectionalLight;
+        Context.Settings.Debug.ShowBoundingBox = viewModel.ShowBoundingBox;
 
-        // XAML 里这两个开关画的是勾选态，这里把设置同步成一样的，免得面板与真值不符。
-        settings.Debug.ShowDirectionalLight = true;
-        settings.Debug.ShowBoundingBox = true;
+        // 本页的 Settings 参数（含光源上限）都被 ShadowMapPass 逐帧读，写完要排一帧重绘。
+        viewModel.FrameRequested += Context.InvalidateRender;
+
+        // 整页重建只有宿主干得了：跨过 ENABLE_CSM 的着色器界线要重走「建视图 → 取资产 → 建场景」。
+        viewModel.ReloadRequested += () => Context.Reload(Context.RequestedPipeline);
     }
 
     /// <inheritdoc />
@@ -64,34 +68,18 @@ public sealed partial class ShadowsDemo : Demo
     {
         var scene = Context.Scene!;
 
+        // 场景交给 VM：显式主光开关与相机 FarPlane 的写穿目标是场景成员。
+        // 旧代码在这里调的 ApplyShadowConfig/主光旋转已在 VM 构造期对齐，滑杆的后续写也
+        // 落在 VM 持有的灯对象上，建场景时自然带着最新值。
+        viewModel.AttachScene(scene);
+
         scene.MainCamera.Position = new Vector3(0, 6f, 26f);
         scene.MainCamera.LookAt(new Vector3(0, 0.6f, -6f));
-        scene.MainCamera.SetClippingPlanes(0.4f, (float)FarPlaneRow.Value);
+        scene.MainCamera.SetClippingPlanes(0.4f, (float)viewModel.CameraFar);
 
-        main = new DirectionalLight
-        {
-            Name = "Main",
-            LightColor = System.Drawing.Color.White,
-            CastShadow = true,
-            Irradiance = 60000,
-        };
+        scene.AddNode(viewModel.Main);
 
-        ApplyMainRotation();
-
-        scene.AddNode(main);
-
-        // 第二盏也投影，但它不是主光，所以拿的是单张正交图那条路径。
-        second = new DirectionalLight
-        {
-            Name = "Second",
-            LightColor = System.Drawing.Color.Orange,
-            CastShadow = true,
-            Irradiance = 20000,
-        };
-
-        second.RotationDegrees = new Vector3(-50f, 120f, 0);
-
-        scene.AddNode(second);
+        scene.AddNode(viewModel.Second);
 
         var ground = new Mesh
         {
@@ -126,165 +114,16 @@ public sealed partial class ShadowsDemo : Demo
 
         casters.AddChild(sphere, AttachToParentRule.KeepLocal);
 
-        ApplyShadowConfig();
+        // 旧代码在这里还调一次 Report() 预填读数；现在读数是 VM 的 observable，
+        // 同一帧的 Update 会先调 Tick()，显示时机不变。
     }
 
     /// <inheritdoc />
     public override void Update(double deltaTime)
     {
-        Report();
+        viewModel.Tick();
 
         Context.RequestFrame();
-    }
-
-    private void OnMainPitchChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        pitch = (float)e.ValueAs<double>();
-
-        ApplyMainRotation();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnMainYawChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        yaw = (float)e.ValueAs<double>();
-
-        ApplyMainRotation();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnMainCastToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        if (main != null)
-            main.CastShadow = e.ValueAs<bool>();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnMainExplicitToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        if (Context.Scene != null)
-            Context.Scene.MainDirectionalLight = e.ValueAs<bool>() ? main : null;
-
-        Report();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnShadowWidthChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        shadowWidth = (float)e.ValueAs<double>();
-
-        ApplyShadowConfig();
-    }
-
-    private void OnShadowHeightChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        shadowHeight = (float)e.ValueAs<double>();
-
-        ApplyShadowConfig();
-    }
-
-    private void OnShadowNearChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        shadowNear = (float)e.ValueAs<double>();
-
-        ApplyShadowConfig();
-    }
-
-    private void OnShadowFarChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        shadowFar = (float)e.ValueAs<double>();
-
-        ApplyShadowConfig();
-    }
-
-    private void OnCascadeCountChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.CsmCascadeCount = (int)Math.Round(e.ValueAs<double>());
-
-        Report();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnSplitLambdaChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.CsmSplitLambda = (float)e.ValueAs<double>();
-
-        Report();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnMapResolutionChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.CsmShadowMapResolution = (int)Math.Round(e.ValueAs<double>() / 256) * 256;
-
-        Report();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnCameraFarChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Scene?.MainCamera.SetClippingPlanes(0.4f, (float)e.ValueAs<double>());
-
-        Report();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnLightLimitChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.DirectionalLightLimit = (int)Math.Round(e.ValueAs<double>());
-
-        Report();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnShowDirectionalLightToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.Debug.ShowDirectionalLight = e.ValueAs<bool>();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnShowBoundingBoxToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.Debug.ShowBoundingBox = e.ValueAs<bool>();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnReload(object? sender, RoutedEventArgs e) =>
-        Context.Reload(Context.RequestedPipeline);
-
-    private void ApplyMainRotation()
-    {
-        if (main != null)
-            main.RotationDegrees = new Vector3(pitch, yaw, 0);
-    }
-
-    private void ApplyShadowConfig()
-    {
-        foreach (var light in new[] { main, second })
-        {
-            if (light == null)
-                continue;
-
-            light.ShadowConfig.Width = (int)Math.Round(shadowWidth);
-            light.ShadowConfig.Height = (int)Math.Round(shadowHeight);
-            light.ShadowConfig.NearPlane = shadowNear;
-            light.ShadowConfig.FarPlane = shadowFar;
-        }
-
-        Report();
-
-        Context.InvalidateRender();
     }
 
     private void AddPillars(float spacing, int count, Vector3 origin)
@@ -308,30 +147,5 @@ public sealed partial class ShadowsDemo : Demo
 
             casters.AddChild(pillar, AttachToParentRule.KeepLocal);
         }
-    }
-
-    private void Report()
-    {
-        var pipeline = Context.Scene?.RenderPipeline;
-
-        if (pipeline == null || main == null)
-            return;
-
-        var csm = main.GetPipelineGpuState<CsmShadowData>(nameof(CsmShadowData));
-
-        var single = main.GetPipelineGpuState<RenderTarget>("ShadowMapRenderTarget");
-
-        var mainLightName = Context.Scene!.MainDirectionalLight?.Name ?? Strings.Keys.Shadows_AutoPicked.T();
-
-        Readout.Text = Strings.Keys.Shadows_Readout.Format(
-            Context.RequestedPipeline.DisplayName(),
-            pipeline.SupportsCSM,
-            mainLightName,
-            csm?.CascadeCount ?? 0,
-            csm?.Resolution ?? 0,
-            Context.Settings.CsmCascadeCount,
-            Context.Settings.CsmShadowMapResolution,
-            single == null ? Strings.Keys.Shadows_SingleNone.T() : $"{single.Width}×{single.Height}",
-            (csm?.CascadeSplitDepths.Length ?? 0) - 1);
     }
 }

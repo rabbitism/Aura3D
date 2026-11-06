@@ -4,30 +4,39 @@ using Aura3D.Core.Resources;
 using Aura3D.Gallery.Kit;
 using Aura3D.Gallery.Localization;
 using System;
-using System.Collections;
-using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
+using Color = System.Drawing.Color;
 
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// 同一幕场景在五条管线下的差别。页里的每个对象都刻意只喂某一种信息
-/// （平涂、法线贴图、金属度粗糙度、遮罩、半透明），
+/// 同一幕场景在五条管线下的差别，MVVM 化：文案、灯光参数与两条读数全在
+/// <see cref="PipelinesViewModel"/>，XAML 经绑定直连；本类只保留生命周期——组装场景
+/// （相机、地面、五个各只喂一种信息的对象）与逐帧把管线事实喂给 VM 的读数。
+/// 页里的每个对象都刻意只喂某一种信息（平涂、法线贴图、金属度粗糙度、遮罩、半透明），
 /// 于是在宿主状态栏里换管线就能看出「谁读了哪张贴图、谁压根不读」。
-/// 参数行的排版全在 <c>PipelinesDemo.axaml</c> 里，这里只剩场景组装与回调。
+/// 换管线不在页面里做：状态栏的管线框走 <c>DemoContext.Reload</c>，整页连同 VM 重建。
 /// </summary>
 public sealed partial class PipelinesDemo : Demo
 {
+    private readonly PipelinesViewModel viewModel = new();
+
     private Node? row;
-    private DirectionalLight? sun;
-    private PointLight? point;
 
-    private double sunAngle = -46;
-
-    /// <summary>建页：装配 XAML。</summary>
+    /// <summary>
+    /// 建页：装配 XAML 并把 DataContext 换成 VM。仍须显式赋值——外壳继承下来的
+    /// DataContext 优先于默认值；基类先设的「页面自身」在这里被 VM 顶替。
+    /// </summary>
     /// <param name="context">宿主环境。</param>
-    public PipelinesDemo(DemoContext context) : base(context) => InitializeComponent();
+    public PipelinesDemo(DemoContext context) : base(context)
+    {
+        InitializeComponent();
+
+        DataContext = viewModel;
+
+        viewModel.FrameRequested += () => Context.InvalidateRender();
+    }
 
     /// <inheritdoc />
     public override Task LoadAssetsAsync(AssetBatch assets) => Task.CompletedTask;
@@ -44,22 +53,9 @@ public sealed partial class PipelinesDemo : Demo
 
         scene.ShowGrid = true;
 
-        sun = new DirectionalLight { LightColor = System.Drawing.Color.White };
-
-        sun.RotationDegrees = new Vector3((float)sunAngle, -28f, 0);
-
-        scene.AddNode(sun);
-
-        point = new PointLight
-        {
-            LightColor = System.Drawing.Color.Orange,
-            LuminousIntensity = 5000,
-            AttenuationRadius = 10f,
-        };
-
-        point.Position = new Vector3(3.6f, 2.4f, 3.2f);
-
-        scene.AddNode(point);
+        // 两个灯是 VM 的引擎模型（参数行写穿到它们），这里只登记进场景。
+        scene.AddNode(viewModel.Sun);
+        scene.AddNode(viewModel.Point);
 
         var ground = new Mesh
         {
@@ -110,31 +106,14 @@ public sealed partial class PipelinesDemo : Demo
         Context.RequestFrame();
     }
 
-    private void OnSunAngleChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        sunAngle = e.ValueAs<double>();
-
-        if (sun != null)
-            sun.RotationDegrees = new Vector3((float)sunAngle, -28f, 0);
-
-        Context.InvalidateRender();
-    }
-
-    private void OnSunCastToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        if (sun != null)
-            sun.CastShadow = e.ValueAs<bool>();
-
-        Context.InvalidateRender();
-    }
-
-    private void OnPointEnableToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        if (point != null)
-            point.Enable = e.ValueAs<bool>();
-
-        Context.InvalidateRender();
-    }
+    /// <summary>
+    /// 读数的三样原料（要求的管线、实际管线对象、背景是否立方图）都在宿主/场景手里，
+    /// VM 不碰 DemoContext，由视图取来逐帧喂给它——这是本页对 Particles 之 Tick 的对应物。
+    /// </summary>
+    private void Report() => viewModel.Report(
+        Context.RequestedPipeline,
+        Context.Scene?.RenderPipeline,
+        Context.Scene?.Background.IsT0 == true);
 
     private void Add(string name, Geometry geometry, float x, Action<Material> fill)
     {
@@ -164,37 +143,5 @@ public sealed partial class PipelinesDemo : Demo
         data[3] = a;
 
         return data;
-    }
-
-    private void Report()
-    {
-        var kind = Context.RequestedPipeline;
-        var pipeline = Context.Scene?.RenderPipeline;
-
-        if (pipeline == null)
-            return;
-
-        var passes = pipeline.OnceRenderPasses.Select(p => p.GetType().Name).ToList();
-
-        passes.Add("→");
-
-        passes.AddRange(pipeline.EveryCameraRenderPasses.Select(p => p.GetType().Name));
-
-        PassesReadout.Text = string.Join(" ", passes);
-
-        var pbr = kind is PipelineKind.PBRDeferred or PipelineKind.PBRForward;
-
-        // 只有立方图那一路才喂给 IrradianceMap / PrefilteredEnvironment 两个 pass。
-        var hasEnv = Context.Scene!.Background.IsT0;
-
-        var litMark = kind == PipelineKind.NoLight ? "×" : "✓";
-        var pbrMark = pbr ? "✓" : "×";
-        var celMark = kind == PipelineKind.CelShading ? "✓" : "×";
-        var envMark = pbr
-            ? hasEnv ? Strings.Keys.Pipelines_EnvSet.T() : Strings.Keys.Pipelines_EnvUnsetDefault.T()
-            : "—";
-
-        ChannelsReadout.Text = Strings.Keys.Pipelines_ChannelsReadout.Format(
-            kind.DisplayName(), litMark, pbrMark, pbrMark, pbrMark, litMark, celMark, envMark);
     }
 }

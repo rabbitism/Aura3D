@@ -1,15 +1,17 @@
 <ex:Demo x:Class="Aura3D.Gallery.Demos.GpuLifecycleDemo"
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-         xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
+         xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
-         x:DataType="demos:GpuLifecycleDemo">
+         x:DataType="demos:GpuLifecycleViewModel">
 
   <!--
-    生命周期页。按钮调的都是视图上的真 API，所以参数行的排版虽然在 XAML 里，
-    处理函数仍留在代码：GL 资源的释放请求只能在渲染回调之外排，事件计数靠 ViewAttached 的订阅。
+    生命周期页，MVVM 化：文案、计数读数与命令全在 GpuLifecycleViewModel——标签是 Lingua
+    observable（^ 绑定，换语言自动生效），按钮走 RelayCommand；动真格 GPU 的三条只经语义
+    事件桥回到 code-behind 调视图 API（GL 请求必须在渲染回调之外排）。
+    视图 code-behind 只剩生命周期：视图事件订阅推进 VM 计数、场景组装与重建调度。
   -->
   <Panel>
 
@@ -22,27 +24,22 @@
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_Events}}" />
 
-        <Button Content="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_ReleaseGpu}}"
-                Click="OnReleaseGpuResources" HorizontalAlignment="Stretch" />
-        <Button Content="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_SimulateLost}}"
-                Click="OnSimulateContextLost" HorizontalAlignment="Stretch" />
-        <Button Content="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_DestroyScene}}"
-                Click="OnDestroyScene" HorizontalAlignment="Stretch" />
-        <Button Content="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_ClearLog}}" Click="OnClearLog" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_ReleaseGpu}}" Command="{Binding ReleaseGpuResourcesCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_SimulateLost}}" Command="{Binding SimulateContextLostCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_DestroyScene}}" Command="{Binding DestroySceneCommand}" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_ClearLog}}" Command="{Binding ClearLogCommand}" HorizontalAlignment="Stretch" />
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_OnDemand}}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_Continuous}}" IsChecked="True"
-                       Toggled="OnContinuousRenderToggled" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_Continuous}}" IsChecked="{Binding ContinuousRender}" />
 
-        <Button Content="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_RequestFrame}}"
-                Click="OnRequestOneFrame" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_RequestFrame}}" Command="{Binding RequestOneFrameCommand}" HorizontalAlignment="Stretch" />
 
         <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_OnDemandNote}}" />
 
-        <kit:ReadoutRow x:Name="Readout" Label="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_Runtime}}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_Runtime}}" Text="{Binding ReadoutText^}" />
 
-        <kit:ReadoutRow x:Name="LogReadout" Label="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_EventLog}}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.GpuLifecycle_EventLog}}" Text="{Binding LogText}" />
 
       </StackPanel>
     </kit:InspectorPanel>

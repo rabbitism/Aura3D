@@ -179,8 +179,13 @@
   <data name="Background_RebakeIbl" xml:space="preserve"><value>Rebake IBL (switching sources already rebakes; for in-place content changes)</value></data>
   <data name="Background_IblNote" xml:space="preserve"><value>Irradiance and prefiltered reflections only recognise the cubemap branch: when Background is not a CubeTexture they fall back to the engine's default cube (IrradianceMapPass reads RenderPipeline.DefaultIblAmbientCubeTexture). Both results are cached on the camera node and reused whenever FrameBufferId is non-zero, so flipping between the four sources on this page leaves the sphere's reflections unchanged — press the button above to Invalidate, or Reload. The full caching demo lives on the ibl-environment page.</value></data>
   <data name="Background_IblCache" xml:space="preserve"><value>Background branch and IBL cache</value></data>
+  <data name="Background_SceneBackground" xml:space="preserve"><value>Scene.Background</value></data>
+  <data name="Background_IblAmbientIntensity" xml:space="preserve"><value>IblAmbientIntensity</value></data>
+  <data name="Background_ToneMappingExposure" xml:space="preserve"><value>ToneMappingExposure</value></data>
   <data name="Camera_Intro" xml:space="preserve"><value>Orthographic projection has no near-large-far-small, which makes it the right tool for measuring; changing FieldOfView under perspective alters both the vertical field and the effective aspect. Pulling near and far apart so they straddle an object reveals a cross-section — a second kind of invisibility on top of frustum culling.</value></data>
   <data name="Camera_Projection" xml:space="preserve"><value>Projection mode</value></data>
+  <data name="Camera_FieldOfView" xml:space="preserve"><value>FieldOfView °</value></data>
+  <data name="Camera_OrthographicSize" xml:space="preserve"><value>OrthographicSize</value></data>
   <data name="Camera_NearPlane" xml:space="preserve"><value>Near plane</value></data>
   <data name="Camera_FarPlane" xml:space="preserve"><value>Far plane</value></data>
   <data name="Camera_FitFifthBox" xml:space="preserve"><value>FitToBoundingBox (the 5th box)</value></data>
@@ -208,6 +213,15 @@
   <data name="CelShading_FaceRenderType" xml:space="preserve"><value>RenderType=1 with the face tag (takes the FACE_RENDER branch)</value></data>
   <data name="CelShading_OutlineNote" xml:space="preserve"><value>This is OutlinePass's only public knob. Outline width and colour are private fields (2f / 1.5f / black), and the pass instance can only be found by type in RenderPipeline.EveryCameraRenderPasses, which is exactly how this page gets it.</value></data>
   <data name="CelShading_Bindings" xml:space="preserve"><value>Binding result</value></data>
+  <data name="CelShading_RampIndex0" xml:space="preserve"><value>_RampIndex0 · _RampIndex0</value></data>
+  <data name="CelShading_RampIndex1" xml:space="preserve"><value>_RampIndex1 · _RampIndex1</value></data>
+  <data name="CelShading_RampIndex2" xml:space="preserve"><value>_RampIndex2 · _RampIndex2</value></data>
+  <data name="CelShading_RampIndex3" xml:space="preserve"><value>_RampIndex3 · _RampIndex3</value></data>
+  <data name="CelShading_RampIndex4" xml:space="preserve"><value>_RampIndex4 · _RampIndex4</value></data>
+  <data name="CelShading_DirectionalLight" xml:space="preserve"><value>Directional Light</value></data>
+  <data name="CelShading_YawSpeed" xml:space="preserve"><value>Yaw Speed (deg/s)</value></data>
+  <data name="CelShading_OutlineAmbient" xml:space="preserve"><value>OutlinePass.AmbientIntensity</value></data>
+  <data name="CelShading_SettingsAmbient" xml:space="preserve"><value>Settings.AmbientIntensity</value></data>
   <data name="Environment_Intro" xml:space="preserve"><value>Irradiance and prefiltered reflections are each baked once and parked in two GPU-state slots on the camera node, then reused every frame. Assigning a new Background notifies the pipeline (OnBackgroundChanged), which invalidates both caches automatically - the next frame rebakes from the new map, so switching environments needs no manual step. The rebake button covers the remaining case: the resource reference stayed the same but its content changed in place, or you want to force a recomputation - it calls Invalidate() to zero the frame buffers.</value></data>
   <data name="Environment_Panorama" xml:space="preserve"><value>Panorama</value></data>
   <data name="Environment_CubeSize" xml:space="preserve"><value>Cubemap edge length</value></data>
@@ -259,6 +273,7 @@
   <data name="Hism_MoveEveryFrame" xml:space="preserve"><value>Move instances every frame</value></data>
   <data name="Hism_MovesPerSecond" xml:space="preserve"><value>Moves per second</value></data>
   <data name="Hism_GroupCulling" xml:space="preserve"><value>Per-group frustum culling</value></data>
+  <data name="Hism_Clear" xml:space="preserve"><value>Clear</value></data>
   <data name="Hism_Refill" xml:space="preserve"><value>Refill</value></data>
   <data name="Hism_OctreeState" xml:space="preserve"><value>Octree state</value></data>
   <data name="Instancing_Intro" xml:space="preserve"><value>Both fields hold the same instance count; the right one uses per-instance vertex colours. Its vertex shader carries an INSTANCED_MESH branch, so one material serves both a plain Mesh (uniform branch) and an InstancedMesh (attribute branch). Per-instance attribute arrays must be exactly the instance count long, so this page always creates the instances before attaching the attributes.</value></data>
@@ -272,7 +287,9 @@
   <data name="Instancing_Restore" xml:space="preserve"><value>Restore the full count</value></data>
   <data name="Instancing_Cost" xml:space="preserve"><value>Cost</value></data>
   <data name="MaterialShaders_Intro" xml:space="preserve"><value>Custom shaders attach to a material keyed by pass class name (this page overrides LightPass throughout), and you can replace the fragment stage alone while keeping the engine's vertex stage. Material parameters bind to same-named uniforms. Note: writing a parameter raises the material's Version and forces materials carrying custom shaders to recompile, which is why per-frame uniform writes are off by default.</value></data>
+  <data name="MaterialShaders_AlphaCutoff" xml:space="preserve"><value>alphaCutoff</value></data>
   <data name="MaterialShaders_BaseColorMap" xml:space="preserve"><value>BaseColor map</value></data>
+  <data name="MaterialShaders_BlendMode" xml:space="preserve"><value>BlendMode</value></data>
   <data name="MaterialShaders_NormalMap" xml:space="preserve"><value>Normal channel (tangent-space normal)</value></data>
   <data name="MaterialShaders_UseConstantShader" xml:space="preserve"><value>Use the custom constant-colour shader</value></data>
   <data name="MaterialShaders_Hue" xml:space="preserve"><value>Hue (deg)</value></data>
@@ -353,6 +370,13 @@
   <data name="PostProcessing_Reload" xml:space="preserve"><value>Reload: apply the group above</value></data>
   <data name="PostProcessing_CastShadow" xml:space="preserve"><value>Directional light CastShadow</value></data>
   <data name="PostProcessing_Matrix" xml:space="preserve"><value>What the current pipeline honours</value></data>
+  <data name="PostProcessing_ToneMappingExposure" xml:space="preserve"><value>ToneMappingExposure</value></data>
+  <data name="PostProcessing_BrightnessClamp" xml:space="preserve"><value>BrightnessClamp</value></data>
+  <data name="PostProcessing_FrustumCulling" xml:space="preserve"><value>EnableFrustumCulling</value></data>
+  <data name="PostProcessing_DirectionalLightLimit" xml:space="preserve"><value>DirectionalLightLimit</value></data>
+  <data name="PostProcessing_SpotLightLimit" xml:space="preserve"><value>SpotLightLimit</value></data>
+  <data name="PostProcessing_CsmSplitLambda" xml:space="preserve"><value>CsmSplitLambda</value></data>
+  <data name="PostProcessing_CsmShadowMapResolution" xml:space="preserve"><value>CsmShadowMapResolution</value></data>
   <data name="Primitives_Intro" xml:space="preserve"><value>All seven primitives share one vertex set and differ only in how the GPU connects it. Changing columns, rows or amplitude genuinely rebuilds the vertex buffer; focusing one primitive moves the rest off-screen so you can read its connection rule on its own.</value></data>
   <data name="Primitives_Focus" xml:space="preserve"><value>Focused primitive</value></data>
   <data name="Primitives_Columns" xml:space="preserve"><value>Columns (vertices per row)</value></data>
@@ -395,8 +419,16 @@
   <data name="Shadows_DirectionalVolume" xml:space="preserve"><value>Light volume: directional</value></data>
   <data name="Shadows_BoundingBox" xml:space="preserve"><value>Bounding box</value></data>
   <data name="Shadows_Resources" xml:space="preserve"><value>Shadow resources in effect</value></data>
+  <data name="Shadows_NearPlane" xml:space="preserve"><value>NearPlane</value></data>
+  <data name="Shadows_ConfigFarPlane" xml:space="preserve"><value>FarPlane</value></data>
+  <data name="Shadows_CsmCascadeCount" xml:space="preserve"><value>CsmCascadeCount</value></data>
+  <data name="Shadows_CsmShadowMapResolution" xml:space="preserve"><value>CsmShadowMapResolution</value></data>
+  <data name="Shadows_DirectionalLightLimit" xml:space="preserve"><value>DirectionalLightLimit</value></data>
+  <data name="Shadows_Reload" xml:space="preserve"><value>Reload</value></data>
   <data name="SkinnedAnimation_Intro" xml:space="preserve"><value>Clip names and durations come from the glb's actual animations array, not from constants: this model carries four, and the TPose one is exactly what you need to check the bind pose against.</value></data>
   <data name="SkinnedAnimation_Clip" xml:space="preserve"><value>Clip</value></data>
+  <data name="SkinnedAnimation_TimeScale" xml:space="preserve"><value>TimeScale</value></data>
+  <data name="SkinnedAnimation_LoopMode" xml:space="preserve"><value>LoopMode</value></data>
   <data name="SkinnedAnimation_Reset" xml:space="preserve"><value>Reset (back to 0 s)</value></data>
   <data name="SkinnedAnimation_ExternalUpdate" xml:space="preserve"><value>ExternalUpdate (Model.Update stops advancing the sampler)</value></data>
   <data name="SkinnedAnimation_DriveNote" xml:space="preserve"><value>Model.Update contains a single statement: the sampler is advanced only when it is non-null and ExternalUpdate is false. Checking it hands control back to this page, and the button below feeds a fixed step — the skeleton holds still, which is the evidence for that early-out branch.</value></data>
@@ -427,6 +459,8 @@
   <data name="Environment_Readout" xml:space="preserve"><value>Background {0} · panorama {1} · requested face size {2} · IrradianceMap fbo={3} PrefilteredMap fbo={4} · IBL intensity {5:0.00} exposure {6:0.00} · {7}</value></data>
   <data name="Environment_Rebaked" xml:space="preserve"><value>Manually force-rebaked</value></data>
   <data name="Environment_NotRebaked" xml:space="preserve"><value>Not manually rebaked (switching the environment rebakes automatically)</value></data>
+  <data name="Environment_ToneMappingExposure" xml:space="preserve"><value>ToneMappingExposure</value></data>
+  <data name="Environment_BrightnessClamp" xml:space="preserve"><value>BrightnessClamp</value></data>
   <data name="MaterialShaders_MapChecker" xml:space="preserve"><value>Checker</value></data>
   <data name="MaterialShaders_MapSoftDot" xml:space="preserve"><value>Soft dot</value></data>
   <data name="MaterialShaders_MapGradient" xml:space="preserve"><value>Vertical gradient</value></data>

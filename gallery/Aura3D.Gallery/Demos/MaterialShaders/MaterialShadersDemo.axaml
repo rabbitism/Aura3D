@@ -1,15 +1,16 @@
 <ex:Demo x:Class="Aura3D.Gallery.Demos.MaterialShadersDemo"
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-         xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
+         xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
-         x:DataType="demos:MaterialShadersDemo">
+         x:DataType="demos:MaterialShadersViewModel">
 
   <!--
-    材质通道与自定义着色器页。整页两层：视口 + 浮在右侧的检视面板。
-    参数行的排版全在这里，代码只剩场景组装与回调。
+    材质通道与自定义着色器页。文案与参数全部绑定 MaterialShadersViewModel——标签是 Lingua
+    observable（^ 绑定，换语言自动生效），行控件值走双向绑定写穿到 VM 里的材质对象。
+    视图 code-behind 只剩生命周期：建场景（摆相机、加灯、登记 VM 的整排网格）、逐帧 Tick。
   -->
   <Panel>
 
@@ -22,62 +23,57 @@
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.MaterialShaders_Channels}}" />
 
-        <kit:ComboRow x:Name="BaseColorCombo" Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_BaseColorMap}}" Options="{Binding BaseColorOptions}"
-                      SelectionChanged="OnBaseColorChanged" />
+        <kit:ComboRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_BaseColorMap}}" Options="{Binding BaseColorOptions}"
+                      SelectedItem="{Binding SelectedBaseColor}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_NormalMap}}" IsChecked="False"
-                       Toggled="OnNormalToggled" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_NormalMap}}" IsChecked="{Binding ShowNormal}" />
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.MaterialShaders_BothStages}}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_UseConstantShader}}" IsChecked="True"
-                       Toggled="OnUseCustomSolidToggled" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_UseConstantShader}}" IsChecked="{Binding UseCustomSolid}" />
 
         <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_Hue}}" Minimum="0" Maximum="360" Format="0"
-                       ValueChanged="OnHueChanged" />
+                       Value="{Binding Hue}" />
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.MaterialShaders_Tinted}}" />
 
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_TintStrength}}" Minimum="0" Maximum="1" Value="0.55"
-                       ValueChanged="OnTintChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_TintStrength}}" Minimum="0" Maximum="1"
+                       Value="{Binding TintStrength}" />
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.MaterialShaders_Parameters}}" />
 
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_StripeSpeed}}" Minimum="0" Maximum="4" Value="0.9" Format="0.0"
-                       ValueChanged="OnStripeSpeedChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_StripeSpeed}}" Minimum="0" Maximum="4" Format="0.0"
+                       Value="{Binding StripeSpeed}" />
 
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_FrequencyU}}" Minimum="0" Maximum="16" Value="6" Format="0.0"
-                       ValueChanged="OnStripeFrequencyUChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_FrequencyU}}" Minimum="0" Maximum="16" Format="0.0"
+                       Value="{Binding StripeFrequencyU}" />
 
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_FrequencyV}}" Minimum="0" Maximum="16" Value="2" Format="0.0"
-                       ValueChanged="OnStripeFrequencyVChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_FrequencyV}}" Minimum="0" Maximum="16" Format="0.0"
+                       Value="{Binding StripeFrequencyV}" />
 
-        <kit:ComboRow x:Name="BlendModeCombo" Label="BlendMode" Options="{Binding BlendModeOptions}"
-                      SelectionChanged="OnBlendModeChanged" />
+        <kit:ComboRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_BlendMode}}" Options="{Binding BlendModeOptions}"
+                      SelectedItem="{Binding SelectedBlendMode}" />
 
-        <kit:SliderRow Label="alphaCutoff" Minimum="0" Maximum="0.95" Value="0.5"
-                       ValueChanged="OnStripeCutoffChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_AlphaCutoff}}" Minimum="0" Maximum="0.95"
+                       Value="{Binding StripeCutoff}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_WriteTime}}" IsChecked="False"
-                       Toggled="OnAnimateTimeToggled" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_WriteTime}}" IsChecked="{Binding AnimateTime}" />
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.MaterialShaders_AlphaModes}}" />
 
-        <kit:SliderRow Label="alphaCutoff" Minimum="0" Maximum="0.95" Value="0.35" Format="0.00"
-                       ValueChanged="OnAlphaCutoffChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_AlphaCutoff}}" Minimum="0" Maximum="0.95" Format="0.00"
+                       Value="{Binding AlphaCutoff}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_DoubleSided}}" IsChecked="False"
-                       Toggled="OnDoubleSidedToggled" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_DoubleSided}}" IsChecked="{Binding DoubleSided}" />
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.MaterialShaders_Scene}}" />
 
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_RotationSpeed}}" Minimum="0" Maximum="90" Value="14" Format="0"
-                       ValueChanged="OnSpinChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_RotationSpeed}}" Minimum="0" Maximum="90" Format="0"
+                       Value="{Binding Spin}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_Grid}}" IsChecked="False"
-                       Toggled="OnShowGridToggled" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_Grid}}" IsChecked="{Binding ShowGrid}" />
 
-        <kit:ReadoutRow x:Name="Readout" Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_Runtime}}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.MaterialShaders_Runtime}}" Text="{Binding ReadoutText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>

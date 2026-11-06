@@ -19,8 +19,7 @@ namespace Aura3D.Gallery.Demos;
 /// <summary>
 /// 粒子页的界面状态，MVVM 化试点。分工：
 /// <list type="bullet">
-///   <item><description>文案：每个标签一个 Lingua observable，XAML 用 <c>{Binding Xxx^}</c> 订阅，
-///     换语言时由绑定自动收到新值，不依赖外壳整页重挂。</description></item>
+///   <item><description>文案：AXAML 直接写 <c>{Translate}</c> 标记扩展取 Strings.Keys 键值；换语言走外壳既有的整页重挂。</description></item>
 ///   <item><description>参数：滑杆/开关/下拉双向绑定到这里的属性，setter 写穿到发射器对象；
 ///     初值即发射器里真正生效的值，旧页面构造函数里那批「行控件写回」由绑定初始化取代。</description></item>
 ///   <item><description>Readout：Lingua 1.1 的 format builder 组装，占位符全是计算参数，
@@ -260,93 +259,6 @@ public sealed partial class ParticlesViewModel : ObservableObject
     private bool pauseAll;
     private bool culling;
     private bool showBounds = true;
-
-    /// <summary>页首说明。</summary>
-    public IObservable<string?> IntroLabel => Strings.Instance.Particles_Intro;
-
-    /// <summary>「喷泉」分组标题。</summary>
-    public IObservable<string?> FountainSectionLabel => Strings.Instance.Particles_Fountain;
-
-    /// <summary>「爆发」分组标题。</summary>
-    public IObservable<string?> BurstSectionLabel => Strings.Instance.Particles_Burst;
-
-    /// <summary>「碎块」分组标题。</summary>
-    public IObservable<string?> DebrisSectionLabel => Strings.Instance.Particles_Debris;
-
-    /// <summary>「三者共享」分组标题。</summary>
-    public IObservable<string?> SharedSectionLabel => Strings.Instance.Particles_Shared;
-
-    /// <summary>喷泉发射率标签。</summary>
-    public IObservable<string?> FountainRateLabel => Strings.Instance.Particles_FountainRate;
-
-    /// <summary>锥形角标签。</summary>
-    public IObservable<string?> FountainConeAngleLabel => Strings.Instance.Particles_ConeAngle;
-
-    /// <summary>重力 Y 标签。</summary>
-    public IObservable<string?> FountainGravityLabel => Strings.Instance.Particles_GravityY;
-
-    /// <summary>阻尼标签。</summary>
-    public IObservable<string?> FountainDampingLabel => Strings.Instance.Particles_Damping;
-
-    /// <summary>起始尺寸标签。</summary>
-    public IObservable<string?> FountainStartSizeLabel => Strings.Instance.Particles_StartSize;
-
-    /// <summary>贴图下拉标签。</summary>
-    public IObservable<string?> TextureLabel => Strings.Instance.Particles_Map;
-
-    /// <summary>翻页格数标签。</summary>
-    public IObservable<string?> FlipbookTilesLabel => Strings.Instance.Particles_FlipbookTiles;
-
-    /// <summary>翻页说明。</summary>
-    public IObservable<string?> FlipbookNoteLabel => Strings.Instance.Particles_FlipbookNote;
-
-    /// <summary>爆发发射率标签。</summary>
-    public IObservable<string?> BurstRateLabel => Strings.Instance.Particles_BurstRate;
-
-    /// <summary>爆发时长标签。</summary>
-    public IObservable<string?> BurstDurationLabel => Strings.Instance.Particles_Duration;
-
-    /// <summary>寿命上限标签。</summary>
-    public IObservable<string?> BurstLifetimeLabel => Strings.Instance.Particles_MaxLife;
-
-    /// <summary>初速上限标签。</summary>
-    public IObservable<string?> BurstVelocityLabel => Strings.Instance.Particles_MaxSpeed;
-
-    /// <summary>「再放一次」按钮文案。</summary>
-    public IObservable<string?> ReplayBurstLabel => Strings.Instance.Particles_Replay;
-
-    /// <summary>碎块发射率标签。</summary>
-    public IObservable<string?> DebrisRateLabel => Strings.Instance.Particles_DebrisRate;
-
-    /// <summary>自转速度标签。</summary>
-    public IObservable<string?> DebrisSpinLabel => Strings.Instance.Particles_SpinSpeed;
-
-    /// <summary>网格缩放标签。</summary>
-    public IObservable<string?> DebrisMeshScaleLabel => Strings.Instance.Particles_MeshScale;
-
-    /// <summary>单发射器上限标签。</summary>
-    public IObservable<string?> DebrisMaxParticlesLabel => Strings.Instance.Particles_MaxParticles;
-
-    /// <summary>「让上限生效」按钮文案。</summary>
-    public IObservable<string?> ApplyDebrisLabel => Strings.Instance.Particles_ApplyMaxParticles;
-
-    /// <summary>混合模式下拉标签。</summary>
-    public IObservable<string?> BlendModeLabel => Strings.Instance.Particles_BlendMode;
-
-    /// <summary>「全部重开」按钮文案。</summary>
-    public IObservable<string?> RestartAllLabel => Strings.Instance.Particles_RestartAll;
-
-    /// <summary>「Pause 全部」开关标签。</summary>
-    public IObservable<string?> PauseAllLabel => Strings.Instance.Particles_PauseAll;
-
-    /// <summary>按体积剔除开关标签。</summary>
-    public IObservable<string?> CullingLabel => Strings.Instance.Particles_VisibilityCulling;
-
-    /// <summary>画粒子体积开关标签。</summary>
-    public IObservable<string?> ShowBoundsLabel => Strings.Instance.Particles_ShowBounds;
-
-    /// <summary>读数行标题。</summary>
-    public IObservable<string?> StateLabel => Strings.Instance.Particles_State;
 
     /// <summary>喷泉发射率（个/秒）。</summary>
     public double FountainRate

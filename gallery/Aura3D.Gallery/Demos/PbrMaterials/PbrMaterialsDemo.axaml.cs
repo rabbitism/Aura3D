@@ -2,7 +2,6 @@ using Aura3D.Core.Geometries;
 using Aura3D.Core.Nodes;
 using Aura3D.Core.Resources;
 using Aura3D.Gallery.Kit;
-using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -10,36 +9,27 @@ using System.Threading.Tasks;
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// 三颗球各挂一套 Poly Haven（CC0）实拍 PBR 材质，三档一眼可分：
-/// 锈蚀铁皮（锈是电介质、露铁处才有金属度，arm 的 B 通道斑驳）、混砌砖墙（法线主导的粗糙介质）、
-/// 镀锌钢板（metal≈0.9、粗糙度≈0.13 的光滑裸金属，IBL 下有锐利的环境反射）。
-/// 选材时用 arm 图的通道均值把关：Poly Haven 名字带 metal 的多是涂漆/锈蚀（B 通道≈0），
-/// 进引擎就是非金属——之前四颗球看起来一个样就是这么来的。每套三张贴图：
-/// diff → BaseColor，nor_gl（OpenGL 约定）→ Normal，arm（R=AO/G=粗糙/B=金属）→ MetallicRoughness——
-/// 后者不用拆通道，glTF 的打包约定跟引擎着色器读法（G=roughness、B=metallic）一字不差。
+/// PBR 材质页的视图，MVVM 化（模式照抄 Particles）：面板三颗材质球住在
+/// <see cref="PbrMaterialsViewModel"/>（选材口径与贴图接线的说明也见那边），本类只留生命周期——
+/// 资产阶段取天空盒与九张贴图喂 VM，渲染线程回调里组场景（天空盒/定向光/地面/相机），逐帧自转并请求重绘。
 /// 环境挂六面天空盒：金属反射没有 IBL 就是一坨死灰，环境立方图是这页能不能看的前提。
 /// </summary>
 public sealed partial class PbrMaterialsDemo : Demo
 {
-    // 从左到右的排布顺序，也是面板读出行的顺序
-    private static readonly (string Name, string BaseKey, string NormalKey, string ArmKey)[] Materials =
-    [
-        ("Rusty Metal", "PbrRustyMetalBase", "PbrRustyMetalNormal", "PbrRustyMetalArm"),
-        ("Brick Wall", "PbrBrickWallBase", "PbrBrickWallNormal", "PbrBrickWallArm"),
-        ("Galvanized Metal", "PbrGalvanizedBase", "PbrGalvanizedNormal", "PbrGalvanizedArm"),
-    ];
-
-    private readonly List<Mesh> spheres = [];
+    private readonly PbrMaterialsViewModel viewModel = new();
 
     private CubeTexture environment = null!;
 
     /// <summary>
-    /// 建页：装配 XAML。
+    /// 建页：装配 XAML 并把 DataContext 换成 VM。仍须显式赋值——外壳继承下来的
+    /// DataContext 优先于默认值；基类先设的「页面自身」在这里被 VM 顶替。
     /// </summary>
     /// <param name="context">宿主环境。</param>
     public PbrMaterialsDemo(DemoContext context) : base(context)
     {
         InitializeComponent();
+
+        DataContext = viewModel;
     }
 
     /// <inheritdoc />
@@ -47,42 +37,13 @@ public sealed partial class PbrMaterialsDemo : Demo
     {
         environment = await assets.CubeTextureAsync();
 
+        // 按 VM 展开的键序取九张贴图（每套 base/normal/arm），喂回去由 VM 组材质与球体。
         var textures = new Dictionary<string, Texture>();
 
-        foreach (var (_, baseKey, normalKey, armKey) in Materials)
-        {
-            textures[baseKey] = await assets.TextureAsync(baseKey);
-            textures[normalKey] = await assets.TextureAsync(normalKey);
-            textures[armKey] = await assets.TextureAsync(armKey);
-        }
+        foreach (var key in viewModel.TextureKeys)
+            textures[key] = await assets.TextureAsync(key);
 
-        for (var i = 0; i < Materials.Length; i++)
-        {
-            var (name, baseKey, normalKey, armKey) = Materials[i];
-
-            // TextureLoader 默认按线性上传；BaseColor 是 sRGB 编码的 JPEG，必须标成 gamma 空间，
-            // 驱动才会用 SRGB8 内部格式硬件解码到线性——否则 sRGB 值被当线性参与光照，
-            // 末尾 GammaCorrectionPass 再提亮一次，整页就会发白发灰。Normal/ARM 是数据图，保持线性。
-            textures[baseKey].SetIsGammaSpace(true);
-
-            var material = new Material();
-
-            material.SetTexture("BaseColor", textures[baseKey]);
-            material.SetTexture("Normal", textures[normalKey]);
-            material.SetTexture("MetallicRoughness", textures[armKey]);
-
-            var sphere = new Mesh
-            {
-                Name = name,
-                Geometry = new SphereGeometry(1.2f, 64, 40),
-                Material = material,
-            };
-
-            // 三颗球等距排一排；Update 里自转起来，让法线图和反射随角度变化
-            sphere.Position = new Vector3((i - (Materials.Length - 1) / 2f) * 2.4f, 1.5f, 0);
-
-            spheres.Add(sphere);
-        }
+        viewModel.SetTextures(textures);
     }
 
     /// <inheritdoc />
@@ -127,16 +88,14 @@ public sealed partial class PbrMaterialsDemo : Demo
 
         scene.AddNode(ground);
 
-        foreach (var sphere in spheres)
+        foreach (var sphere in viewModel.Spheres)
             scene.AddNode(sphere);
-
-        OrderReadout.Text = string.Join(" → ", Array.ConvertAll(Materials, m => m.Name));
     }
 
     /// <inheritdoc />
     public override void Update(double deltaTime)
     {
-        foreach (var sphere in spheres)
+        foreach (var sphere in viewModel.Spheres)
             sphere.RotationDegrees = new Vector3(0, sphere.RotationDegrees.Y + 12f * (float)deltaTime, 0);
 
         Context.RequestFrame();

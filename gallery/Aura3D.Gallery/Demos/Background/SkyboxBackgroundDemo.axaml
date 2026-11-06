@@ -1,15 +1,18 @@
 <ex:Demo x:Class="Aura3D.Gallery.Demos.SkyboxBackgroundDemo"
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-         xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
+         xmlns:ex="clr-namespace:Aura3D.Gallery"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
-         x:DataType="demos:SkyboxBackgroundDemo">
+         x:DataType="demos:SkyboxBackgroundViewModel">
 
   <!--
-    背景来源与天空盒页。整页两层：视口 + 浮在右侧的检视面板。
-    参数行的排版全在这里，代码只剩场景组装与回调。
+    背景来源与天空盒页：MVVM 化（样板见 Particles 页）。文案与参数全部绑定
+    SkyboxBackgroundViewModel——标签是 Lingua observable（^ 绑定，换语言自动生效），
+    行控件值双向绑定写穿到场景/相机/平行光；宿主的 PipelineSettings 只有视图够得着，
+    两根滑杆的值事件在 code-behind 里转写进去。视图 code-behind 只剩生命周期：
+    取资产、装场景、逐帧 Tick。
   -->
   <Panel>
 
@@ -22,49 +25,46 @@
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Background_Source}}" />
 
-        <kit:ComboRow x:Name="SourceCombo" Label="Scene.Background" Options="{Binding SourceOptions}"
-                      SelectionChanged="OnSourceChanged" />
+        <kit:ComboRow Label="{Translate {x:Static loc:Strings+Keys.Background_SceneBackground}}" Options="{Binding SourceOptions}"
+                      SelectedItem="{Binding SelectedSource}" />
 
-        <kit:SliderRow x:Name="CubeFaceRow" Label="{Translate {x:Static loc:Strings+Keys.Background_CubeSize}}" Minimum="32" Maximum="256" Format="0"
-                       ValueChanged="OnCubeFaceChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Background_CubeSize}}" Minimum="32" Maximum="256" Format="0"
+                       Value="{Binding CubeFaceSize}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Background_RenderBackground}}" IsChecked="True"
-                       Toggled="OnRenderBackgroundToggled" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Background_RenderBackground}}" IsChecked="{Binding RenderBackground}" />
 
         <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Background_ClearNote}}" />
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Background_ShaderVariants}}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Background_Orthographic}}" IsChecked="False"
-                       Toggled="OnOrthographicToggled" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Background_Orthographic}}" IsChecked="{Binding Orthographic}" />
 
-        <kit:SliderRow x:Name="OrthoSizeRow" Label="{Translate {x:Static loc:Strings+Keys.Background_OrthoSize}}" Minimum="2" Maximum="40" Format="0"
-                       ValueChanged="OnOrthoSizeChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Background_OrthoSize}}" Minimum="2" Maximum="40" Format="0"
+                       Value="{Binding OrthoSize}" />
 
-        <kit:SliderRow x:Name="FovRow" Label="{Translate {x:Static loc:Strings+Keys.Background_FieldOfView}}" Minimum="15" Maximum="120" Format="0"
-                       ValueChanged="OnFovChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Background_FieldOfView}}" Minimum="15" Maximum="120" Format="0"
+                       Value="{Binding FieldOfView}" />
 
-        <kit:SliderRow x:Name="FarPlaneRow" Label="{Translate {x:Static loc:Strings+Keys.Background_FarPlane}}" Minimum="5" Maximum="400" Format="0"
-                       ValueChanged="OnFarPlaneChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Background_FarPlane}}" Minimum="5" Maximum="400" Format="0"
+                       Value="{Binding FarPlane}" />
 
         <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Background_ProjectionNote}}" />
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Background_CubemapFeedsIbl}}" />
 
-        <kit:SliderRow x:Name="AmbientRow" Label="IblAmbientIntensity" Minimum="0" Maximum="4"
-                       ValueChanged="OnIblAmbientChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Background_IblAmbientIntensity}}" Minimum="0" Maximum="4"
+                       Value="{Binding IblAmbientIntensity}" />
 
-        <kit:SliderRow x:Name="ExposureRow" Label="ToneMappingExposure" Minimum="0.05" Maximum="4"
-                       ValueChanged="OnExposureChanged" />
+        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Background_ToneMappingExposure}}" Minimum="0.05" Maximum="4"
+                       Value="{Binding ToneMappingExposure}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Background_KeyLightVisible}}" IsChecked="True"
-                       Toggled="OnSunVisibleToggled" />
+        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Background_KeyLightVisible}}" IsChecked="{Binding SunVisible}" />
 
-        <Button Content="{Translate {x:Static loc:Strings+Keys.Background_RebakeIbl}}" Click="OnRebake" HorizontalAlignment="Stretch" />
+        <Button Content="{Translate {x:Static loc:Strings+Keys.Background_RebakeIbl}}" Command="{Binding RebakeIblCommand}" HorizontalAlignment="Stretch" />
 
         <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Background_IblNote}}" />
 
-        <kit:ReadoutRow x:Name="Readout" Label="{Translate {x:Static loc:Strings+Keys.Background_IblCache}}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.Background_IblCache}}" Text="{Binding ReadoutText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>

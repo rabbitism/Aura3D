@@ -1,86 +1,52 @@
 using Aura3D.Core.Geometries;
-using Aura3D.Core.Math;
 using Aura3D.Core.Nodes;
 using Aura3D.Core.Resources;
 using Aura3D.Gallery.Kit;
-using Aura3D.Gallery.Localization;
-using Avalonia.Interactivity;
-using Irihi.Lingua;
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
-using ModelNode = Aura3D.Core.Nodes.Model;
+using Color = System.Drawing.Color;
 
 namespace Aura3D.Gallery.Demos;
 
 /// <summary>
-/// glTF/GLB 加载出来的 <see cref="ModelNode"/> 节点树：加载器把 glTF 的哪些东西搬进了引擎，
-/// 模型级包围盒的两个属性管什么，以及 <see cref="ModelNode.Clone(CopyType)"/> 三种副本到底共享了什么。
-/// 库里的模型分两档取：进页即取的算进该页的下载量，页内按需取的不算——这是 web 端控制首屏字节的办法。
-/// 参数行的排版全在 <c>ModelViewerDemo.axaml</c> 里，这里只剩场景组装与回调。
+/// glTF/GLB 模型页的视图，MVVM 化：参数、副本与三条读数全在 <see cref="ModelViewerViewModel"/>，
+/// XAML 经绑定直连；本类只保留生命周期——进页即取档的资产装载、在渲染线程回调里组装相机/灯光/
+/// 地面并登记已装载模型，以及页内按需档那条异步通道（VM 发 ModelRequested，这里取字节解码后
+/// 回灌 VM）。库里的模型分两档取：进页即取的算进该页的下载量，页内按需的不算——这是 web 端
+/// 控制首屏字节的办法；两档的模型表与「谁在生效」的状态都在 VM 上，视图不落一份。
 /// </summary>
 public sealed partial class ModelViewerDemo : Demo
 {
-    // 三个进页即取（清单里合计约 3 MB），三个挂在页内按需取，选到才下载。
-    // 后者不计入进页即取的下载量，因为 AssetBatch 允许取本页集合之外的 Key（回落到全表）。
-    private static readonly (string Key, LinguaKey Label, bool Preload)[] Library =
-    [
-        ("Stool", Strings.Keys.ModelViewer_OptionStool, true),
-        ("CoffeeTable", Strings.Keys.ModelViewer_OptionCoffeeTable, true),
-        ("LionHead", Strings.Keys.ModelViewer_OptionLionHead, true),
-        ("Lightbulb", Strings.Keys.ModelViewer_OptionLightbulb, false),
-        ("Stones", Strings.Keys.ModelViewer_OptionStones, false),
-        ("Present", Strings.Keys.ModelViewer_OptionPresent, false),
-        ("CelCharacter", Strings.Keys.ModelViewer_OptionCelCharacter, false),
-    ];
+    private readonly ModelViewerViewModel viewModel = new();
 
-    private static readonly LinguaKey[] CopyModeKeys =
-    [
-        Strings.Keys.ModelViewer_CopyOptionSharedResource,
-        Strings.Keys.ModelViewer_CopyOptionSharedResourceData,
-        Strings.Keys.ModelViewer_CopyOptionFullCopy,
-    ];
-
-    // 下拉文案里的 CopyType 枚举名是技术标识，不翻：读数行只引用名字部分。
-    private static readonly string[] CopyModeNames = ["SharedResource", "SharedResourceData", "FullCopy"];
-
-    private readonly Dictionary<string, ModelNode> loaded = [];
-    private readonly List<ModelNode> clones = [];
-
+    // 按需档的下载解码走这个批处理（进度上报与按 Key 缓存都在里面），LoadAssetsAsync 时留下引用。
     private AssetBatch batch = null!;
-    private bool loading;
-
-    private ModelNode? current;
-    private string selectedKey = Library[0].Key;
-    private float padding = 0.12f;
-    private float modelPadding;
-    private bool customBox;
-    private int copyModeIndex;
-
-    /// <summary>当前模型下拉的选项，供 XAML 的 <c>Options="{Binding ModelLabels}"</c> 绑定。</summary>
-    public IList ModelLabels { get; } = Library.Select(i => i.Label.T()).ToList();
-
-    /// <summary>CopyType 下拉的选项，供 XAML 的 <c>Options="{Binding CopyModeOptions}"</c> 绑定。</summary>
-    public IList CopyModeOptions { get; } = CopyModeKeys.Select(k => k.T()).ToList();
 
     /// <summary>
-    /// 建页：装配 XAML，并把两个下拉的选中项对齐到本页当前状态。
+    /// 建页：装配 XAML 并把 DataContext 换成 VM。仍须显式赋值——外壳继承下来的
+    /// DataContext 优先于默认值；基类先设的「页面自身」在这里被 VM 顶替。
     /// </summary>
     /// <param name="context">宿主环境。</param>
     public ModelViewerDemo(DemoContext context) : base(context)
     {
         InitializeComponent();
 
-        ModelRow.SelectedItem = LabelOf(selectedKey);
-        CopyModeRow.SelectedItem = CopyModeOptions[copyModeIndex];
+        // 顶替基类的 DataContext=this：XAML 的绑定从此指向 VM。
+        DataContext = viewModel;
 
         // XAML 里这个开关画的是勾选态，而引擎默认是关的：不进设置同步一次，
         // 一进页就看不到线框，面板与真值也对不上。
         Context.Settings.Debug.ShowBoundingBox = true;
+
+        // 语义事件桥：VM 不碰 DemoContext，场景/相机/宿主设置的落点全在视图这边接。
+        viewModel.ModelRequested += key => FetchModel(key);
+        viewModel.CloneAdded += node => Context.Scene!.AddNode(node);
+        viewModel.CloneRemoved += node => Context.Scene?.RemoveNode(node);
+        viewModel.FitRequested += FitCamera;
+        viewModel.ShowBoxForced += () => Context.Settings.Debug.ShowBoundingBox = true;
+        viewModel.ShowBoxToggled += value => Context.Settings.Debug.ShowBoundingBox = value;
     }
 
     /// <inheritdoc />
@@ -88,14 +54,9 @@ public sealed partial class ModelViewerDemo : Demo
     {
         batch = assets;
 
-        foreach (var (key, _, preload) in Library.Where(i => i.Preload))
-        {
-            var model = await assets.ModelAsync(key);
-
-            model.Name = key;
-
-            loaded[key] = model;
-        }
+        // 进页即取档：一次全取完（约 3 MB），页内换它们只切 Enable 不再下载。
+        foreach (var (key, _, preload) in ModelViewerViewModel.Library.Where(i => i.Preload))
+            viewModel.Preload(key, await assets.ModelAsync(key));
     }
 
     /// <inheritdoc />
@@ -112,7 +73,7 @@ public sealed partial class ModelViewerDemo : Demo
         var light = new DirectionalLight
         {
             Name = "Key",
-            LightColor = System.Drawing.Color.White,
+            LightColor = Color.White,
         };
 
         light.RotationDegrees = new Vector3(-42f, -28f, 0);
@@ -130,278 +91,64 @@ public sealed partial class ModelViewerDemo : Demo
 
         scene.AddNode(ground);
 
-        foreach (var key in loaded.Keys)
+        // 全部已装载模型都入场景，用 Enable 挑当前那份——之后页内换模型不再动场景结构。
+        foreach (var (key, model) in viewModel.Loaded)
         {
-            var model = loaded[key];
-
-            model.Enable = key == selectedKey;
+            model.Enable = key == viewModel.SelectedKey;
 
             scene.AddNode(model);
         }
 
-        current = loaded[selectedKey];
+        // 立初选为当前模型（拨 Enable、立 CurrentModel），再按它的盒子取一次景。
+        viewModel.ActivateInitialModel();
 
-        Fit();
+        FitCamera();
     }
 
     /// <inheritdoc />
     public override void Update(double deltaTime)
     {
-        ReportBox();
+        viewModel.Tick();
 
         Context.RequestFrame();
     }
 
-    private void OnModelChanged(object? sender, InspectorValueChangedEventArgs e)
+    /// <summary>
+    /// 按需档的下载解码（旧 Choose 的 await 段等价搬迁）：字节流走 LoadAssetsAsync 留下的
+    /// 批处理，进度与耗时文案由 VM 记账；解码完先把节点入场景，再回灌 VM 走同一条切换路径。
+    /// 重入由 VM 的 loading 状态挡（装载中新选择根本不会发请求）。
+    /// </summary>
+    private async void FetchModel(string key)
     {
-        // 建页时模板会把初值推给下拉，触发一次「没变」的合成选中，用相等判断挡掉。
-        if (e.Value is not string label || label == LabelOf(selectedKey))
-            return;
+        var asset = Assets.AssetManifest.All.First(a => a.Key == key);
 
-        Choose(Library[ModelLabels.IndexOf(label)].Key);
+        viewModel.BeginLoad(key, asset.Bytes / 1024);
+
+        var stopwatch = Stopwatch.StartNew();
+
+        var model = await batch.ModelAsync(key);
+
+        stopwatch.Stop();
+
+        Context.Scene!.AddNode(model);
+
+        viewModel.SetModel(key, model, asset.Bytes / 1024, stopwatch.ElapsedMilliseconds, asset.Path);
     }
 
-    private void OnCopyModeChanged(object? sender, InspectorValueChangedEventArgs e)
+    /// <summary>
+    /// 相机取景（旧 Fit 等价搬迁）：按当前模型的盒子收紧视角，far 放大几倍留拉远余量。
+    /// 旧页每次 Fit 都乘一次 far——远平面只变大不碍事，照抄。
+    /// </summary>
+    private void FitCamera()
     {
-        // 同上：初值推入时 CopyType 会触发一次「没变」的选中，别让它凭空建出副本。
-        if (e.Value is not string mode || mode == (string)CopyModeOptions[copyModeIndex]!)
-            return;
-
-        copyModeIndex = Math.Max(0, CopyModeOptions.IndexOf(mode));
-
-        ClearClones();
-        AddClones();
-    }
-
-    private void OnFit(object? sender, RoutedEventArgs e) => Fit();
-
-    private void OnClearClones(object? sender, RoutedEventArgs e) => ClearClones();
-
-    private void OnPaddingChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        padding = (float)e.ValueAs<double>();
-
-        Fit();
-    }
-
-    private void OnBoxPaddingChanged(object? sender, InspectorValueChangedEventArgs e)
-    {
-        modelPadding = (float)e.ValueAs<double>();
-
-        if (current != null)
-            current.BoundingBoxPadding = modelPadding;
-
-        Context.Settings.Debug.ShowBoundingBox = true;
-
-        ReportBox();
-    }
-
-    private void OnCustomBoxToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        customBox = e.ValueAs<bool>();
-
-        if (current != null)
-            current.CustomBoundingBox = customBox
-                ? new BoundingBox(new Vector3(-2f, -0.2f, -2f), new Vector3(2f, 3.4f, 2f))
-                : null;
-
-        Context.Settings.Debug.ShowBoundingBox = true;
-
-        ReportBox();
-    }
-
-    private void OnShowBoxToggled(object? sender, InspectorValueChangedEventArgs e)
-    {
-        Context.Settings.Debug.ShowBoundingBox = e.ValueAs<bool>();
-    }
-
-    private void Fit()
-    {
-        if (current == null)
-            return;
-
         var camera = Context.Scene?.MainCamera;
-        if (camera == null)
+
+        if (camera == null || viewModel.CurrentModel == null)
             return;
 
-        camera.FitToBoundingBox(current.BoundingBox, padding);
+        camera.FitToBoundingBox(viewModel.CurrentModel.BoundingBox, (float)viewModel.FitPadding);
 
         // fit 收紧后的 far 恰好贴着模型背面，滚轮拉远一点就撞远平面；放大几倍留出拉远余量
         camera.FarPlane *= 3f;
-    }
-
-    private CopyType ModeOf() => copyModeIndex switch
-    {
-        1 => CopyType.SharedResourceData,
-        2 => CopyType.FullCopy,
-        _ => CopyType.SharedResource,
-    };
-
-    private void AddClones()
-    {
-        if (current == null)
-            return;
-
-        for (int i = 0; i < 2; i++)
-        {
-            var clone = current.Clone(ModeOf());
-
-            clone.Name = $"{current.Name}-clone{i}";
-            clone.Enable = true;
-            clone.Position = new Vector3(2.6f + i * 2.6f, 0, 0);
-
-            // 第二份换掉自己的 BaseColor：材质若与原模型同源，原模型会跟着换图，
-            // 这是判断共享边界最直白的办法——BaseColor 是 LightPass/PBR 都真读的通道。
-            if (i == 1)
-            {
-                foreach (var mesh in clone.Meshes)
-                {
-                    mesh.Material?.SetTexture("BaseColor", Procedural.Checker(128, 6,
-                        new Procedural.Rgb(240, 90, 40), new Procedural.Rgb(40, 200, 235)));
-                }
-            }
-
-            Context.Scene!.AddNode(clone);
-
-            clones.Add(clone);
-        }
-
-        ReportClone();
-    }
-
-    private void ClearClones()
-    {
-        foreach (var clone in clones)
-            Context.Scene?.RemoveNode(clone);
-
-        clones.Clear();
-
-        ReportClone();
-    }
-
-    private string LabelOf(string key) => Library.First(i => i.Key == key).Label.T();
-
-    // 按需那一档第一次选中时才取字节并解码；下载与解码都在批处理里排到线程池，不堵渲染。
-    private async void Choose(string key)
-    {
-        if (loading)
-            return;
-
-        if (!loaded.TryGetValue(key, out var model))
-        {
-            loading = true;
-
-            var asset = Assets.AssetManifest.All.First(a => a.Key == key);
-
-            LoadReadout.Text = Strings.Keys.ModelViewer_LoadProgress.Format(key, asset.Bytes / 1024);
-
-            var stopwatch = Stopwatch.StartNew();
-
-            model = await batch.ModelAsync(key);
-
-            stopwatch.Stop();
-
-            model.Name = key;
-
-            loaded[key] = model;
-
-            Context.Scene!.AddNode(model);
-
-            LoadReadout.Text = Strings.Keys.ModelViewer_LoadDone.Format(
-                key, asset.Bytes / 1024, stopwatch.ElapsedMilliseconds, asset.Path);
-
-            loading = false;
-        }
-
-        selectedKey = key;
-        current = model;
-
-        foreach (var loadedKey in loaded.Keys)
-            loaded[loadedKey].Enable = loadedKey == key;
-
-        ClearClones();
-
-        Fit();
-
-        ReportStructure();
-    }
-
-    private void ReportStructure()
-    {
-        if (current == null)
-            return;
-
-        var meshes = current.Meshes;
-
-        var channels = meshes
-            .Where(m => m.Material != null)
-            .SelectMany(m => m.Material!.Channels)
-            .Select(c => $"{c.Name}{(c.Texture == null ? "∅" : $"({c.Texture.Width}×{c.Texture.Height})")}")
-            .Distinct()
-            .ToList();
-
-        var first = meshes.FirstOrDefault(m => m.Material != null)?.Material;
-
-        StructureReadout.Text = Strings.Keys.ModelViewer_StructureReadout.Format(
-            LabelOf(selectedKey),
-            current.Children.Count,
-            meshes.Count,
-            meshes.Sum(m => m.Geometry?.VertexCount ?? 0),
-            string.Join(" ", channels),
-            first?.BlendMode,
-            first?.DoubleSided,
-            first?.AlphaCutoff);
-    }
-
-    private void ReportBox()
-    {
-        if (current == null)
-            return;
-
-        var box = current.BoundingBox;
-
-        BoxReadout.Text = Strings.Keys.ModelViewer_BoxReadout.Format(
-            box.Min.X, box.Min.Y, box.Min.Z,
-            box.Max.X, box.Max.Y, box.Max.Z,
-            current.BoundingBoxPadding,
-            current.CustomBoundingBox == null
-                ? Strings.Keys.ModelViewer_BoxNone.T()
-                : Strings.Keys.ModelViewer_BoxSet.T());
-    }
-
-    private void ReportClone()
-    {
-        if (clones.Count == 0 || current == null)
-        {
-            CloneReadout.Text = Strings.Keys.ModelViewer_NoClones.T();
-
-            return;
-        }
-
-        var sharedGeometry = clones
-            .SelectMany(c => c.Meshes)
-            .Zip(current.Meshes, (a, b) => ReferenceEquals(a.Geometry, b.Geometry))
-            .All(x => x);
-
-        var sharedMaterial = clones
-            .SelectMany(c => c.Meshes)
-            .Zip(current.Meshes, (a, b) => ReferenceEquals(a.Material, b.Material))
-            .All(x => x);
-
-        var originalTint = current.Meshes
-            .FirstOrDefault(m => m.Material != null)?
-            .Material!.GetTexture("BaseColor");
-
-        var followed = originalTint != null && clones
-            .SelectMany(c => c.Meshes)
-            .Any(m => m.Material != null && ReferenceEquals(m.Material.GetTexture("BaseColor"), originalTint));
-
-        CloneReadout.Text = Strings.Keys.ModelViewer_CloneReadout.Format(
-            CopyModeNames[copyModeIndex],
-            sharedGeometry ? Strings.Keys.ModelViewer_SameInstance.T() : Strings.Keys.ModelViewer_OwnCopies.T(),
-            sharedMaterial ? Strings.Keys.ModelViewer_SameInstance.T() : Strings.Keys.ModelViewer_OwnCopies.T(),
-            followed
-                ? Strings.Keys.ModelViewer_TintFollowed.T()
-                : Strings.Keys.ModelViewer_TintIndependent.T());
     }
 }
