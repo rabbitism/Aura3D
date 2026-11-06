@@ -131,12 +131,14 @@ public sealed partial class SkinnedAnimationViewModel : ObservableObject
     /// <summary>播放状态读数。语言切换时模板换新，绑定自动收到重排后的整句。</summary>
     public LinguaFormatObservable PlaybackReadoutText { get; }
 
-    /// <summary>骨骼挑选读数。同上，随语言与逐帧 <see cref="Tick"/> 保持最新。</summary>
+    /// <summary>骨骼挑选读数。随语言自动换、在挂载建立（<see cref="StartFlame"/>）与偏航变化时重算。</summary>
     public LinguaFormatObservable BoneReadoutText { get; }
 
     /// <summary>
     /// 逐帧调用：摇曳火光（旧 Update 的中段——三个互质频率的正弦叠加，确定性、无随机数，
-    /// 在基准亮度的 ±18% 内摆动），再重读两条模板读数。
+    /// 在基准亮度的 ±18% 内摆动），再重读播放状态读数（手动推进的累计时钟逐帧变，
+    /// 旧 Update 本就每帧 Report）。骨骼读数不在这里重读：它只在挂载建立与偏航变化时变，
+    /// 两个变异点各自 Refresh。
     /// </summary>
     /// <param name="deltaTime">距上一帧的秒数。</param>
     public void Tick(double deltaTime)
@@ -151,7 +153,6 @@ public sealed partial class SkinnedAnimationViewModel : ObservableObject
                  + 0.04f * MathF.Sin(torchClock * 4.1f + 0.6f));
 
         PlaybackReadoutText.Refresh();
-        BoneReadoutText.Refresh();
     }
 
     /// <summary>资产阶段由视图喂进取回的模型与剪辑表（旧 LoadAssetsAsync 的中段）：命名并留作采样器宿主。</summary>
@@ -240,7 +241,13 @@ public sealed partial class SkinnedAnimationViewModel : ObservableObject
     /// <see cref="ParticleSystem"/> 的世界变换，Play 之后每帧都会跟着骨骼矩阵走。
     /// 本页没有粒子暂停开关，VM 是这套火焰播放态的唯一改写者，不存在暂停后 Play 早退的问题。
     /// </summary>
-    public void StartFlame() => flame?.Play();
+    public void StartFlame()
+    {
+        flame?.Play();
+
+        // 旧页在附件登记、开喷之后调 ReportBones——骨骼读数的首个真值由这里带出。
+        BoneReadoutText.Refresh();
+    }
 
     /// <summary>采样器时间归零（回到 0 秒）；源生成 <c>ResetCommand</c> 供按钮绑定。</summary>
     [RelayCommand]
@@ -464,6 +471,9 @@ public sealed partial class SkinnedAnimationViewModel : ObservableObject
 
             if (attachment != null)
                 attachment.LocalOffset = GripOffset((float)value);
+
+            // 旧偏航处理器的 ReportBones：读数里的偏航角与挂载信息跟着变。
+            BoneReadoutText.Refresh();
 
             FrameRequested?.Invoke();
         }

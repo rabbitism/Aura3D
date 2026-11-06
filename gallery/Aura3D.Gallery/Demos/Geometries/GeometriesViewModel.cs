@@ -113,16 +113,16 @@ public sealed partial class GeometriesViewModel : ObservableObject
     public LinguaFormatObservable ReadoutText { get; }
 
     /// <summary>
-    /// 逐帧调用：先按旋转速度累加整排的 Y 角——静止（≤0）时跳过，等价旧 Update 的早退；
-    /// <see cref="Row"/> 在构造期已建好，旧的 null 判从此免了——再重读读数的计算参数。
+    /// 逐帧调用：按旋转速度累加整排的 Y 角——静止（≤0）时跳过，等价旧 Update 的早退；
+    /// <see cref="Row"/> 在构造期已建好，旧的 null 判从此免了。读数不在这里重读：
+    /// 顶点/索引数只在换选（<see cref="SelectedKind"/>）与重建（Rebuild）时变，
+    /// 两个变异点各自 <c>Refresh</c>，与旧 Report 的挂点一致。
     /// </summary>
     /// <param name="deltaTime">距上一帧的秒数。</param>
     public void Tick(double deltaTime)
     {
         if (rotationSpeed > 0)
             Row.RotationDegrees = new Vector3(0, Row.RotationDegrees.Y + (float)rotationSpeed * (float)deltaTime, 0);
-
-        ReadoutText.Refresh();
     }
 
     /// <summary>页首说明。</summary>

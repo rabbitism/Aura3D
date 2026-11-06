@@ -56,7 +56,7 @@ public sealed partial class FbxAnimationViewModel : ObservableObject
 
         // 剪辑表模板 {0}..{3}：占位语义与旧 Report() 里的 string.Format 逐个对齐——当前项、
         // 条数、名字(时长)拼接（空表落到「无」）、采样器骨骼变换数。当前项与拼接都是重读型：
-        // 换剪辑后下一帧 Tick 自然带出新值。
+        // 换剪辑 / 模型就位两个变异点上 Refresh 带出新值。
         ClipsReadoutText = Strings.Keys.FbxAnimation_ClipTableReadout.CreateFormat()
             .Arg(() => (string)ClipOptions[clipIndex]!)
             .Arg(() => clips.Count)
@@ -98,13 +98,6 @@ public sealed partial class FbxAnimationViewModel : ObservableObject
     /// 仍用 AvaloniaList—— ComboRow 绑定它，补齐发生在渲染线程回调里，沿用旧页同一集合类型不打乱时序。</summary>
     public AvaloniaList<string> BoneOptions { get; } = [];
 
-    /// <summary>逐帧调用：重读两条模板读数（换剪辑后的当前项、采样器骨骼变换数由这里带出）。</summary>
-    public void Tick()
-    {
-        ClipsReadoutText.Refresh();
-        SkeletonReadoutText.Refresh();
-    }
-
     /// <summary>资产阶段由视图喂进取回的模型（旧页的 model 字段）。</summary>
     public void SetModel(ModelNode loadedModel) => model = loadedModel;
 
@@ -138,6 +131,10 @@ public sealed partial class FbxAnimationViewModel : ObservableObject
             BoneOptions.Add(name);
 
         SelectedBone = PickBone();
+
+        // 旧 SetModel 尾部的 Report：两条模板读数的首个真值由这里带出。
+        ClipsReadoutText.Refresh();
+        SkeletonReadoutText.Refresh();
 
         UpdateSampleText();
     }
@@ -209,6 +206,10 @@ public sealed partial class FbxAnimationViewModel : ObservableObject
 
             ApplyClip();
 
+            // 旧换剪辑处理器的 Report：当前项与采样器骨骼变换数在这里跟着换。
+            ClipsReadoutText.Refresh();
+            SkeletonReadoutText.Refresh();
+
             UpdateSampleText();
         }
     }
@@ -252,7 +253,7 @@ public sealed partial class FbxAnimationViewModel : ObservableObject
     /// <summary>剪辑表读数。语言切换时模板换新，绑定自动收到重排后的整句。</summary>
     public LinguaFormatObservable ClipsReadoutText { get; }
 
-    /// <summary>骨架读数。同上，随语言与逐帧 Tick 保持最新。</summary>
+    /// <summary>骨架读数。同上，随语言自动换、在模型就位与换剪辑时重算。</summary>
     public LinguaFormatObservable SkeletonReadoutText { get; }
 
     /// <summary>

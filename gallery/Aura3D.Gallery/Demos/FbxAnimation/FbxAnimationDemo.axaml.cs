@@ -90,8 +90,6 @@ public sealed partial class FbxAnimationDemo : Demo
     /// <inheritdoc />
     public override void Update(double deltaTime)
     {
-        viewModel.Tick();
-
         Context.RequestFrame();
     }
 }

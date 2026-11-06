@@ -23,7 +23,8 @@ namespace Aura3D.Gallery.Demos;
 ///     <see cref="InstancedMeshGroup"/>（或先记字段、等建场景后生效）；
 ///     初值即原页面 XAML 里写死的那一份，由绑定初始化取代。</description></item>
 ///   <item><description>Readout：Lingua 1.1 的 format builder 组装，占位符全是八叉树状态，
-///     视图逐帧调 <see cref="Tick"/> 重读，语言切换时模板本身也会自动换。</description></item>
+///     只在树变化时重算——搬动步进、建树（重铺/清空/分组参数 Build）各自 Refresh，
+///     与旧 Report 挂点一致（旧页清空后读数滞留到下次事件，这里顺带补上），语言切换时模板本身也会自动换。</description></item>
 ///   <item><description>引擎模型：实例变换表、随机分布（含种子复位）与 HISM 分组节点都住在这里，
 ///     视图只负责生命周期——建场景时取走分组节点挂进场景、逐帧驱动。</description></item>
 /// </list>
@@ -89,9 +90,6 @@ public sealed partial class HismViewModel : ObservableObject
     /// <summary>重铺、清空或剔除开关变化后请求一帧重绘；视图把它接到宿主的 RequestFrame 上。</summary>
     public event Action? FrameRequested;
 
-    /// <summary>逐帧调用：重读 Readout 的八叉树状态（建树完成、增量/重建计数的变化由这里带出）。</summary>
-    public void Tick() => ReadoutText.Refresh();
-
     /// <summary>
     /// 建 HISM 分组节点（含茎秆源网格），铺满首批实例后交视图挂进场景——等价于旧
     /// BuildScene 尾部的组装。节点构造是纯 CPU，安全落在渲染线程回调里；返回前不碰场景，
@@ -129,6 +127,9 @@ public sealed partial class HismViewModel : ObservableObject
 
             group.UpdateInstance(cursor, moveModeIndex == 0 ? Nudge(cursor) : Teleport(cursor));
         }
+
+        // 旧 Update 的 Report 位置：只有真的搬动了实例才重读八叉树统计，空闲帧不做事。
+        ReadoutText.Refresh();
     }
 
     /// <summary>页首说明。</summary>
@@ -191,6 +192,8 @@ public sealed partial class HismViewModel : ObservableObject
             {
                 group.MaxInstancesPerGroup = (int)value;
                 group.Build();
+
+                ReadoutText.Refresh();
             }
         }
     }
@@ -208,6 +211,8 @@ public sealed partial class HismViewModel : ObservableObject
             {
                 group.MaxDepth = (int)value;
                 group.Build();
+
+                ReadoutText.Refresh();
             }
         }
     }
@@ -264,6 +269,8 @@ public sealed partial class HismViewModel : ObservableObject
     {
         group?.ClearInstances();
 
+        // 旧页清空不刷新读数（要等下次搬动/重铺才归零），这里在变异点上直接重算。
+        ReadoutText.Refresh();
         FrameRequested?.Invoke();
     }
 
@@ -284,6 +291,7 @@ public sealed partial class HismViewModel : ObservableObject
         group?.SetInstances(transforms);
         group?.Build();
 
+        ReadoutText.Refresh();
         FrameRequested?.Invoke();
     }
 

@@ -23,8 +23,8 @@ namespace Aura3D.Gallery.Demos;
 ///     <see cref="InstancedMesh"/>（或先记字段、由逐帧驱动消费）；初值即原页面 XAML/字段里
 ///     那一份，旧页面靠 Value/IsChecked 初值 + 事件处理写回，现在由绑定初始化取代。</description></item>
 ///   <item><description>Readout：Lingua 1.1 的 format builder 组装，占位符是两片实例数、
-///     顶点数与模式名，视图逐帧调 <see cref="Tick"/> 重读（旧页只在重铺/摘除时点名
-///     <c>Report</c>，值也只在那两处变，逐帧重读等价），语言切换时模板本身也会自动换。</description></item>
+///     顶点数与模式名，只在重铺（<see cref="Rebuild"/>）与摘除（RemoveFront）两个变异点
+///     重算——与旧页点名的两处 <c>Report</c> 同时机，语言切换时模板本身也会自动换。</description></item>
 ///   <item><description>引擎模型：两片 <see cref="InstancedMesh"/>、锚点/变换缓冲与波动时钟
 ///     都住在这里，视图只负责生命周期——建场景时取走两片节点挂进场景、逐帧驱动。</description></item>
 /// </list>
@@ -92,9 +92,6 @@ public sealed partial class InstancingViewModel : ObservableObject
 
     /// <summary>波动推进、重铺、摘除或剔除开关变化后请求一帧重绘；视图把它接到宿主的 RequestFrame 上。</summary>
     public event Action? FrameRequested;
-
-    /// <summary>逐帧调用：重读 Readout 的代价参数（摘除实例后计数由这里带出）。</summary>
-    public void Tick() => ReadoutText.Refresh();
 
     /// <summary>
     /// 建两片实例场（左片引擎材质、右片逐实例顶点色材质），铺满首批实例后交视图挂进场景——
@@ -253,6 +250,7 @@ public sealed partial class InstancingViewModel : ObservableObject
         for (int i = 0; i < 200 && litField.InstanceCount > 0; i++)
             litField.RemoveInstance(0);
 
+        ReadoutText.Refresh();
         FrameRequested?.Invoke();
     }
 
@@ -300,6 +298,7 @@ public sealed partial class InstancingViewModel : ObservableObject
             coloredField.SetInstanceAttribute(BuildInVertexAttribute.Color_0, 4, colors);
         }
 
+        ReadoutText.Refresh();
         FrameRequested?.Invoke();
     }
 

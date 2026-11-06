@@ -22,8 +22,8 @@ namespace Aura3D.Gallery.Demos;
 ///     重灌一遍；点尺寸写穿到点材质的 <c>uPointSize</c> uniform。初值即旧 XAML 行控件上
 ///     写死的那一份（12/6/0.9/12），由绑定初始化取代。</description></item>
 ///   <item><description>Readout：Lingua 1.1 的 format builder 组装 {0}..{2}——聚焦图元的顶点数、
-///     索引数与折算图元数全是计算参数，视图逐帧调 <see cref="Tick"/> 重读（旧 Report 在
-///     「聚焦/重建」两个时机各排一次，逐帧重读把它们都盖住），语言切换时模板本身也会自动换。</description></item>
+///     索引数与折算图元数只在聚焦/重建时变，所以读数在 <see cref="SelectedKind"/> 与
+///     <see cref="Rebuild"/> 两个变异点重算（与旧 Report 同时机），语言切换时模板本身也会自动换。</description></item>
 ///   <item><description>引擎模型：七个网格（手写几何体 + NoLight 覆盖材质 + 聚焦摆位）住在这里。
 ///     本页没有外部资产，构造期即可建全；视图只负责生命周期——建场景时把它们挂进场景、
 ///     逐帧驱动读数。</description></item>
@@ -104,11 +104,8 @@ public sealed partial class PrimitivesViewModel : ObservableObject
     /// <summary>七种图元的网格（顺序同 Kinds）；建场景时由视图挂进场景。</summary>
     public IReadOnlyList<Mesh> Meshes { get; }
 
-    /// <summary>逐帧读数。语言切换时模板换新，绑定自动收到重排后的整句。</summary>
+    /// <summary>聚焦/重建时重算的读数。语言切换时模板换新，绑定自动收到重排后的整句。</summary>
     public LinguaFormatObservable ReadoutText { get; }
-
-    /// <summary>逐帧调用：重读读数的计算参数（顶点/索引/图元数）。</summary>
-    public void Tick() => ReadoutText.Refresh();
 
     /// <summary>页首说明。</summary>
     public IObservable<string?> IntroLabel => Strings.Instance.Primitives_Intro;
@@ -156,6 +153,7 @@ public sealed partial class PrimitivesViewModel : ObservableObject
                 selected = meshes[Kinds[index].Type];
 
             Layout();
+            ReadoutText.Refresh();
             FrameRequested?.Invoke();
         }
     }
@@ -322,6 +320,7 @@ public sealed partial class PrimitivesViewModel : ObservableObject
             meshes[type].Geometry = BuildGeometry(type);
 
         Layout();
+        ReadoutText.Refresh();
         FrameRequested?.Invoke();
     }
 

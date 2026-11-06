@@ -62,6 +62,5 @@ public sealed partial class InstancingDemo : Demo
     public override void Update(double deltaTime)
     {
         viewModel.Update(deltaTime);
-        viewModel.Tick();
     }
 }

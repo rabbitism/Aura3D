@@ -74,7 +74,6 @@ public sealed partial class HismDemo : Demo
     public override void Update(double deltaTime)
     {
         viewModel.Update(deltaTime);
-        viewModel.Tick();
         Context.RequestFrame();
     }
 }
