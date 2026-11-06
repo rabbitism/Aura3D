@@ -2,14 +2,14 @@
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
-         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
-         x:DataType="demos:ParticlesDemo">
+         x:DataType="demos:ParticlesViewModel">
 
   <!--
-    粒子页：公告板、一次性爆发、网格模式三条发射路径各占一段。
-    参数行的排版全在 .axaml 里，滑杆初值取自发射器对象，因此由构造函数写回行控件。
+    粒子页：MVVM 试点。文案与参数全部绑定 ParticlesViewModel——标签是 Lingua observable
+    （^ 绑定，换语言自动生效），行控件值走双向绑定写穿到发射器对象。
+    视图 code-behind 只剩生命周期：取资产、装场景、逐帧 Tick。
   -->
   <Panel>
 
@@ -18,67 +18,67 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Particles_Intro}}" />
+        <kit:Hint Text="{Binding IntroLabel^}" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Particles_Fountain}}" />
+        <kit:Section Title="{Binding FountainSectionLabel^}" />
 
-        <kit:SliderRow x:Name="FountainRateRow" Label="{Translate {x:Static loc:Strings+Keys.Particles_FountainRate}}" Minimum="0" Maximum="6000" Format="0"
-                       ValueChanged="OnFountainRateChanged" />
-        <kit:SliderRow x:Name="FountainConeAngleRow" Label="{Translate {x:Static loc:Strings+Keys.Particles_ConeAngle}}" Minimum="0" Maximum="80" Format="0"
-                       ValueChanged="OnFountainConeAngleChanged" />
-        <kit:SliderRow x:Name="FountainGravityRow" Label="{Translate {x:Static loc:Strings+Keys.Particles_GravityY}}" Minimum="-30" Maximum="5" Format="0.0"
-                       ValueChanged="OnFountainGravityChanged" />
-        <kit:SliderRow x:Name="FountainDampingRow" Label="{Translate {x:Static loc:Strings+Keys.Particles_Damping}}" Minimum="0" Maximum="6"
-                       ValueChanged="OnFountainDampingChanged" />
-        <kit:SliderRow x:Name="FountainStartSizeRow" Label="{Translate {x:Static loc:Strings+Keys.Particles_StartSize}}" Minimum="0.05" Maximum="3"
-                       ValueChanged="OnFountainStartSizeChanged" />
+        <kit:SliderRow Label="{Binding FountainRateLabel^}" Minimum="0" Maximum="6000" Format="0"
+                       Value="{Binding FountainRate}" />
+        <kit:SliderRow Label="{Binding FountainConeAngleLabel^}" Minimum="0" Maximum="80" Format="0"
+                       Value="{Binding FountainConeAngle}" />
+        <kit:SliderRow Label="{Binding FountainGravityLabel^}" Minimum="-30" Maximum="5" Format="0.0"
+                       Value="{Binding FountainGravityY}" />
+        <kit:SliderRow Label="{Binding FountainDampingLabel^}" Minimum="0" Maximum="6"
+                       Value="{Binding FountainDamping}" />
+        <kit:SliderRow Label="{Binding FountainStartSizeLabel^}" Minimum="0.05" Maximum="3"
+                       Value="{Binding FountainStartSize}" />
 
-        <kit:ComboRow x:Name="TextureRow" Label="{Translate {x:Static loc:Strings+Keys.Particles_Map}}" Options="{Binding TextureOptions}"
-                      SelectionChanged="OnTextureChanged" />
+        <kit:ComboRow Label="{Binding TextureLabel^}" Options="{Binding TextureOptions}"
+                      SelectedItem="{Binding SelectedTexture}" />
 
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.Particles_FlipbookTiles}}" Minimum="1" Maximum="8" Value="8" Format="0"
-                       ValueChanged="OnFlipbookTilesChanged" />
+        <kit:SliderRow Label="{Binding FlipbookTilesLabel^}" Minimum="1" Maximum="8" Format="0"
+                       Value="{Binding FlipbookTiles}" />
 
-        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.Particles_FlipbookNote}}" />
+        <kit:Hint Text="{Binding FlipbookNoteLabel^}" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Particles_Burst}}" />
+        <kit:Section Title="{Binding BurstSectionLabel^}" />
 
-        <kit:SliderRow x:Name="BurstRateRow" Label="{Translate {x:Static loc:Strings+Keys.Particles_BurstRate}}" Minimum="0" Maximum="60000" Format="0"
-                       ValueChanged="OnBurstRateChanged" />
-        <kit:SliderRow x:Name="BurstDurationRow" Label="{Translate {x:Static loc:Strings+Keys.Particles_Duration}}" Minimum="0" Maximum="4"
-                       ValueChanged="OnBurstDurationChanged" />
-        <kit:SliderRow x:Name="BurstLifetimeRow" Label="{Translate {x:Static loc:Strings+Keys.Particles_MaxLife}}" Minimum="0.2" Maximum="8"
-                       ValueChanged="OnBurstLifetimeChanged" />
-        <kit:SliderRow x:Name="BurstVelocityRow" Label="{Translate {x:Static loc:Strings+Keys.Particles_MaxSpeed}}" Minimum="0" Maximum="20" Format="0.0"
-                       ValueChanged="OnBurstVelocityChanged" />
+        <kit:SliderRow Label="{Binding BurstRateLabel^}" Minimum="0" Maximum="60000" Format="0"
+                       Value="{Binding BurstRate}" />
+        <kit:SliderRow Label="{Binding BurstDurationLabel^}" Minimum="0" Maximum="4"
+                       Value="{Binding BurstDuration}" />
+        <kit:SliderRow Label="{Binding BurstLifetimeLabel^}" Minimum="0.2" Maximum="8"
+                       Value="{Binding BurstLifetime}" />
+        <kit:SliderRow Label="{Binding BurstVelocityLabel^}" Minimum="0" Maximum="20" Format="0.0"
+                       Value="{Binding BurstVelocity}" />
 
-        <Button Content="{Translate {x:Static loc:Strings+Keys.Particles_Replay}}" Click="OnBurstRestart" HorizontalAlignment="Stretch" />
+        <Button Content="{Binding ReplayBurstLabel^}" Command="{Binding ReplayBurstCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Particles_Debris}}" />
+        <kit:Section Title="{Binding DebrisSectionLabel^}" />
 
-        <kit:SliderRow x:Name="DebrisRateRow" Label="{Translate {x:Static loc:Strings+Keys.Particles_DebrisRate}}" Minimum="0" Maximum="400" Format="0"
-                       ValueChanged="OnDebrisRateChanged" />
-        <kit:SliderRow x:Name="DebrisSpinRow" Label="{Translate {x:Static loc:Strings+Keys.Particles_SpinSpeed}}" Minimum="0" Maximum="12" Format="0.0"
-                       ValueChanged="OnDebrisSpinChanged" />
-        <kit:SliderRow x:Name="DebrisMeshScaleRow" Label="MeshScale" Minimum="0.1" Maximum="4"
-                       ValueChanged="OnDebrisMeshScaleChanged" />
-        <kit:SliderRow x:Name="DebrisMaxParticlesRow" Label="{Translate {x:Static loc:Strings+Keys.Particles_MaxParticles}}" Minimum="50" Maximum="20000" Format="0"
-                       ValueChanged="OnDebrisMaxParticlesChanged" />
+        <kit:SliderRow Label="{Binding DebrisRateLabel^}" Minimum="0" Maximum="400" Format="0"
+                       Value="{Binding DebrisRate}" />
+        <kit:SliderRow Label="{Binding DebrisSpinLabel^}" Minimum="0" Maximum="12" Format="0.0"
+                       Value="{Binding DebrisSpin}" />
+        <kit:SliderRow Label="{Binding DebrisMeshScaleLabel^}" Minimum="0.1" Maximum="4"
+                       Value="{Binding DebrisMeshScale}" />
+        <kit:SliderRow Label="{Binding DebrisMaxParticlesLabel^}" Minimum="50" Maximum="20000" Format="0"
+                       Value="{Binding DebrisMaxParticles}" />
 
-        <Button Content="{Translate {x:Static loc:Strings+Keys.Particles_ApplyMaxParticles}}" Click="OnDebrisRestart" HorizontalAlignment="Stretch" />
+        <Button Content="{Binding ApplyDebrisLabel^}" Command="{Binding ApplyDebrisCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.Particles_Shared}}" />
+        <kit:Section Title="{Binding SharedSectionLabel^}" />
 
-        <kit:ComboRow x:Name="BlendModeRow" Label="{Translate {x:Static loc:Strings+Keys.Particles_BlendMode}}" Options="{Binding BlendModeOptions}"
-                      SelectionChanged="OnBlendModeChanged" />
+        <kit:ComboRow Label="{Binding BlendModeLabel^}" Options="{Binding BlendModeOptions}"
+                      SelectedItem="{Binding SelectedBlendMode}" />
 
-        <Button Content="{Translate {x:Static loc:Strings+Keys.Particles_RestartAll}}" Click="OnRestartAll" HorizontalAlignment="Stretch" />
+        <Button Content="{Binding RestartAllLabel^}" Command="{Binding RestartAllCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Particles_PauseAll}}" IsChecked="False" Toggled="OnPauseToggled" />
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Particles_VisibilityCulling}}" IsChecked="False" Toggled="OnCullingToggled" />
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Particles_ShowBounds}}" IsChecked="True" Toggled="OnShowBoundsToggled" />
+        <kit:ToggleRow Label="{Binding PauseAllLabel^}" IsChecked="{Binding PauseAll}" />
+        <kit:ToggleRow Label="{Binding CullingLabel^}" IsChecked="{Binding Culling}" />
+        <kit:ToggleRow Label="{Binding ShowBoundsLabel^}" IsChecked="{Binding ShowBounds}" />
 
-        <kit:ReadoutRow x:Name="Readout" Label="{Translate {x:Static loc:Strings+Keys.Particles_State}}" />
+        <kit:ReadoutRow Label="{Binding StateLabel^}" Text="{Binding ReadoutText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>
