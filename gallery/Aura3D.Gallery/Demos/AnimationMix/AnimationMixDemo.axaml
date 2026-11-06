@@ -2,14 +2,15 @@
          xmlns="https://github.com/avaloniaui"
          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
          xmlns:ex="clr-namespace:Aura3D.Gallery"
-         xmlns:loc="clr-namespace:Aura3D.Gallery.Localization"
          xmlns:demos="clr-namespace:Aura3D.Gallery.Demos"
          xmlns:kit="clr-namespace:Aura3D.Gallery.Kit"
-         x:DataType="demos:AnimationMixDemo">
+         x:DataType="demos:AnimationMixViewModel">
 
   <!--
-    动画混合页：左右两份模型同骨骼，各挂一个采样器。
-    参数行的排版全在 .axaml 里，初值就是页内字段的默认值，因此不需要构造函数回写。
+    动画混合页：左右两份模型同骨骼，各挂一个采样器。MVVM 化：文案、参数与命令全在
+    AnimationMixViewModel——标签是 Lingua observable（^ 绑定，换语言自动生效），行控件值
+    走双向绑定写穿到状态机节点与混合空间。BlendSpacePad 是强视图交互控件，留在 View：
+    拖动事件推进 VM，扫掠/Reset 的轴值由 code-behind 逐帧回显。
   -->
   <Panel>
 
@@ -18,42 +19,40 @@
     <kit:InspectorPanel>
       <StackPanel Spacing="6">
 
-        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.AnimationMix_Intro}}" />
+        <kit:Hint Text="{Binding IntroLabel^}" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.AnimationMix_Graph}}" />
+        <kit:Section Title="{Binding GraphSectionLabel^}" />
 
-        <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.AnimationMix_AutoToggle}}" IsChecked="True"
-                       Toggled="OnAutoToggleToggled" />
+        <kit:ToggleRow Label="{Binding AutoToggleLabel^}" IsChecked="{Binding AutoToggle}" />
 
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.AnimationMix_ToggleInterval}}" Minimum="0.6" Maximum="6" Value="2.5" Format="0.0"
-                       ValueChanged="OnIntervalChanged" />
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.AnimationMix_BlendTime}}" Minimum="0" Maximum="2" Value="0.6" Format="0.00"
-                       ValueChanged="OnBlendTimeChanged" />
+        <kit:SliderRow Label="{Binding ToggleIntervalLabel^}" Minimum="0.6" Maximum="6" Format="0.0"
+                       Value="{Binding ToggleSeconds}" />
+        <kit:SliderRow Label="{Binding BlendTimeLabel^}" Minimum="0" Maximum="2" Format="0.00"
+                       Value="{Binding BlendTime}" />
 
-        <Button Content="{Translate {x:Static loc:Strings+Keys.AnimationMix_ManualSwitch}}" Click="OnManualSwitch" HorizontalAlignment="Stretch" />
+        <Button Content="{Binding ManualSwitchLabel^}" Command="{Binding ManualSwitchCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.AnimationMix_TransitionNote}}" />
+        <kit:Hint Text="{Binding TransitionNoteLabel^}" />
 
-        <kit:ReadoutRow x:Name="GraphReadout" Label="{Translate {x:Static loc:Strings+Keys.AnimationMix_StateMachine}}" />
+        <kit:ReadoutRow Label="{Binding StateMachineLabel^}" Text="{Binding GraphReadoutText}" />
 
-        <kit:Section Title="{Translate {x:Static loc:Strings+Keys.AnimationMix_BlendSpace}}" />
+        <kit:Section Title="{Binding BlendSpaceSectionLabel^}" />
 
-        <kit:ToggleRow x:Name="AutoSweepToggle" Label="{Translate {x:Static loc:Strings+Keys.AnimationMix_AutoSweep}}" IsChecked="True"
-                       Toggled="OnAutoSweepToggled" />
+        <kit:ToggleRow Label="{Binding AutoSweepLabel^}" IsChecked="{Binding AutoSweep}" />
 
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.AnimationMix_SweepPeriod}}" Minimum="2" Maximum="20" Value="8" Format="0.0"
-                       ValueChanged="OnSweepPeriodChanged" />
+        <kit:SliderRow Label="{Binding SweepPeriodLabel^}" Minimum="2" Maximum="20" Format="0.0"
+                       Value="{Binding SweepPeriod}" />
 
         <kit:BlendSpacePad x:Name="BlendPad" Height="230"
                            AxisChanged="OnPadAxisChanged" />
-        <kit:SliderRow Label="{Translate {x:Static loc:Strings+Keys.AnimationMix_IdwPower}}" Minimum="0.5" Maximum="6" Value="2" Format="0.00"
-                       ValueChanged="OnIdwPowerChanged" />
+        <kit:SliderRow Label="{Binding IdwPowerLabel^}" Minimum="0.5" Maximum="6" Format="0.00"
+                       Value="{Binding IdwPower}" />
 
-        <Button Content="{Translate {x:Static loc:Strings+Keys.AnimationMix_ResetAxes}}" Click="OnResetAxis" HorizontalAlignment="Stretch" />
+        <Button Content="{Binding ResetAxesLabel^}" Command="{Binding ResetAxesCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.AnimationMix_BlendSpaceNote}}" />
+        <kit:Hint Text="{Binding BlendSpaceNoteLabel^}" />
 
-        <kit:ReadoutRow x:Name="BlendReadout" Label="{Translate {x:Static loc:Strings+Keys.AnimationMix_BlendSpaceRow}}" />
+        <kit:ReadoutRow Label="{Binding BlendSpaceRowLabel^}" Text="{Binding BlendReadoutText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>

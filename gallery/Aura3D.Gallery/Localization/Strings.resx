@@ -179,6 +179,9 @@
   <data name="Background_RebakeIbl" xml:space="preserve"><value>Rebake IBL (switching sources already rebakes; for in-place content changes)</value></data>
   <data name="Background_IblNote" xml:space="preserve"><value>Irradiance and prefiltered reflections only recognise the cubemap branch: when Background is not a CubeTexture they fall back to the engine's default cube (IrradianceMapPass reads RenderPipeline.DefaultIblAmbientCubeTexture). Both results are cached on the camera node and reused whenever FrameBufferId is non-zero, so flipping between the four sources on this page leaves the sphere's reflections unchanged — press the button above to Invalidate, or Reload. The full caching demo lives on the ibl-environment page.</value></data>
   <data name="Background_IblCache" xml:space="preserve"><value>Background branch and IBL cache</value></data>
+  <data name="Background_SceneBackground" xml:space="preserve"><value>Scene.Background</value></data>
+  <data name="Background_IblAmbientIntensity" xml:space="preserve"><value>IblAmbientIntensity</value></data>
+  <data name="Background_ToneMappingExposure" xml:space="preserve"><value>ToneMappingExposure</value></data>
   <data name="Camera_Intro" xml:space="preserve"><value>Orthographic projection has no near-large-far-small, which makes it the right tool for measuring; changing FieldOfView under perspective alters both the vertical field and the effective aspect. Pulling near and far apart so they straddle an object reveals a cross-section — a second kind of invisibility on top of frustum culling.</value></data>
   <data name="Camera_Projection" xml:space="preserve"><value>Projection mode</value></data>
   <data name="Camera_FieldOfView" xml:space="preserve"><value>FieldOfView °</value></data>
@@ -445,6 +448,8 @@
   <data name="Environment_Readout" xml:space="preserve"><value>Background {0} · panorama {1} · requested face size {2} · IrradianceMap fbo={3} PrefilteredMap fbo={4} · IBL intensity {5:0.00} exposure {6:0.00} · {7}</value></data>
   <data name="Environment_Rebaked" xml:space="preserve"><value>Manually force-rebaked</value></data>
   <data name="Environment_NotRebaked" xml:space="preserve"><value>Not manually rebaked (switching the environment rebakes automatically)</value></data>
+  <data name="Environment_ToneMappingExposure" xml:space="preserve"><value>ToneMappingExposure</value></data>
+  <data name="Environment_BrightnessClamp" xml:space="preserve"><value>BrightnessClamp</value></data>
   <data name="MaterialShaders_MapChecker" xml:space="preserve"><value>Checker</value></data>
   <data name="MaterialShaders_MapSoftDot" xml:space="preserve"><value>Soft dot</value></data>
   <data name="MaterialShaders_MapGradient" xml:space="preserve"><value>Vertical gradient</value></data>

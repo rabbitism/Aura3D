@@ -179,6 +179,9 @@
   <data name="Background_RebakeIbl" xml:space="preserve"><value>重烘 IBL（换来源会自动重烘；背景资源内容被原地改过时用）</value></data>
   <data name="Background_IblNote" xml:space="preserve"><value>辐照度与预滤波反射只认立方图那一支：Background 不是 CubeTexture 时退到引擎自带的默认立方图（IrradianceMapPass 里读 RenderPipeline.DefaultIblAmbientCubeTexture）。两份结果缓存在相机节点上，FrameBufferId 非 0 就直接复用，所以本页在四种来源之间来回切时球面反射不会跟着变——要么按上面的按钮 Invalidate，要么 Reload。缓存机制的完整演示在 ibl-environment 页。</value></data>
   <data name="Background_IblCache" xml:space="preserve"><value>背景分支与 IBL 缓存</value></data>
+  <data name="Background_SceneBackground" xml:space="preserve"><value>Scene.Background</value></data>
+  <data name="Background_IblAmbientIntensity" xml:space="preserve"><value>IblAmbientIntensity</value></data>
+  <data name="Background_ToneMappingExposure" xml:space="preserve"><value>ToneMappingExposure</value></data>
   <data name="Camera_Intro" xml:space="preserve"><value>正交投影没有近大远小，用来量尺寸；透视投影改 FieldOfView 会同时改变垂直视野与纵横比效果。近/远裁剪面拉到物体之间就能看见截面——这是视锥剔除之外另一层「看不见」。</value></data>
   <data name="Camera_Projection" xml:space="preserve"><value>投影方式</value></data>
   <data name="Camera_FieldOfView" xml:space="preserve"><value>视场角 °</value></data>
@@ -445,6 +448,8 @@
   <data name="Environment_Readout" xml:space="preserve"><value>背景 {0} · 全景选项 {1} · 请求面大小 {2} · IrradianceMap fbo={3} PrefilteredMap fbo={4} · IBL 强度 {5:0.00} 曝光 {6:0.00} · {7}</value></data>
   <data name="Environment_Rebaked" xml:space="preserve"><value>已手动强制重烘</value></data>
   <data name="Environment_NotRebaked" xml:space="preserve"><value>未手动重烘（换图时引擎会自动重烘）</value></data>
+  <data name="Environment_ToneMappingExposure" xml:space="preserve"><value>ToneMappingExposure</value></data>
+  <data name="Environment_BrightnessClamp" xml:space="preserve"><value>BrightnessClamp</value></data>
   <data name="MaterialShaders_MapChecker" xml:space="preserve"><value>棋盘</value></data>
   <data name="MaterialShaders_MapSoftDot" xml:space="preserve"><value>柔光点</value></data>
   <data name="MaterialShaders_MapGradient" xml:space="preserve"><value>竖向渐变</value></data>
