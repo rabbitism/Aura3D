@@ -46,13 +46,15 @@ public sealed partial class ParticlesViewModel : ObservableObject
     /// </summary>
     public ParticlesViewModel()
     {
-        TextureOptions = TextureKeys.Select(k => k.T()).ToList();
-        BlendModeOptions = new List<BlendMode>
+        textureOptionList = TextureKeys.Select((k, i) => Kit.ComboOption.ForKey(k, i)).ToList();
+        var blendModeList = new List<BlendMode>
         {
             BlendMode.Opaque,
             BlendMode.Masked,
             BlendMode.Translucent,
-        };
+        }.Select(m => Kit.ComboOption.Literal(m.ToString(), m)).ToList();
+
+        BlendModeOptions = blendModeList;
 
         // 参数初值取发射器里真正生效的那一份（等价于旧页面把行控件初值写回）。
         fountainRate = FountainEmitter.EmissionRate;
@@ -70,8 +72,8 @@ public sealed partial class ParticlesViewModel : ObservableObject
         debrisMeshScale = DebrisEmitter.MeshScale;
         debrisMaxParticles = DebrisEmitter.MaxParticles;
 
-        selectedTexture = TextureOptions[textureIndex];
-        selectedBlendMode = FountainEmitter.BlendMode;
+        selectedTexture = textureOptionList[textureIndex];
+        selectedBlendMode = blendModeList.Single(o => o.Value == FountainEmitter.BlendMode);
 
         // Readout 模板 {0}..{10}：存活数一类是逐帧读的计算参数，渲染路径与贴图名在切换时才变，
         // 尾部 {10} 是「无贴图」提示——有贴图时是空串，等价于旧代码的字符串拼接。
@@ -83,7 +85,7 @@ public sealed partial class ParticlesViewModel : ObservableObject
             .Arg(() => debris?.ActiveCount ?? 0)
             .Arg(() => DebrisEmitter.UseMeshRenderer ? "InstancedMesh" : Strings.Keys.Particles_RendererBillboard.T())
             .Arg(() => fountain?.IsPlaying ?? false)
-            .Arg(() => (string)TextureOptions[textureIndex]!)
+            .Arg(() => selectedTexture?.CurrentName ?? string.Empty)
             .Arg(() => FountainEmitter.FlipbookTiles.X)
             .Arg(() => FountainEmitter.FlipbookTiles.Y)
             .Arg(() => FountainEmitter.Texture == null ? Strings.Keys.Particles_NoTextureHint.T() : string.Empty)
@@ -120,10 +122,10 @@ public sealed partial class ParticlesViewModel : ObservableObject
     /// <summary>逐帧读数。语言切换时模板换新，绑定自动收到重排后的整句。</summary>
     public LinguaFormatObservable ReadoutText { get; }
 
-    /// <summary>贴图下拉的选项文案；当前语言的一份快照，随页面重建。</summary>
-    public IList TextureOptions { get; }
+    /// <summary>贴图下拉的选项：Name 跟随语言，Value 是纹理序号（驱动 ApplyBillboard 的贴图选择）。</summary>
+    public IList TextureOptions => textureOptionList;
 
-    /// <summary>混合模式下拉的选项。</summary>
+    /// <summary>混合模式下拉的选项：Name 是引擎枚举名（语言无关的引擎标识），Value 是枚举值。</summary>
     public IList BlendModeOptions { get; }
 
     /// <summary>重放一次性爆发；源生成 <c>ReplayBurstCommand</c> 供按钮绑定。</summary>
@@ -238,8 +240,9 @@ public sealed partial class ParticlesViewModel : ObservableObject
     private Texture? fireSheet;
 
     private int textureIndex = 2;
-    private object? selectedTexture;
-    private object? selectedBlendMode;
+    private List<Kit.ComboOption<int>> textureOptionList = [];
+    private Kit.ComboOption<int>? selectedTexture;
+    private Kit.ComboOption<BlendMode>? selectedBlendMode;
 
     private double fountainRate;
     private double fountainConeAngle;
@@ -319,8 +322,11 @@ public sealed partial class ParticlesViewModel : ObservableObject
         }
     }
 
-    /// <summary>贴图下拉的选中项；换贴图会连带重设翻页格数（程序化图只有一帧）。</summary>
-    public object? SelectedTexture
+    /// <summary>
+    /// 贴图下拉的选中项；选项实例即身份，Value 直接给出纹理序号（程序化图只有一帧，
+    /// 换贴图会连带重设翻页格数）。
+    /// </summary>
+    public Kit.ComboOption<int>? SelectedTexture
     {
         get => selectedTexture;
         set
@@ -328,7 +334,7 @@ public sealed partial class ParticlesViewModel : ObservableObject
             if (value == null || !SetProperty(ref selectedTexture, value))
                 return;
 
-            textureIndex = Math.Max(0, TextureOptions.IndexOf(value));
+            textureIndex = value.Value;
 
             ApplyBillboard();
             FrameRequested?.Invoke();
@@ -447,17 +453,17 @@ public sealed partial class ParticlesViewModel : ObservableObject
         }
     }
 
-    /// <summary>混合模式；三个系统里公告板路径的两个一起改。</summary>
-    public object? SelectedBlendMode
+    /// <summary>混合模式；选项的 Value 即枚举，公告板路径的两个系统一起改。</summary>
+    public Kit.ComboOption<BlendMode>? SelectedBlendMode
     {
         get => selectedBlendMode;
         set
         {
-            if (value is not BlendMode mode || !SetProperty(ref selectedBlendMode, value))
+            if (value == null || !SetProperty(ref selectedBlendMode, value))
                 return;
 
-            FountainEmitter.BlendMode = mode;
-            BurstEmitter.BlendMode = mode;
+            FountainEmitter.BlendMode = value.Value;
+            BurstEmitter.BlendMode = value.Value;
 
             FrameRequested?.Invoke();
         }

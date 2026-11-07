@@ -51,6 +51,19 @@ public sealed partial class MaterialShadersViewModel : ObservableObject
     /// </summary>
     public MaterialShadersViewModel()
     {
+        // 下拉选项统一走 ComboOption：BaseColor 的 Name 是 Lingua 流绑定（换语言自动换文案），
+        // 混合模式显示引擎枚举名（语言无关的引擎标识）；Value 是语言无关的稳定值，
+        // 选中项按对象身份比较，不再按显示名 IndexOf 反查。
+        baseColorOptionList = BaseColorKeys.Select((k, i) => Kit.ComboOption.ForKey(k, i)).ToList();
+        var blendModeList = new List<BlendMode>
+        {
+            BlendMode.Opaque,
+            BlendMode.Masked,
+            BlendMode.Translucent,
+        }.Select(m => Kit.ComboOption.Literal(m.ToString(), m)).ToList();
+
+        BlendModeOptions = blendModeList;
+
         // 可换着用的三张 BaseColor 贴图，键即下拉选项的下标。
         swappableTextures[0] = Procedural.Checker(128, 4);
         swappableTextures[1] = Procedural.SoftDot(128);
@@ -92,8 +105,8 @@ public sealed partial class MaterialShadersViewModel : ObservableObject
 
         // 下拉初值：BaseColor 对齐第一张（棋盘）。条纹材质的混合模式保持 Shaders.Stripes 出厂的
         // Opaque——旧页面构造函数也只拨了下拉显示（Masked），并不写穿材质，照原样不制造新行为。
-        selectedBaseColor = BaseColorOptions[0];
-        selectedBlendMode = BlendMode.Masked;
+        selectedBaseColor = baseColorOptionList[0];
+        selectedBlendMode = blendModeList.Single(o => o.Value == BlendMode.Masked);
 
         // Readout 模板 {0}..{3}：帧时由 Tick 逐帧喂进来（构造期为 0，首帧后即真实值），
         // uTime 时钟只在「逐帧写 uTime」开着时前进，覆盖键是常量，cutoff 随滑杆变。
@@ -114,11 +127,11 @@ public sealed partial class MaterialShadersViewModel : ObservableObject
     /// <summary>整排网格的父节点（含全部六个网格）；建场景时由视图挂进场景。</summary>
     public Node Row { get; }
 
-    /// <summary>BaseColor 下拉的选项文案；当前语言的一份快照，随页面重建。</summary>
-    public IList BaseColorOptions { get; } = BaseColorKeys.Select(k => k.T()).ToList();
+    /// <summary>BaseColor 下拉的选项：Name 跟随语言（Lingua 流绑定），Value 是贴图序号（对应 swappableTextures 的键）。</summary>
+    public IList BaseColorOptions => baseColorOptionList;
 
-    /// <summary>条纹材质混合模式下拉的选项。</summary>
-    public IList BlendModeOptions { get; } = Enum.GetValues<BlendMode>();
+    /// <summary>条纹材质混合模式下拉的选项：Name 是引擎枚举名（语言无关的引擎标识），Value 是枚举值。</summary>
+    public IList BlendModeOptions { get; }
 
     /// <summary>逐帧读数。语言切换时模板换新，绑定自动收到重排后的整句。</summary>
     public LinguaFormatObservable ReadoutText { get; }
@@ -148,20 +161,19 @@ public sealed partial class MaterialShadersViewModel : ObservableObject
     }
 
     /// <summary>
-    /// BaseColor 下拉的选中项；换贴图即换左上球（引擎材质）的 BaseColor 通道。
-    /// 旧处理器取 <c>litMesh?.Material ?? engineMaterial</c>——那颗球从建出来就挂着
-    /// engineMaterial（会换材质的是中路的球），这里直接落到 engineMaterial；
-    /// IndexOf 找不到时与旧代码一样夹回 0。
+    /// BaseColor 下拉的选中项；选项实例即身份，Value 直接给出贴图序号，换贴图即换
+    /// 左上球（引擎材质）的 BaseColor 通道。旧处理器取 <c>litMesh?.Material ?? engineMaterial</c>
+    /// ——那颗球从建出来就挂着 engineMaterial（会换材质的是中路的球），这里直接落到 engineMaterial。
     /// </summary>
-    public object? SelectedBaseColor
+    public Kit.ComboOption<int>? SelectedBaseColor
     {
         get => selectedBaseColor;
         set
         {
-            if (value is not string name || !SetProperty(ref selectedBaseColor, value))
+            if (value == null || !SetProperty(ref selectedBaseColor, value))
                 return;
 
-            engineMaterial.SetTexture("BaseColor", swappableTextures[Math.Max(0, BaseColorOptions.IndexOf(name))]);
+            engineMaterial.SetTexture("BaseColor", swappableTextures[value.Value]);
 
             FrameRequested?.Invoke();
         }
@@ -256,16 +268,16 @@ public sealed partial class MaterialShadersViewModel : ObservableObject
         }
     }
 
-    /// <summary>条纹材质的混合模式；引擎以 #define 传进同一段 GLSL 走不同分支。</summary>
-    public object? SelectedBlendMode
+    /// <summary>条纹材质的混合模式；选项的 Value 即枚举，引擎以 #define 传进同一段 GLSL 走不同分支。</summary>
+    public Kit.ComboOption<BlendMode>? SelectedBlendMode
     {
         get => selectedBlendMode;
         set
         {
-            if (value is not BlendMode mode || !SetProperty(ref selectedBlendMode, value))
+            if (value == null || !SetProperty(ref selectedBlendMode, value))
                 return;
 
-            stripeMaterial.BlendMode = mode;
+            stripeMaterial.BlendMode = value.Value;
 
             FrameRequested?.Invoke();
         }
@@ -426,8 +438,9 @@ public sealed partial class MaterialShadersViewModel : ObservableObject
     // 唯一需要事后换材质的网格（中路的球）；其余网格建完就不再单独引用。
     private readonly Mesh switchMesh;
 
-    private object? selectedBaseColor;
-    private object? selectedBlendMode;
+    private List<Kit.ComboOption<int>> baseColorOptionList = [];
+    private Kit.ComboOption<int>? selectedBaseColor;
+    private Kit.ComboOption<BlendMode>? selectedBlendMode;
 
     // 参数初值即旧 .axaml 行控件上写死的那一份（Hue 滑杆没写 Value，默认 0）。
     private double spin = 14;

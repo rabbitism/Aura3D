@@ -15,6 +15,14 @@
       <SolidColorBrush x:Key="Inspector.Line">#55808080</SolidColorBrush>
       <FontFamily x:Key="Inspector.Mono">Consolas,Menlo,monospace</FontFamily>
 
+      <!--
+        下拉选项的统一渲染：选项是 ComboOption（Name 是 Lingua observable，Value 是语言无关的
+        稳定值），^ 流订阅后切换语言时下拉文字自动换，闭合态与展开项共用这一份模板。
+      -->
+      <DataTemplate x:Key="ComboOptionTemplate" x:DataType="kit:ComboOption">
+        <TextBlock Text="{Binding Name^}" TextWrapping="Wrap" />
+      </DataTemplate>
+
       <ControlTheme x:Key="{x:Type kit:Section}" TargetType="kit:Section">
         <Setter Property="Template">
           <ControlTemplate>
@@ -101,6 +109,7 @@
               <ComboBox x:Name="PART_Combo"
                         ItemsSource="{TemplateBinding Options}"
                         SelectedItem="{Binding SelectedItem, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                        ItemTemplate="{StaticResource ComboOptionTemplate}"
                         HorizontalAlignment="Stretch"
                         HorizontalContentAlignment="Left" />
             </StackPanel>

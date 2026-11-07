@@ -8,6 +8,7 @@ using Irihi.Lingua;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 
 namespace Aura3D.Gallery.Demos;
@@ -42,7 +43,9 @@ public sealed partial class GeometriesViewModel : ObservableObject
 
     private string readoutKind = "Box";
 
-    private object? selectedKind;
+    private List<Kit.ComboOption<string>> kindOptions = [];
+
+    private Kit.ComboOption<string>? selectedKind;
 
     private double boxWidth = 2, boxHeight = 2, boxDepth = 2;
     private double sphereRadius = 1.4, sphereStacks = 48, sphereSlices = 24, sphereLongitude = 360;
@@ -62,8 +65,10 @@ public sealed partial class GeometriesViewModel : ObservableObject
     /// </summary>
     public GeometriesViewModel()
     {
-        KindOptions = Kinds;
-        selectedKind = readoutKind;
+        // 种类名指名道姓地对着 BoxGeometry 一族 API（兼作网格名与重建键），是语言无关的
+        // 引擎标识，用 Literal 建选项：Name 不随语言换，Value 即种类键，换选/重建/字典索引都走它。
+        kindOptions = Kinds.Select(kind => Kit.ComboOption.Literal(kind, kind)).ToList();
+        selectedKind = kindOptions.Single(o => o.Value == readoutKind);
 
         for (int index = 0; index < Kinds.Length; index++)
         {
@@ -102,8 +107,8 @@ public sealed partial class GeometriesViewModel : ObservableObject
     /// <summary>坐标轴 gizmo 开关变化；同上，经事件桥回视图。</summary>
     public event Action<bool>? ShowAxesToggled;
 
-    /// <summary>「读数对象」下拉的选项；种类名本身，不随语言换（API 名保持英文原文）。</summary>
-    public IList KindOptions { get; }
+    /// <summary>「读数对象」下拉的选项：Name 是语言无关的字面量（种类名兼引擎 API 标识，不随语言换），Value 即种类键。</summary>
+    public IList KindOptions => kindOptions;
 
     /// <summary>整排节点；四个网格挂在其下，旋转速度转的就是它。建场景时由视图挂进场景。</summary>
     public Node Row { get; } = new() { Name = "Row" };
@@ -125,10 +130,11 @@ public sealed partial class GeometriesViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 「读数对象」下拉的选中项；换一种几何体只把读数挪过去并立即重读——等价于旧
+    /// 「读数对象」下拉的选中项；选项实例即身份，Value 直接给出种类键（旧实现还要把
+    /// object 强转回 string），换一种几何体只把读数挪过去并立即重读——等价于旧
     /// OnKindChanged 里的「readoutKind 赋值 + Report」，不重建任何几何体。
     /// </summary>
-    public object? SelectedKind
+    public Kit.ComboOption<string>? SelectedKind
     {
         get => selectedKind;
         set
@@ -136,7 +142,7 @@ public sealed partial class GeometriesViewModel : ObservableObject
             if (value == null || !SetProperty(ref selectedKind, value))
                 return;
 
-            readoutKind = (string)value;
+            readoutKind = value.Value;
 
             ReadoutText.Refresh();
         }

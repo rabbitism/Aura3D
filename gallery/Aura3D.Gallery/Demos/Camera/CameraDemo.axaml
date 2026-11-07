@@ -50,7 +50,7 @@
 
         <kit:ToggleRow Label="{Translate {x:Static loc:Strings+Keys.Camera_RenderBackground}}" IsChecked="{Binding RenderBackground}" />
 
-        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.Camera_Box0Projection}}" Text="{Binding ScreenReadoutText}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.Camera_Box0Projection}}" Text="{Binding ScreenReadoutText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>

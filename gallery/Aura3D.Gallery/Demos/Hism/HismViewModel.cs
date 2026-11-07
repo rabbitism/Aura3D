@@ -44,9 +44,11 @@ public sealed partial class HismViewModel : ObservableObject
 
     private int cursor;
 
-    // moveModeIndex 与下拉选中项互为影子：比较/回写用下标，显示用字符串。
+    // moveModeIndex 与下拉选中项互为影子：下标供逐帧搬动分流增量/瞬移两种代价路径，
+    // 稳定值回写自选中项的 Value，不再按翻译后的字符串 IndexOf 反查下标。
     private int moveModeIndex;
-    private object? selectedMoveMode;
+    private List<Kit.ComboOption<int>> moveModeOptions = [];
+    private Kit.ComboOption<int>? selectedMoveMode;
 
     // 滑杆是 double：数量/深度这几个整数参数在写穿时统一 (int) 换算，与旧事件处理一致。
     private double instanceCount = 12000;
@@ -63,8 +65,10 @@ public sealed partial class HismViewModel : ObservableObject
     /// </summary>
     public HismViewModel()
     {
-        MoveModeOptions = MoveModeKeys.Select(k => k.T()).ToList();
-        selectedMoveMode = MoveModeOptions[moveModeIndex];
+        // 选项的 Name 从 Lingua 键取 observable（切语言自动换），Value 是模式下标——
+        // 语言无关的稳定值，逐帧搬动按它分流增量/瞬移两条路径。
+        moveModeOptions = MoveModeKeys.Select((k, i) => Kit.ComboOption.ForKey(k, i)).ToList();
+        selectedMoveMode = moveModeOptions[moveModeIndex];
 
         // Readout 模板 {0}..{7}：实例数/组数/建树中/增量/重建/光标逐帧在读；
         // 每组上限与深度读字段，拖动滑杆时立刻反映，不必等树重建完。
@@ -80,8 +84,8 @@ public sealed partial class HismViewModel : ObservableObject
             .Build();
     }
 
-    /// <summary>「移动方式」下拉的选项文案；当前语言的一份快照，随页面重建。</summary>
-    public IList MoveModeOptions { get; }
+    /// <summary>「移动方式」下拉的选项：Name 跟随语言（Lingua 流绑定），Value 是模式下标（逐帧搬动按它分流）。</summary>
+    public IList MoveModeOptions => moveModeOptions;
 
     /// <summary>逐帧读数。语言切换时模板换新，绑定自动收到重排后的整句。</summary>
     public LinguaFormatObservable ReadoutText { get; }
@@ -183,8 +187,8 @@ public sealed partial class HismViewModel : ObservableObject
         }
     }
 
-    /// <summary>移动方式下拉的选中项；只记下标，真正消费它的是逐帧搬动。</summary>
-    public object? SelectedMoveMode
+    /// <summary>移动方式下拉的选中项；选项实例即身份，Value 直接给出模式下标，真正消费它的是逐帧搬动。</summary>
+    public Kit.ComboOption<int>? SelectedMoveMode
     {
         get => selectedMoveMode;
         set
@@ -192,7 +196,7 @@ public sealed partial class HismViewModel : ObservableObject
             if (value == null || !SetProperty(ref selectedMoveMode, value))
                 return;
 
-            moveModeIndex = Math.Max(0, MoveModeOptions.IndexOf(value));
+            moveModeIndex = value.Value;
         }
     }
 

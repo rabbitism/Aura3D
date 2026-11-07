@@ -41,8 +41,10 @@ public sealed partial class SkinnedAnimationViewModel : ObservableObject
     private static readonly Texture SoftDot = Procedural.SoftDot(128, 2.4f);
     private static readonly Texture Spark = Procedural.Spark(64, 64);
 
+    // 与引擎 LoopMode 枚举同序（Once/Loop/PingPong）：下标即枚举值，ctor 的 ForKey 按它直转，
+    // 选中比较从此走枚举 Value，不再按翻译后的字符串回查下标。
     private static readonly LinguaKey[] LoopModeKeys =
-        [Strings.Keys.SkinnedAnimation_LoopModeLoop, Strings.Keys.SkinnedAnimation_LoopModeOnce, Strings.Keys.SkinnedAnimation_LoopModePingPong];
+        [Strings.Keys.SkinnedAnimation_LoopModeOnce, Strings.Keys.SkinnedAnimation_LoopModeLoop, Strings.Keys.SkinnedAnimation_LoopModePingPong];
 
     /// <summary>火把点光源的基准亮度，<see cref="Tick"/> 里在这个值附近做三频叠加的轻微摇曳。</summary>
     private const float TorchLightIntensity = 600f;
@@ -77,11 +79,15 @@ public sealed partial class SkinnedAnimationViewModel : ObservableObject
     /// </summary>
     public SkinnedAnimationViewModel()
     {
-        LoopModeOptions = LoopModeKeys.Select(k => k.T()).ToList();
+        // 循环模式选项：下标与引擎 LoopMode 枚举同序，ForKey 按下标直转枚举 Value；
+        // Name 走 Lingua 流，换语言时下拉文字由流绑定自动换。
+        var loopModeList = LoopModeKeys.Select((k, i) => Kit.ComboOption.ForKey(k, (LoopMode)i)).ToList();
 
-        // 初选对齐旧页构造函数里的 LoopModeCombo.SelectedItem = LoopModeOptions[loopModeIndex]，
-        // 现在由绑定初始化替它完成。
-        selectedLoopMode = LoopModeOptions[loopModeIndex];
+        LoopModeOptions = loopModeList;
+
+        // 初选按引擎当前值匹配：AnimationSampler.LoopMode 的默认就是 Loop（旧页 loopModeIndex=0
+        // 同一个口径，此时还没有采样器实例可读）；由绑定初始化替旧页的 SelectedItem 赋值。
+        selectedLoopMode = loopModeList.Single(o => o.Value == LoopMode.Loop);
 
         // 播放状态模板 {0}..{6}：剪辑名/时长、TimeScale、LoopMode、推进方、手动累计与蒙皮判定。
         // 占位语义与旧 Report() 逐个对齐——无剪辑回落 "-"、无采样器时浮点/枚举占位是空串、
@@ -123,7 +129,7 @@ public sealed partial class SkinnedAnimationViewModel : ObservableObject
     /// <summary>资产阶段取回的士兵模型；视图建场景时摆位（朝向、包围盒适配）并登记进场景。</summary>
     public ModelNode? SoldierModel => model;
 
-    /// <summary>循环模式下拉的选项文案；当前语言的一份快照，随页面重建。</summary>
+    /// <summary>循环模式下拉的选项：Name 是 Lingua 流（随语言自动换），Value 直接是引擎的 LoopMode 枚举。</summary>
     public IList LoopModeOptions { get; }
 
     /// <summary>播放状态读数。语言切换时模板换新，绑定自动收到重排后的整句。</summary>
@@ -167,23 +173,21 @@ public sealed partial class SkinnedAnimationViewModel : ObservableObject
 
     /// <summary>
     /// 建场景时由视图调（旧 BuildScene 的中段）：把 glb 的 animations 数组排成剪辑下拉的选项
-    /// （序号 · 名称 · 时长），经 <see cref="SelectedClip"/> 回填初选，再按旧页口径建第一个
-    /// 采样器挂上模型。必须在相机的 FitToBoundingBox 之前——采样器构造立即算第一帧姿势，
-    /// 包围盒跟着姿势走。
+    /// （剪辑名是语言无关的引擎标识，字面量名直出），经 <see cref="SelectedClip"/> 回填初选，
+    /// 再按旧页口径建第一个采样器挂上模型。必须在相机的 FitToBoundingBox 之前——采样器构造
+    /// 立即算第一帧姿势，包围盒跟着姿势走。
     /// </summary>
     public void InitializeClips()
     {
-        clipNames = animations.Select((a, i) =>
-            Strings.Keys.SkinnedAnimation_ClipOption.Format(i, a.Name, a.Duration)).ToList();
+        ClipOptions = animations.Select(a => Kit.ComboOption.Literal(a.Name, a.Name)).ToList();
 
-        ClipOptions = clipNames;
-
-        SelectedClip = clipNames.Count > 0 ? clipNames[clipIndex] : "—";
+        // 空表没有可选项可选，SelectedClip 保持 null（旧「—」占位只是视图层的空态，不再伪造选项）。
+        SelectedClip = clipOptionList.Count > 0 ? clipOptionList[clipIndex] : null;
 
         // 旧代码在填完下拉后无条件 CreateSampler(clipIndex)（空表会在 animations[0] 越界崩掉）；
         // 这里按「有剪辑才建」收口，正常路径逐行等价。SelectedClip 的写穿分支要求采样器已存在，
         // 所以这第一个采样器由这里直接建，之后的换剪辑才走属性。
-        if (clipNames.Count > 0 && model != null)
+        if (clipOptionList.Count > 0 && model != null)
         {
             sampler = CreateSampler(clipIndex);
 
@@ -269,7 +273,6 @@ public sealed partial class SkinnedAnimationViewModel : ObservableObject
 
     private ModelNode? model;
     private List<Animation> animations = [];
-    private List<string> clipNames = [];
 
     private AnimationSampler? sampler;
     private BoneAttachment? attachment;
@@ -284,34 +287,34 @@ public sealed partial class SkinnedAnimationViewModel : ObservableObject
     private Animation? CurrentClip => clipIndex >= 0 && clipIndex < animations.Count ? animations[clipIndex] : null;
 
     private int clipIndex;
-    private object? selectedClip;
+    private Kit.ComboOption<string>? selectedClip;
     private double timeScale = 1;
-    private int loopModeIndex;
-    private object? selectedLoopMode;
+    private Kit.ComboOption<LoopMode>? selectedLoopMode;
     private bool externalUpdate;
     private bool showBone = true;
     private bool showAttachment = true;
     private double attachmentYaw;
-    private IList clipOptions = new List<string>();
+    private List<Kit.ComboOption<string>> clipOptionList = [];
 
     private float torchClock;
     private double manualStepClock;
 
     /// <summary>
-    /// 剪辑下拉的选项（序号 · 名称 · 时长）；资产到位前是空的，建场景时由
-    /// <see cref="InitializeClips"/> 按回填时语言排好，所以是可通知属性而不是构造期常量。
+    /// 剪辑下拉的选项（Name/Value 都是剪辑名这一引擎标识）；资产到位前是空的，建场景时由
+    /// <see cref="InitializeClips"/> 换上新列表并经此发出通知，所以是可通知属性而不是构造期常量。
     /// </summary>
     public IList ClipOptions
     {
-        get => clipOptions;
-        private set => SetProperty(ref clipOptions, value);
+        get => clipOptionList;
+        private set => SetProperty(ref clipOptionList, (List<Kit.ComboOption<string>>)value);
     }
 
     /// <summary>
     /// 剪辑下拉的选中项；换剪辑即换模型节点上的采样器（每次新建，时间与循环模式带入当前值）。
-    /// 选中项不在表里（空表的「—」占位）时只记下标、不动采样器——旧 OnClipChanged 的口径。
+    /// 选项实例即身份，Value 给出剪辑名，按它在强类型表里定位下标（FindIndex 落空只记下标、
+    /// 不动采样器——旧 OnClipChanged 的口径）。
     /// </summary>
-    public object? SelectedClip
+    public Kit.ComboOption<string>? SelectedClip
     {
         get => selectedClip;
         set
@@ -319,7 +322,7 @@ public sealed partial class SkinnedAnimationViewModel : ObservableObject
             if (value == null || !SetProperty(ref selectedClip, value))
                 return;
 
-            clipIndex = clipNames.IndexOf((string)value);
+            clipIndex = clipOptionList.FindIndex(o => o.Value == value.Value);
 
             if (sampler != null && model != null && clipIndex >= 0)
             {
@@ -346,8 +349,8 @@ public sealed partial class SkinnedAnimationViewModel : ObservableObject
         }
     }
 
-    /// <summary>循环模式下拉的选中项；写穿当前采样器的 LoopMode。</summary>
-    public object? SelectedLoopMode
+    /// <summary>循环模式下拉的选中项；选项的 Value 即引擎枚举，直接写穿当前采样器的 LoopMode。</summary>
+    public Kit.ComboOption<LoopMode>? SelectedLoopMode
     {
         get => selectedLoopMode;
         set
@@ -355,10 +358,8 @@ public sealed partial class SkinnedAnimationViewModel : ObservableObject
             if (value == null || !SetProperty(ref selectedLoopMode, value))
                 return;
 
-            loopModeIndex = Math.Max(0, LoopModeOptions.IndexOf(value));
-
             if (sampler != null)
-                sampler.LoopMode = ModeOf();
+                sampler.LoopMode = value.Value;
 
             FrameRequested?.Invoke();
         }
@@ -426,12 +427,8 @@ public sealed partial class SkinnedAnimationViewModel : ObservableObject
         }
     }
 
-    private LoopMode ModeOf() =>
-        loopModeIndex == 1 ? LoopMode.Once :
-        loopModeIndex == 2 ? LoopMode.PingPong :
-        LoopMode.Loop;
-
-    // 换剪辑每次都新建采样器（旧 CreateSampler 照搬）：时间倍率与循环模式带入当前值；
+    // 换剪辑每次都新建采样器（旧 CreateSampler 照搬）：时间倍率与循环模式带入当前值——循环模式
+    // 直接取选中项的枚举 Value（ctor 保证已按引擎默认初选，旧 ModeOf 的下标翻译随之删掉）；
     // ExternalUpdate 故意不带——旧页就是这个口径（开关只写当时的采样器，换剪辑即回到引擎默认的自动）。
     private AnimationSampler CreateSampler(int index)
     {
@@ -440,7 +437,7 @@ public sealed partial class SkinnedAnimationViewModel : ObservableObject
         return new AnimationSampler(animation)
         {
             TimeScale = (float)timeScale,
-            LoopMode = ModeOf(),
+            LoopMode = selectedLoopMode!.Value,
         };
     }
 

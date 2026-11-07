@@ -6,6 +6,7 @@ using Aura3D.Gallery.Kit;
 using Aura3D.Gallery.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Irihi.Lingua;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -19,10 +20,10 @@ namespace Aura3D.Gallery.Demos;
 ///   <item><description>参数：滑杆/开关双向绑定到这里的属性。挡板可见与方阵边长写穿到住在
 ///     VM 里的引擎模型；EnablePicking 是视图属性、中心射线由视图的逐帧路径消费，两者
 ///     VM 都够不着，setter 走「backing + 值事件」，由视图转写（同 PostProcessing 页的 Settings 桥）。</description></item>
-///   <item><description>结果文本：普通 string + SetProperty，视图拾到（或中心射线未中）后调
-///     这里的报告方法写入。命中行虽然是 resx 的 {0}..{8} 模板键，但不做成 CreateFormat 的
-///     observable——这一行还要在未命中时整句换成另一条无占位符文案，单一模板表达不了；
-///     事件驱动的快照串与旧页行为一致（换语言后维持上一条，下次拾取换新）。</description></item>
+///   <item><description>结果文本：IObservable&lt;string?&gt; 的多形态读数——占位「—」、命中
+///     模板（CreateFormat，Arg 重读最近一次报告）、中心未中整句（生成的 observable）各一个
+///     形态字段，公共属性只在形态切换时换引用；报告点不再手动拼串，模板字段的动态 Arg
+///     变化只对该字段 Refresh（换语言由各 observable 自行响应）。</description></item>
 ///   <item><description>引擎模型：五个目标球、半透明挡板与实例方阵住在这里，建场景时由视图
 ///     逐个挂进场景；相机与灯是纯布景，仍留在视图的 BuildScene 里组装。</description></item>
 /// </list>
@@ -89,6 +90,25 @@ public sealed partial class PickingViewModel : ObservableObject
         // 等价于旧 BuildField→SetFieldCount(GridSize)：构造期先铺边长初值的一份。
         ApplyField();
 
+        // ResultText 的三个形态字段：命中行是 resx 的 {0}..{8} 模板——来源串与最近命中是
+        // 动态 Arg（computed getter 在订阅与每次 Refresh 时重读，占位顺序与旧 Report 对齐）；
+        // 中心未中整句 resx 无占位符，直接用生成的 observable；初始形态是占位「—」。
+        resultPlaceholder = LinguaObservableString.FromLiteral("—");
+        resultCenterMiss = Strings.Instance.Picking_NoCenterHit;
+        resultHitFormat = Strings.Keys.Picking_HitReadout.CreateFormat()
+            .Arg(() => lastSource)
+            .Arg(() => lastHit?.Node.Name ?? "—")
+            .Arg(() => lastHit?.Distance ?? 0f)
+            .Arg(() => lastHit?.WorldPosition.X ?? 0f)
+            .Arg(() => lastHit?.WorldPosition.Y ?? 0f)
+            .Arg(() => lastHit?.WorldPosition.Z ?? 0f)
+            .Arg(() => lastHit?.InstanceIndex?.ToString() ?? "—")
+            .Arg(() => lastHitCount)
+            .Arg(() => clickCount)
+            .Build();
+
+        resultText = resultPlaceholder;
+
         // 挡板可见初值取节点上真正生效的 Enable（引擎默认可见）；EnablePicking/中心射线
         // 的初值分别是视图属性与旧开关的默认（开/关），视图 attach 时会按这里的值对齐。
         occluderVisible = Blocker.Enable;
@@ -112,7 +132,20 @@ public sealed partial class PickingViewModel : ObservableObject
     /// <summary>实例方阵：边长滑杆整批重写它的实例变换。</summary>
     public InstancedMesh Field { get; }
 
-    private string resultText = "—";
+    // ResultText 的三个形态字段（ctor 里装配）：命中模板的动态 Arg 重读最近一次报告，
+    // 中心未中整句直接用生成的 observable（resx 无占位符，文化响应、永不 Refresh），
+    // 初始占位是「—」字面量 observable（同 Kit.ComboOption 的 Literal 用法）。
+    private readonly LinguaFormatObservable resultHitFormat;
+    private readonly IObservable<string?> resultCenterMiss;
+    private readonly IObservable<string?> resultPlaceholder;
+
+    // 命中模板 Arg 的重读源：最近一次报告的命中与来源串（点击是本地化短语、中心射线是
+    // API 名，都由视图传入）。WriteHit 先落字段再 Refresh，模板重算即得最新一句。
+    private PickResult? lastHit;
+    private string? lastSource;
+
+    // ResultText 的 backing：指向当前形态字段，只在形态切换时换引用（SetProperty 按引用判等）。
+    private IObservable<string?> resultText;
 
     private double gridSize = 6;
     private bool enablePicking = true;
@@ -125,10 +158,12 @@ public sealed partial class PickingViewModel : ObservableObject
     private int clickCount;
 
     /// <summary>
-    /// 拾取结果行。事件驱动的快照串：命中行按 resx 模板键格式化，未命中整句换提示文案；
-    /// 初值沿用 ReadoutRow 的默认占位「—」，首条报告之前与旧页面显示一致。
+    /// 拾取结果行：IObservable&lt;string?&gt; 的多形态读数。占位「—」/ 命中模板 / 中心未中整句
+    /// 三个形态字段经 SetProperty 按引用切换（只有真换形态才推新订阅）；命中模板的动态 Arg
+    /// 变化在 <see cref="WriteHit"/> 里对该字段 <c>Refresh()</c>。初值是占位「—」，首条报告
+    /// 之前与旧页面显示一致；换语言由当前形态的 observable 自行响应。
     /// </summary>
-    public string ResultText
+    public IObservable<string?> ResultText
     {
         get => resultText;
         private set => SetProperty(ref resultText, value);
@@ -220,8 +255,9 @@ public sealed partial class PickingViewModel : ObservableObject
     /// <param name="source">读数行 {0} 的来源名。</param>
     public void ReportPick(PickResult hit, string source) => WriteHit(hit, source);
 
-    /// <summary>中心射线未命中：整句换成无占位符的提示文案（旧代码此分支不排重绘，保持）。</summary>
-    public void ReportCenterMiss() => ResultText = Strings.Keys.Picking_NoCenterHit.T();
+    /// <summary>中心射线未命中：整句切到无占位符的提示形态——生成的 observable 跟随文化，
+    /// 换引用即生效、无需 Refresh（旧代码此分支不排重绘，保持）。</summary>
+    public void ReportCenterMiss() => ResultText = resultCenterMiss;
 
     /// <summary>
     /// 登记最近一次 PickAt 的命中总数，供命中行的 {7} 显示。调用顺序由视图按旧代码保持：
@@ -230,19 +266,19 @@ public sealed partial class PickingViewModel : ObservableObject
     /// <param name="count">该点的全部命中数。</param>
     public void NoteHitCount(int count) => lastHitCount = count;
 
-    /// <summary>按 resx 模板键拼命中行并排一帧重绘；占位顺序与旧 Report 逐个对齐。</summary>
+    /// <summary>
+    /// 命中报告：先把模板形态的动态 Arg 落进重读源字段，再切到模板形态并对该字段 Refresh
+    /// （首次切换由绑定订阅取得整句；之后同形态连报——中心射线逐帧——引用相等不推属性，
+    /// Refresh 负责重排）；改完排一帧重绘。占位顺序与旧 Report 逐个对齐。
+    /// </summary>
     private void WriteHit(PickResult hit, string source)
     {
-        ResultText = Strings.Keys.Picking_HitReadout.Format(
-            source,
-            hit.Node.Name,
-            hit.Distance,
-            hit.WorldPosition.X,
-            hit.WorldPosition.Y,
-            hit.WorldPosition.Z,
-            hit.InstanceIndex?.ToString() ?? "—",
-            lastHitCount,
-            clickCount);
+        lastHit = hit;
+        lastSource = source;
+
+        ResultText = resultHitFormat;
+
+        resultHitFormat.Refresh();
 
         // 旧 Report 末尾的 InvalidateRender：结果变了排一帧重绘。
         FrameRequested?.Invoke();
