@@ -39,7 +39,7 @@
 
         <kit:Hint Text="{Translate {x:Static loc:Strings+Keys.FbxAnimation_SampleNote}}" />
 
-        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.FbxAnimation_Result}}" Text="{Binding SampleText}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.FbxAnimation_Result}}" Text="{Binding SampleText^}" />
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.FbxAnimation_SkeletonLoader}}" />
 

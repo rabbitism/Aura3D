@@ -21,10 +21,11 @@ namespace Aura3D.Gallery.Demos;
 ///   <item><description>参数：模型/Clone 类型两个下拉与滑杆开关双向绑定到这里；包围盒的两个
 ///     属性写穿到当前模型节点，副本的创建、清账与共享情况统计也全在这里。</description></item>
 ///   <item><description>Readout：包围盒一行是纯模板读数，Lingua 1.1 的 format builder 组装，
-///     逐帧 <see cref="Tick"/> 重读；装载记录、结构统计、共享情况三行都是「模板 + 回落句」的
-///     多态行（有/没下载、有/没副本是两种句式）——format builder 换不了整句模板，所以按
-///     非模板动态字符串走普通 string 属性，在各自的变化处重算（同 FbxAnimation 取样读数的口径）。
-///     模型结构维持旧页的一行统计读数，原页没有 TreeView，不引入新的层级展示。</description></item>
+///     逐帧 <see cref="Tick"/> 重读；装载记录、结构统计、共享情况三行都是「模板 ↔ 回落句」
+///     的多形态行——每个形态各立一个 observable 字段（回落句用生成的 observable 或「—」
+///     字面量），公共属性（IObservable&lt;string?&gt;）只在形态切换时换引用，模板字段的动态
+///     Arg 变化点只调该字段 Refresh，不再手动拼整句。模型结构维持旧页的一行统计读数，
+///     原页没有 TreeView，不引入新的层级展示。</description></item>
 ///   <item><description>引擎模型：已装载的模型表、当前生效的那份与两份副本都住在这里；
 ///     视图只保留生命周期——进页即取档喂 <see cref="Preload"/>、建场景时调
 ///     <see cref="ActivateInitialModel"/>；页内按需档经 <see cref="ModelRequested"/> 请视图
@@ -85,9 +86,31 @@ public sealed partial class ModelViewerViewModel : ObservableObject
     // 一帧只取一次，8 个占位共用（旧 ReportBox 也是先取一次再填）。
     private BoundingBox? box;
 
+    // 三行多形态读数的形态字段（ctor 里装配）：回落句/占位用生成的 observable（resx 无
+    // 占位符，文化响应、永不 Refresh）或「—」字面量，模板用 format builder、动态 Arg 重读
+    // 下面的装载字段与当前模型状态；公共属性只在形态切换时换引用。
+    private readonly IObservable<string?> loadHintForm;
+    private readonly LinguaFormatObservable loadProgressFormat;
+    private readonly LinguaFormatObservable loadDoneFormat;
+
+    private readonly IObservable<string?> clonePlaceholder;
+    private readonly IObservable<string?> cloneNoClonesForm;
+    private readonly LinguaFormatObservable cloneReadoutFormat;
+
+    private readonly IObservable<string?> structurePlaceholder;
+    private readonly LinguaFormatObservable structureReadoutFormat;
+
+    // 装载模板的动态 Arg 重读源：BeginLoad/SetModel 先落字段再 Refresh。进度形态只用到
+    // key/kilobytes，完成形态四样全有；两个字段组共享同一份。
+    private string? loadKey;
+    private long loadKilobytes;
+    private long loadMilliseconds;
+    private string? loadPath;
+
     /// <summary>
     /// 建 VM：装好两个下拉的选项与初选（对齐旧页构造函数里的两个 SelectedItem 赋值，
-    /// 现在由绑定初始化替它完成），给三条普通读数立初值，再装配包围盒模板读数。
+    /// 现在由绑定初始化替它完成），装配三行多形态读数的形态字段并立初值，再装配包围盒
+    /// 模板读数。
     /// </summary>
     public ModelViewerViewModel()
     {
@@ -98,12 +121,58 @@ public sealed partial class ModelViewerViewModel : ObservableObject
         selectedModel = modelOptionList.Single(o => o.Value == selectedKey);
         selectedCopyMode = copyModeOptionList.Single(o => o.Value == CopyType.SharedResource);
 
-        // 装载记录初值是「还没取过」的提示句（旧 XAML 里 Text 直接绑这个键）；
+        // 装载记录的三个形态字段：提示句 resx 无占位符，直接用生成的 observable（跟随
+        // 文化，切引用即生效）；进度/完成是模板，动态 Arg 重读上面的装载字段。
+        loadHintForm = Strings.Instance.ModelViewer_LoadHint;
+        loadProgressFormat = Strings.Keys.ModelViewer_LoadProgress.CreateFormat()
+            .Arg(() => loadKey ?? string.Empty)
+            .Arg(() => loadKilobytes)
+            .Build();
+        loadDoneFormat = Strings.Keys.ModelViewer_LoadDone.CreateFormat()
+            .Arg(() => loadKey ?? string.Empty)
+            .Arg(() => loadKilobytes)
+            .Arg(() => loadMilliseconds)
+            .Arg(() => loadPath ?? string.Empty)
+            .Build();
+
+        // 共享情况的三个形态字段：占位「—」用字面量 observable（同 Kit.ComboOption 的
+        // Literal 用法），无副本回落句用生成的 observable；有副本的读数是模板，四个短语
+        // Arg 在 Refresh 时按当前副本状态重算（判定提成 ReportClone 旁的三个私有方法）。
+        clonePlaceholder = LinguaObservableString.FromLiteral("—");
+        cloneNoClonesForm = Strings.Instance.ModelViewer_NoClones;
+        cloneReadoutFormat = Strings.Keys.ModelViewer_CloneReadout.CreateFormat()
+            .Arg(() => ModeOf())
+            .Arg(() => ClonesShareGeometry()
+                ? Strings.Keys.ModelViewer_SameInstance.T()
+                : Strings.Keys.ModelViewer_OwnCopies.T())
+            .Arg(() => ClonesShareMaterial()
+                ? Strings.Keys.ModelViewer_SameInstance.T()
+                : Strings.Keys.ModelViewer_OwnCopies.T())
+            .Arg(() => CloneTintFollowed()
+                ? Strings.Keys.ModelViewer_TintFollowed.T()
+                : Strings.Keys.ModelViewer_TintIndependent.T())
+            .Build();
+
+        // 结构统计的两个形态字段：占位「—」加单模板，Arg 重读当前模型（DescribeChannels、
+        // FirstMaterial 与几个直接读 current 的 getter）。
+        structurePlaceholder = LinguaObservableString.FromLiteral("—");
+        structureReadoutFormat = Strings.Keys.ModelViewer_StructureReadout.CreateFormat()
+            .Arg(() => LabelOf(selectedKey))
+            .Arg(() => current?.Children.Count ?? 0)
+            .Arg(() => current?.Meshes.Count ?? 0)
+            .Arg(() => current?.Meshes.Sum(m => m.Geometry?.VertexCount ?? 0) ?? 0)
+            .Arg(() => DescribeChannels())
+            .Arg(() => FirstMaterial()?.BlendMode)
+            .Arg(() => FirstMaterial()?.DoubleSided)
+            .Arg(() => FirstMaterial()?.AlphaCutoff)
+            .Build();
+
+        // 三行读数立初值：装载记录是「还没取过」的提示句（旧 XAML 里 Text 直接绑这个键）；
         // 共享情况与结构统计旧页进页时不写（ReportClone/ReportStructure 只在交互后跑），
-        // 这里立成行控件的缺省占位，展示口径与旧页一致。
-        loadText = Strings.Keys.ModelViewer_LoadHint.T();
-        cloneText = "—";
-        structureText = "—";
+        // 这里立成「—」占位，展示口径与旧页一致。
+        loadText = loadHintForm;
+        cloneText = clonePlaceholder;
+        structureText = structurePlaceholder;
 
         // 包围盒读数模板 {0}..{7}：六个坐标分量、外扩量、自定义盒有无（{7} 落到
         // 「无/有」两个短语键，同 Particles 贴图提示占位的做法）。资产到位前先显示一排
@@ -137,7 +206,13 @@ public sealed partial class ModelViewerViewModel : ObservableObject
     {
         isLoading = true;
 
-        LoadText = Strings.Keys.ModelViewer_LoadProgress.Format(key, kilobytes);
+        // 进度模板的动态 Arg 先落字段，再切到进度形态并 Refresh——重算读的就是刚写入的值。
+        loadKey = key;
+        loadKilobytes = kilobytes;
+
+        LoadText = loadProgressFormat;
+
+        loadProgressFormat.Refresh();
     }
 
     /// <summary>
@@ -150,7 +225,15 @@ public sealed partial class ModelViewerViewModel : ObservableObject
 
         loaded[key] = model;
 
-        LoadText = Strings.Keys.ModelViewer_LoadDone.Format(key, kilobytes, milliseconds, path);
+        // 完成模板的动态 Arg 先落字段（耗时与清单路径只有这里有值），再切到完成形态并 Refresh。
+        loadKey = key;
+        loadKilobytes = kilobytes;
+        loadMilliseconds = milliseconds;
+        loadPath = path;
+
+        LoadText = loadDoneFormat;
+
+        loadDoneFormat.Refresh();
 
         isLoading = false;
 
@@ -197,22 +280,25 @@ public sealed partial class ModelViewerViewModel : ObservableObject
     /// <summary>包围盒读数。语言切换时模板换新，绑定自动收到重排后的整句。</summary>
     public LinguaFormatObservable BoxText { get; }
 
-    /// <summary>装载记录（提示/进度/完成三态句），按需下载的两个节点处重算。</summary>
-    public string LoadText
+    /// <summary>装载记录（提示句/进度/完成三形态 observable）：按需下载的两个节点先落
+    /// Arg 字段、再切形态并 Refresh；提示句形态跟随文化，无需 Refresh。</summary>
+    public IObservable<string?> LoadText
     {
         get => loadText;
         private set => SetProperty(ref loadText, value);
     }
 
-    /// <summary>共享情况读数（模板 + 「没有副本」回落句），建/清副本处重算。</summary>
-    public string CloneText
+    /// <summary>共享情况读数（占位/无副本回落句/模板三形态 observable），建/清副本处切换；
+    /// 模板的短语 Arg 在 Refresh 时按当前副本状态重算。</summary>
+    public IObservable<string?> CloneText
     {
         get => cloneText;
         private set => SetProperty(ref cloneText, value);
     }
 
-    /// <summary>结构统计读数（单模板，但只在换模型时变），切换路径末尾重算。</summary>
-    public string StructureText
+    /// <summary>结构统计读数（占位/单模板两形态 observable），切换路径末尾落形态并
+    /// Refresh 重读当前模型。</summary>
+    public IObservable<string?> StructureText
     {
         get => structureText;
         private set => SetProperty(ref structureText, value);
@@ -415,70 +501,80 @@ public sealed partial class ModelViewerViewModel : ObservableObject
 
     private string LabelOf(string key) => Library.First(i => i.Key == key).Label.T();
 
-    // 旧 ReportStructure 逐行照搬：子节点/Mesh/顶点合计/通道清单/首材质的 alpha 三件套。
+    // 旧 ReportStructure 的口径：子节点/Mesh/顶点合计/通道清单/首材质的 alpha 三件套。
+    // 单模板一个形态——换模型只是 Arg 全变：落形态（首次切换才订阅）+ Refresh 重读。
     private void ReportStructure()
     {
         if (current == null)
             return;
 
-        var meshes = current.Meshes;
+        StructureText = structureReadoutFormat;
 
-        var channels = meshes
-            .Where(m => m.Material != null)
-            .SelectMany(m => m.Material!.Channels)
-            .Select(c => $"{c.Name}{(c.Texture == null ? "∅" : $"({c.Texture.Width}×{c.Texture.Height})")}")
-            .Distinct()
-            .ToList();
-
-        var first = meshes.FirstOrDefault(m => m.Material != null)?.Material;
-
-        StructureText = Strings.Keys.ModelViewer_StructureReadout.Format(
-            LabelOf(selectedKey),
-            current.Children.Count,
-            meshes.Count,
-            meshes.Sum(m => m.Geometry?.VertexCount ?? 0),
-            string.Join(" ", channels),
-            first?.BlendMode,
-            first?.DoubleSided,
-            first?.AlphaCutoff);
+        structureReadoutFormat.Refresh();
     }
 
-    // 旧 ReportClone 逐行照搬：没副本时整句回落；有副本时用引用相等探几何/材质是否同源，
-    // 再看原模型的 BaseColor 有没有跟着副本换图。
+    // 结构读数 {4} 的重读源：通道清单（名字 + 纹理尺寸，无纹理标 ∅），去重后空格连接。
+    private string DescribeChannels() => current == null
+        ? string.Empty
+        : string.Join(" ",
+            current.Meshes
+                .Where(m => m.Material != null)
+                .SelectMany(m => m.Material!.Channels)
+                .Select(c => $"{c.Name}{(c.Texture == null ? "∅" : $"({c.Texture.Width}×{c.Texture.Height})")}")
+                .Distinct());
+
+    // 结构读数 {5}..{7} 的重读源：首个带材质的 Mesh 的材质（无则 null，格式化为空串）。
+    private Material? FirstMaterial() =>
+        current?.Meshes.FirstOrDefault(m => m.Material != null)?.Material;
+
+    // 旧 ReportClone 的口径：没副本时整句回落；有副本时用引用相等探几何/材质是否同源，
+    // 再看原模型的 BaseColor 有没有跟着副本换图（判定提成下面三个方法，作模板短语 Arg）。
     private void ReportClone()
     {
         if (clones.Count == 0 || current == null)
         {
-            CloneText = Strings.Keys.ModelViewer_NoClones.T();
+            // 回落句是生成的 observable，跟随文化——切引用即得当前语言的整句，无需 Refresh。
+            CloneText = cloneNoClonesForm;
 
             return;
         }
 
-        var sharedGeometry = clones
+        // 有副本：切到模板形态并 Refresh，四个短语 Arg 按当前副本状态重算。
+        CloneText = cloneReadoutFormat;
+
+        cloneReadoutFormat.Refresh();
+    }
+
+    // 副本与原模型的几何是否同源：逐格引用相等（current 为空按不同源处理，只为确定性——
+    // 模板只会在有副本且 current 就位时显示）。
+    private bool ClonesShareGeometry() =>
+        current != null
+        && clones
             .SelectMany(c => c.Meshes)
             .Zip(current.Meshes, (a, b) => ReferenceEquals(a.Geometry, b.Geometry))
             .All(x => x);
 
-        var sharedMaterial = clones
+    // 同上，材质一路。
+    private bool ClonesShareMaterial() =>
+        current != null
+        && clones
             .SelectMany(c => c.Meshes)
             .Zip(current.Meshes, (a, b) => ReferenceEquals(a.Material, b.Material))
             .All(x => x);
+
+    // 原模型的 BaseColor 是否被副本换图波及：副本里有材质与原模型同贴图引用即算跟上。
+    private bool CloneTintFollowed()
+    {
+        if (current == null)
+            return false;
 
         var originalTint = current.Meshes
             .FirstOrDefault(m => m.Material != null)?
             .Material!.GetTexture("BaseColor");
 
-        var followed = originalTint != null && clones
+        return originalTint != null && clones
             .SelectMany(c => c.Meshes)
             .Any(m => m.Material != null && ReferenceEquals(m.Material.GetTexture("BaseColor"), originalTint));
-
-        CloneText = Strings.Keys.ModelViewer_CloneReadout.Format(
-            ModeOf(),
-            sharedGeometry ? Strings.Keys.ModelViewer_SameInstance.T() : Strings.Keys.ModelViewer_OwnCopies.T(),
-            sharedMaterial ? Strings.Keys.ModelViewer_SameInstance.T() : Strings.Keys.ModelViewer_OwnCopies.T(),
-            followed
-                ? Strings.Keys.ModelViewer_TintFollowed.T()
-                : Strings.Keys.ModelViewer_TintIndependent.T());
     }
 
     private void RefreshBox()
@@ -488,7 +584,8 @@ public sealed partial class ModelViewerViewModel : ObservableObject
         BoxText.Refresh();
     }
 
-    private string loadText;
-    private string cloneText;
-    private string structureText;
+    // 三行读数公共属性的 backing：指向当前形态字段，只在形态切换时换引用（SetProperty 按引用判等）。
+    private IObservable<string?> loadText;
+    private IObservable<string?> cloneText;
+    private IObservable<string?> structureText;
 }

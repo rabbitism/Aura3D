@@ -39,7 +39,7 @@
 
         <Button Content="{Translate {x:Static loc:Strings+Keys.Picking_ClearClicks}}" Command="{Binding ClearClicksCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.Picking_Result}}" Text="{Binding ResultText}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.Picking_Result}}" Text="{Binding ResultText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>

@@ -2,6 +2,7 @@ using Aura3D.Core.Nodes;
 using Aura3D.Gallery.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Irihi.Lingua;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -18,8 +19,10 @@ namespace Aura3D.Gallery.Demos;
 ///     把视锥四参整组写穿到真相机——旧页每个事件处理末尾都调一次 ApplyProjection，
 ///     「改一项、重放全部」的语义逐行保留。</description></item>
 ///   <item><description>读数：屏幕投影这句话在「坐标模板」与「相机背后」两种形态间切换，
-///     单一 format 模板表达不了，所以走普通 string 属性——视图逐帧喂原始值
-///     （<see cref="SetScreenProjection"/>），<see cref="Tick"/> 按当前语言重排整句。</description></item>
+///     单一 format 模板表达不了整句切换，所以两种形态在构造期各备一份 observable 字段
+///     （模板走 format builder，回落直接持 Strings.Instance 键流），<see cref="ScreenReadoutText"/>
+///     按条件赋「当前形态」的引用——视图逐帧喂原始值（<see cref="SetScreenProjection"/>），
+///     <see cref="Tick"/> 选形态、Refresh 模板。</description></item>
 ///   <item><description>引擎模型：Scene.MainCamera 的可绑参数（投影方式、FOV、正交尺寸、裁剪面、
 ///     背景开关）加取景目标网格。真相机由 Scene 内部创建、BuildScene 才存在，构造期只存 UI 值；
 ///     相机控制器、十字标记等视图侧对象留在 View。</description></item>
@@ -48,19 +51,38 @@ public sealed partial class CameraViewModel : ObservableObject
 
     private bool renderBackground = true;
 
-    // 视图每帧推来的屏幕投影原始值（逻辑像素坐标与输出分辨率），Tick 用它们重排读数。
+    // 视图每帧推来的屏幕投影原始值（逻辑像素坐标与输出分辨率），坐标模板的 Arg 每帧重读它们。
     private Vector2? screenPoint;
     private uint outputWidth;
     private uint outputHeight;
 
-    private string screenReadoutText = string.Empty;
+    // 屏幕投影读数的两个形态字段：构造期各备一份，形态切换才把对应引用赋给 ScreenReadoutText
+    // （形态选择与模板刷新解耦——背后/在前只在切换那一刻换引用，坐标变化每帧 Refresh 模板）。
+    private readonly LinguaFormatObservable screenTemplateText;
+    private readonly IObservable<string?> behindText;
+    private IObservable<string?> screenReadoutText;
 
     /// <summary>
-    /// 建好 VM：装配下拉选项并把选中项对齐到真正生效的投影方式（等价于旧页构造函数里
-    /// 给 ProjectionRow.SelectedItem 赋初值）。
+    /// 建好 VM：装配屏幕投影读数的两个形态字段、下拉选项，并把选中项对齐到真正生效的投影方式
+    /// （等价于旧页构造函数里给 ProjectionRow.SelectedItem 赋初值）。
     /// </summary>
     public CameraViewModel()
     {
+        // 坐标模板形态的 4 个 Arg 与 resx 模板逐个对齐：{0}/{1} 屏幕坐标、{2}/{3} 输出分辨率。
+        // Arg 全是重读型，每帧 Refresh 取此刻值；整句回落形态直接持 Strings.Instance 的键流，
+        // culture 响应式，永不需要 Refresh。
+        screenTemplateText = Strings.Keys.Camera_ScreenReadout.CreateFormat()
+            .Arg(() => screenPoint?.X ?? 0f)
+            .Arg(() => screenPoint?.Y ?? 0f)
+            .Arg(() => outputWidth)
+            .Arg(() => outputHeight)
+            .Build();
+
+        behindText = Strings.Instance.Camera_BehindCamera;
+
+        // 首帧前对齐旧行为的空串：语言无关的空 literal，首个 Tick 就会被两形态之一替换。
+        screenReadoutText = LinguaObservableString.FromLiteral(string.Empty);
+
         projectionOptionList = new List<ProjectionType>
         {
             ProjectionType.Perspective,
@@ -102,12 +124,20 @@ public sealed partial class CameraViewModel : ObservableObject
         outputHeight = height;
     }
 
-    /// <summary>逐帧调用：按当前语言重排读数，语言切换下一帧即生效（与旧页每帧重拼字符串一致）。</summary>
+    /// <summary>
+    /// 逐帧调用：按「相机在目标背后与否」选形态——在目标前方切 4 占位坐标模板并每帧 Refresh
+    /// 带出最新坐标（旧代码本就每帧 Format，成本同级）；转到背后切「相机背后」整句形态，那是
+    /// Strings.Instance 的键流，赋引用即可，语言切换下一帧自动换句。SetProperty 按引用比较，
+    /// 形态没换就不发通知、绑定不换订阅。
+    /// </summary>
     public void Tick()
     {
-        ScreenReadoutText = screenPoint is { } point
-            ? Strings.Keys.Camera_ScreenReadout.Format(point.X, point.Y, outputWidth, outputHeight)
-            : Strings.Keys.Camera_BehindCamera.T();
+        var target = screenPoint is not null ? screenTemplateText : behindText;
+
+        ScreenReadoutText = target;
+
+        if (ReferenceEquals(screenReadoutText, screenTemplateText))
+            screenTemplateText.Refresh();
     }
 
     /// <summary>投影方式；选项的 Value 即引擎枚举，写穿真相机并排一次重绘。</summary>
@@ -189,8 +219,14 @@ public sealed partial class CameraViewModel : ObservableObject
         }
     }
 
-    /// <summary>屏幕投影读数；由 <see cref="Tick"/> 重排，首个 Update 前为空串。</summary>
-    public string ScreenReadoutText
+    /// <summary>
+    /// 屏幕投影读数（公共形态口）。这句话在「坐标模板」与「相机背后」两种形态间切换，单一
+    /// format 模板表达不了整句切换，所以两种形态在构造期各备一份 observable 字段，属性只持
+    /// 「当前形态」的引用：SetProperty 按引用比较，形态没换就不发通知；XAML 用 <c>^</c> 流
+    /// 绑定跟随引用换订阅，坐标变化由模板字段自己的 Refresh 带出。首帧前是语言无关的空
+    /// literal，对齐旧「首个 Update 前为空串」的口径。
+    /// </summary>
+    public IObservable<string?> ScreenReadoutText
     {
         get => screenReadoutText;
         private set => SetProperty(ref screenReadoutText, value);

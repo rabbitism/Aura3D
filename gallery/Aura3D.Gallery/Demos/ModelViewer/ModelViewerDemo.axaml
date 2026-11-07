@@ -56,15 +56,15 @@
 
         <Button Content="{Translate {x:Static loc:Strings+Keys.ModelViewer_ClearClones}}" Command="{Binding ClearClonesCommand}" HorizontalAlignment="Stretch" />
 
-        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_Sharing}}" Text="{Binding CloneText}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_Sharing}}" Text="{Binding CloneText^}" />
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.ModelViewer_LoadOnDemand}}" />
 
-        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_LoadLog}}" Text="{Binding LoadText}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_LoadLog}}" Text="{Binding LoadText^}" />
 
         <kit:Section Title="{Translate {x:Static loc:Strings+Keys.ModelViewer_LoaderOutput}}" />
 
-        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_Structure}}" Text="{Binding StructureText}" />
+        <kit:ReadoutRow Label="{Translate {x:Static loc:Strings+Keys.ModelViewer_Structure}}" Text="{Binding StructureText^}" />
 
       </StackPanel>
     </kit:InspectorPanel>

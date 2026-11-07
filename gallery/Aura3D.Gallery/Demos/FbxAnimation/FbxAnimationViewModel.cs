@@ -8,6 +8,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using ModelNode = Aura3D.Core.Nodes.Model;
 
 namespace Aura3D.Gallery.Demos;
@@ -19,9 +20,11 @@ namespace Aura3D.Gallery.Demos;
 ///   <item><description>参数：剪辑/骨骼下拉与取样滑杆双向绑定到这里的属性；换剪辑写穿到模型节点的
 ///     AnimationSampler（第 0 项「不挂采样器」写 null），换骨骼与取样时刻只改取样读数。</description></item>
 ///   <item><description>Readout：骨架与剪辑表两行是纯模板读数，Lingua 1.1 的 format builder 组装，
-///     逐帧 <see cref="Tick"/> 重读；取样读数是「模板 + 无剪辑回落」的双态行——format builder
-///     换不了整句模板（占位格式串与回落句是两个键），所以按非模板动态字符串走
-///     <see cref="SampleText"/> 普通 string 属性，在三个输入变化处重算。</description></item>
+///     在模型就位与换剪辑两处 Refresh 重读；取样读数是「模板 + 无剪辑回落」的双形态行——
+///     占位格式串与回落句是两个键，单一 format 模板表达不了整句切换，所以两种形态在构造期
+///     各备一份 observable 字段（模板走 format builder，回落直接持 Strings.Instance 键流），
+///     <see cref="SampleText"/> 按条件赋「当前形态」的引用，形态内的动态变化调字段自己的
+///     Refresh，不再手动重拼整句。</description></item>
 ///   <item><description>引擎模型：模型节点、挂在它身上的采样器与取回的剪辑表都住在这里；
 ///     视图只负责取资产喂进来、建场景时把节点登记进场景并调 <see cref="PrepareBones"/> 回填骨骼名单。</description></item>
 /// </list>
@@ -41,8 +44,8 @@ public sealed partial class FbxAnimationViewModel : ObservableObject
 
     /// <summary>
     /// 建 VM：装好剪辑下拉的选项与初选（第 0 项是要翻译的「不挂采样器」，文件名标签不随语言走），
-    /// 再把两条模板读数装配起来。取样读数的初值直接给「无剪辑」句——资产到位前这就是实情，
-    /// 也省得等第一次交互才把空行填上。
+    /// 再把两条模板读数装配起来。取样读数的初值直接持「无剪辑」整句形态的 observable——
+    /// 资产到位前这就是实情，也省得等第一次交互才把空行填上。
     /// </summary>
     public FbxAnimationViewModel()
     {
@@ -93,7 +96,25 @@ public sealed partial class FbxAnimationViewModel : ObservableObject
                 : Strings.Keys.FbxAnimation_SkeletonDiff.T())
             .Build();
 
-        sampleText = Strings.Keys.FbxAnimation_NoClip.T();
+        // 取样读数的两个形态字段在构造期各备一份（形态选择与模板刷新解耦，见 SampleText）。
+        // 模板形态的 7 个 Arg 与 resx 模板逐个对齐：{0} 剪辑名、{1} 时刻、{2} 骨骼名、{3}..{5}
+        // 位移三分量、{6} 通道数。Arg 全是重读型，Refresh 时取此刻值——骨骼名直接读选中项的
+        // Value、剪辑按当前下标现解析，不能捕获某个具体剪辑或选项，否则会钉死在构造时的那一个上。
+        sampleTemplateText = Strings.Keys.FbxAnimation_SampleReadout.CreateFormat()
+            .Arg(() => SampleAnimation?.Name ?? "-")
+            .Arg(() => sampleTime)
+            .Arg(() => SelectedBone?.Value ?? "-")
+            .Arg(() => sampleTranslation.X)
+            .Arg(() => sampleTranslation.Y)
+            .Arg(() => sampleTranslation.Z)
+            .Arg(() => SampleAnimation?.Channels.Count ?? 0)
+            .Build();
+
+        // 整句回落形态直接持 Strings.Instance 的键流：本身 culture 响应式，永不需要 Refresh。
+        noClipText = Strings.Instance.FbxAnimation_NoClip;
+
+        // 初值对齐旧构造的「无剪辑」句：给引用不给快照，绑定订上的就是键流本身，语言切换这行自己会换。
+        sampleText = noClipText;
     }
 
     /// <summary>资产阶段取回的模型节点；剪辑下拉从此写穿它上面的 AnimationSampler。</summary>
@@ -173,7 +194,18 @@ public sealed partial class FbxAnimationViewModel : ObservableObject
     private Kit.ComboOption<string>? selectedBone;
     private double sampleTime;
 
-    private string sampleText;
+    // 模板占位 {3}..{5} 的共享取样结果：UpdateSampleText 每次刷新前只调一次 Animation.Sample，
+    // 三个位移占位的 Arg 共读这份平移——若各占位各自取样，同一时刻的同一根骨骼会被插值三遍。
+    private Vector3 sampleTranslation;
+
+    // 取样读数的两个形态字段：构造期各备一份，形态切换才把对应引用赋给 SampleText
+    // （形态选择与模板刷新解耦——形态没换不动引用，形态内的动态变化只 Refresh）。
+    private readonly LinguaFormatObservable sampleTemplateText;
+    private readonly IObservable<string?> noClipText;
+    private IObservable<string?> sampleText;
+
+    /// <summary>当前取样目标：选中文件标签对应剪辑，查不到回落表里第一条（旧 ReportSample 口径）。</summary>
+    private Animation? SampleAnimation => clips.Count > 0 ? byLabel.GetValueOrDefault(ClipLabel) ?? clips[0] : null;
 
     /// <summary>「挂上的动作」下拉的选中项；选项实例即身份，Value（下拉序号）直接驱动换剪辑
     /// ——换模型节点上的采样器，并重算取样读数。</summary>
@@ -222,12 +254,14 @@ public sealed partial class FbxAnimationViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 取样读数。这行是双态：有剪辑且选了骨骼时是 7 占位模板（剪辑名、时刻、骨骼名、位移三分量、
-    /// 通道数），否则整句换成「没有可取样的剪辑」——两个键、两种句式，Lingua 的 format builder
-    /// 承不住整句切换，所以按「非模板动态字符串」走普通 string + SetProperty，在换剪辑、
-    /// 换骨骼、拖时刻三处重算。语言切换由外壳重挂整页（连同本 VM 一起换新）自然换句。
+    /// 取样读数（公共形态口）。这行是双形态：有剪辑且选了骨骼时是 7 占位模板（剪辑名、时刻、
+    /// 骨骼名、位移三分量、通道数），否则整句换成「没有可取样的剪辑」——两个键、两种句式，
+    /// 单一 format 模板表达不了整句切换。属性只持「当前形态」observable 的引用：SetProperty
+    /// 按引用比较，形态没换就不发通知；XAML 用 <c>^</c> 流绑定跟随引用换订阅，形态内的动态
+    /// 变化由对应字段自己的 Refresh 带出。语言切换两种形态都自应答——模板形态由
+    /// LinguaFormatObservable 换模板重发，回落形态是 Strings.Instance 的键流，天生 culture 响应式。
     /// </summary>
-    public string SampleText
+    public IObservable<string?> SampleText
     {
         get => sampleText;
         private set => SetProperty(ref sampleText, value);
@@ -276,34 +310,30 @@ public sealed partial class FbxAnimationViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 重算取样读数（旧 ReportSample 逐行照搬）：无剪辑或未选骨骼时整行回落到「没有可取样的剪辑」；
-    /// 否则直接调 Animation.Sample 拿那根骨骼在该时刻的矩阵，按 7 占位模板排出。
+    /// 刷新取样读数（形态选择与模板刷新在此收口）：无剪辑或未选骨骼时把整行切到「没有可取样
+    /// 的剪辑」整句形态——赋 noClipText 引用即可，它是 Strings.Instance 的键流，语言切换自己
+    /// 换句，永不需要 Refresh；否则切到 7 占位模板形态——先把此刻的取样矩阵算好（三个位移
+    /// 占位共读这一份），再赋模板字段引用并 Refresh。形态没换时 SetProperty 按引用比较挡掉
+    /// 赋值，只剩 Refresh 重排整句：换骨骼、拖时刻这些形态内变化走的就是这条。
     /// </summary>
     private void UpdateSampleText()
     {
-        var animation = clips.Count > 0
-            ? byLabel.GetValueOrDefault(ClipLabel) ?? clips[0]
-            : null;
+        var animation = SampleAnimation;
 
         // 消费端从选中项的 Value 取骨骼名，不再单独养一个字符串影子字段。
         var boneName = SelectedBone?.Value;
 
         if (animation == null || string.IsNullOrEmpty(boneName))
         {
-            SampleText = Strings.Keys.FbxAnimation_NoClip.T();
+            SampleText = noClipText;
 
             return;
         }
 
-        var matrix = animation.Sample(boneName, (float)sampleTime);
+        sampleTranslation = animation.Sample(boneName, (float)sampleTime).Translation;
 
-        SampleText = Strings.Keys.FbxAnimation_SampleReadout.Format(
-            animation.Name,
-            sampleTime,
-            boneName,
-            matrix.Translation.X,
-            matrix.Translation.Y,
-            matrix.Translation.Z,
-            animation.Channels.Count);
+        SampleText = sampleTemplateText;
+
+        sampleTemplateText.Refresh();
     }
 }
