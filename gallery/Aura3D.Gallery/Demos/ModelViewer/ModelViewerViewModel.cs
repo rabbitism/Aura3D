@@ -49,15 +49,14 @@ public sealed partial class ModelViewerViewModel : ObservableObject
         ("CelCharacter", Strings.Keys.ModelViewer_OptionCelCharacter, false),
     ];
 
-    private static readonly LinguaKey[] CopyModeKeys =
+    // 副本模式下拉的 (Lingua 键, CopyType) 对照表，键序沿用旧 CopyModeKeys（即枚举成员序）。
+    // Value 直接携带引擎枚举，读数行的技术名由枚举 ToString() 给出，不再另备名字表。
+    private static readonly (LinguaKey Key, CopyType Mode)[] CopyModes =
     [
-        Strings.Keys.ModelViewer_CopyOptionSharedResource,
-        Strings.Keys.ModelViewer_CopyOptionSharedResourceData,
-        Strings.Keys.ModelViewer_CopyOptionFullCopy,
+        (Strings.Keys.ModelViewer_CopyOptionSharedResource, CopyType.SharedResource),
+        (Strings.Keys.ModelViewer_CopyOptionSharedResourceData, CopyType.SharedResourceData),
+        (Strings.Keys.ModelViewer_CopyOptionFullCopy, CopyType.FullCopy),
     ];
-
-    // 下拉文案里的 CopyType 枚举名是技术标识，不翻：读数行只引用名字部分。
-    private static readonly string[] CopyModeNames = ["SharedResource", "SharedResourceData", "FullCopy"];
 
     private readonly Dictionary<string, ModelNode> loaded = [];
     private readonly List<ModelNode> clones = [];
@@ -68,14 +67,19 @@ public sealed partial class ModelViewerViewModel : ObservableObject
     // 一次按需装载未落地前挡掉新的选择（旧页 Choose 开头的 loading 早退原样搬来）。
     private bool isLoading;
 
-    private object? selectedModel;
-    private object? selectedCopyMode;
+    // 下拉选项统一走 ComboOption：强类型私表 + public IList 透出（XAML 绑定不变）。
+    // Name 是 Lingua observable（模板 {Binding Name^} 流订阅，换语言自动换字），
+    // Value 是语言无关的稳定身份——资产 Key / CopyType 枚举，选中比较回到选项实例，
+    // 不再按翻译后的字符串 IndexOf 匹配。
+    private List<Kit.ComboOption<string>> modelOptionList = [];
+    private List<Kit.ComboOption<CopyType>> copyModeOptionList = [];
+    private Kit.ComboOption<string>? selectedModel;
+    private Kit.ComboOption<CopyType>? selectedCopyMode;
 
     private double fitPadding = 0.12;
     private double boxPadding;
     private bool customBox;
     private bool showBox = true;
-    private int copyModeIndex;
 
     // 包围盒读数的逐帧缓存：Model.BoundingBox 的 getter 每次都遍历 Mesh 再合并，
     // 一帧只取一次，8 个占位共用（旧 ReportBox 也是先取一次再填）。
@@ -87,11 +91,12 @@ public sealed partial class ModelViewerViewModel : ObservableObject
     /// </summary>
     public ModelViewerViewModel()
     {
-        ModelOptions = Library.Select(i => i.Label.T()).ToList();
-        CopyModeOptions = CopyModeKeys.Select(k => k.T()).ToList();
+        modelOptionList = Library.Select(i => Kit.ComboOption.ForKey(i.Label, i.Key)).ToList();
+        copyModeOptionList = CopyModes.Select(m => Kit.ComboOption.ForKey(m.Key, m.Mode)).ToList();
 
-        selectedModel = LabelOf(selectedKey);
-        selectedCopyMode = CopyModeOptions[copyModeIndex];
+        // 初选按 Value 对表：模型取选中键，副本模式取旧 copyModeIndex=0 对应的 SharedResource。
+        selectedModel = modelOptionList.Single(o => o.Value == selectedKey);
+        selectedCopyMode = copyModeOptionList.Single(o => o.Value == CopyType.SharedResource);
 
         // 装载记录初值是「还没取过」的提示句（旧 XAML 里 Text 直接绑这个键）；
         // 共享情况与结构统计旧页进页时不写（ReportClone/ReportStructure 只在交互后跑），
@@ -213,11 +218,11 @@ public sealed partial class ModelViewerViewModel : ObservableObject
         private set => SetProperty(ref structureText, value);
     }
 
-    /// <summary>当前模型下拉的选项；当前语言的一份快照，随页面重建（换语言即换页）。</summary>
-    public IList ModelOptions { get; }
+    /// <summary>当前模型下拉的选项：Name 跟随语言（流绑定自动换字），Value 是语言无关的资产 Key。</summary>
+    public IList ModelOptions => modelOptionList;
 
-    /// <summary>CopyType 下拉的选项。</summary>
-    public IList CopyModeOptions { get; }
+    /// <summary>CopyType 下拉的选项：Name 跟随语言（流绑定自动换字），Value 是引擎的 CopyType 枚举。</summary>
+    public IList CopyModeOptions => copyModeOptionList;
 
     /// <summary>已装载的模型表（进页即取与按需两档都在内）；建场景时视图按它登记节点。</summary>
     public IReadOnlyDictionary<string, ModelNode> Loaded => loaded;
@@ -249,37 +254,32 @@ public sealed partial class ModelViewerViewModel : ObservableObject
     /// 选到按需那档发 <see cref="ModelRequested"/> 请视图取字节。装载进行中的新选择被
     /// <c>isLoading</c> 挡掉——旧页 Choose 的早退口径：下拉显示先行一步，落地后下次选择才追上。
     /// </summary>
-    public object? SelectedModel
+    public Kit.ComboOption<string>? SelectedModel
     {
         get => selectedModel;
         set
         {
-            // 绑定初始化会把当前项再推一次（合成选中），相等判断挡掉，别让它凭空触发一次切换。
-            if (value is not string label
-                || label == LabelOf(selectedKey)
-                || !SetProperty(ref selectedModel, value))
-            {
+            // 选项实例即身份：绑定初始化把当前项再推一次时是同一实例，SetProperty 的相等
+            // 判断挡掉，别让它凭空触发一次切换。
+            if (value == null || !SetProperty(ref selectedModel, value))
                 return;
-            }
 
             if (isLoading)
                 return;
 
-            SelectModel(Library[ModelOptions.IndexOf(label)].Key);
+            SelectModel(value.Value);
         }
     }
 
     /// <summary>CopyType 下拉的选中项；换类型要整批重建副本——先清旧再按新模式建新。</summary>
-    public object? SelectedCopyMode
+    public Kit.ComboOption<CopyType>? SelectedCopyMode
     {
         get => selectedCopyMode;
         set
         {
-            // 同上：初值推入时会触发一次「没变」的选中，别让它凭空建出副本。
-            if (value is not string mode || !SetProperty(ref selectedCopyMode, value))
+            // 同上：初值推入是同一实例，SetProperty 挡掉，别让它凭空建出副本。
+            if (value == null || !SetProperty(ref selectedCopyMode, value))
                 return;
-
-            copyModeIndex = Math.Max(0, CopyModeOptions.IndexOf(mode));
 
             ClearClones();
             AddClones();
@@ -409,12 +409,9 @@ public sealed partial class ModelViewerViewModel : ObservableObject
         ReportClone();
     }
 
-    private CopyType ModeOf() => copyModeIndex switch
-    {
-        1 => CopyType.SharedResourceData,
-        2 => CopyType.FullCopy,
-        _ => CopyType.SharedResource,
-    };
+    // 选中项的 Value 即引擎枚举，旧 copyModeIndex→CopyType 的换算随之退役；
+    // 建副本时必已选中，null 回落只是给编译器一个确定性出口。
+    private CopyType ModeOf() => selectedCopyMode?.Value ?? CopyType.SharedResource;
 
     private string LabelOf(string key) => Library.First(i => i.Key == key).Label.T();
 
@@ -476,7 +473,7 @@ public sealed partial class ModelViewerViewModel : ObservableObject
             .Any(m => m.Material != null && ReferenceEquals(m.Material.GetTexture("BaseColor"), originalTint));
 
         CloneText = Strings.Keys.ModelViewer_CloneReadout.Format(
-            CopyModeNames[copyModeIndex],
+            ModeOf(),
             sharedGeometry ? Strings.Keys.ModelViewer_SameInstance.T() : Strings.Keys.ModelViewer_OwnCopies.T(),
             sharedMaterial ? Strings.Keys.ModelViewer_SameInstance.T() : Strings.Keys.ModelViewer_OwnCopies.T(),
             followed

@@ -2,12 +2,14 @@ using Aura3D.Core.Nodes;
 using Aura3D.Core.Renderers;
 using Aura3D.Core.Resources;
 using Aura3D.Core.Scenes;
+using Aura3D.Gallery.Kit;
 using Aura3D.Gallery.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Irihi.Lingua;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Color = System.Drawing.Color;
@@ -56,21 +58,23 @@ public sealed partial class SkyboxBackgroundViewModel : ObservableObject
     /// <param name="settings">宿主当前生效的管线设置，仅在构造期读初值，不保存引用。</param>
     public SkyboxBackgroundViewModel(PipelineSettings settings)
     {
-        SourceOptions = SourceKeys.Select(k => k.T()).ToList();
+        // 选项的 Name 是 Lingua 流绑定（换语言自动换文案），Value 是语言无关的来源序号，
+        // 选中项按对象身份比较，不再按翻译后的字符串 IndexOf 反查。
+        sourceOptionList = SourceKeys.Select((k, i) => Kit.ComboOption.ForKey(k, i)).ToList();
 
         iblAmbientIntensity = settings.IblAmbientIntensity;
         toneMappingExposure = settings.ToneMappingExposure;
 
         // 默认停在六面立方图那一支（sourceIndex=1），与旧页面一致。
         sourceIndex = 1;
-        selectedSource = SourceOptions[sourceIndex];
+        selectedSource = sourceOptionList[sourceIndex];
 
         // Readout 模板 {0}..{6}：占位语义与旧 Report() 里的 string.Format 逐个对齐——{0} 来源名；
         // {1} 背景 OneOf 分支（尺寸只有场景知道）；{2} 投影变体、{3} FarPlane 与 {4} 画背景开关
         // 读 VM 的 backing（VM 是这些相机参数的唯一改写者，登记时同步过一次，同 PostProcessing
         // 页重建参数读 backing 的做法）；尾部 {5}/{6} 是两张 IBL 缓存的 fbo 号，只能逐帧问相机节点。
         ReadoutText = Strings.Keys.Background_Readout.CreateFormat()
-            .Arg(() => (string)SourceOptions[sourceIndex]!)
+            .Arg(() => selectedSource?.CurrentName ?? string.Empty)
             .Arg(() => BranchText())
             .Arg(() => orthographic
                 ? Strings.Keys.Background_VariantOrtho.Format(orthoSize)
@@ -124,8 +128,8 @@ public sealed partial class SkyboxBackgroundViewModel : ObservableObject
     /// <summary>逐帧读数。语言切换时模板换新，绑定自动收到重排后的整句。</summary>
     public LinguaFormatObservable ReadoutText { get; }
 
-    /// <summary>来源下拉的选项文案；当前语言的一份快照，随页面重建。</summary>
-    public IList SourceOptions { get; }
+    /// <summary>来源下拉的选项：Name 跟随语言（Lingua 流绑定），Value 是来源序号（驱动 ApplyBackground 的分支选择）。</summary>
+    public IList SourceOptions => sourceOptionList;
 
     /// <summary>
     /// 重烘 IBL：把缓存在相机节点上的辐照度图与预滤波图作废，下一帧管线重烘；
@@ -165,7 +169,8 @@ public sealed partial class SkyboxBackgroundViewModel : ObservableObject
     private Texture? flatImage;
 
     private int sourceIndex;
-    private object? selectedSource;
+    private List<Kit.ComboOption<int>> sourceOptionList = [];
+    private Kit.ComboOption<int>? selectedSource;
 
     private double cubeFaceSize = 128;
     private double orthoSize = 12;
@@ -179,10 +184,11 @@ public sealed partial class SkyboxBackgroundViewModel : ObservableObject
     private bool sunVisible = true;
 
     /// <summary>
-    /// 背景来源下拉的选中项；换来源立即把新的 OneOf 分支写到场景背景上（场景建好之前
-    /// 只记在 backing 里，登记时统一补写），HDRI 分支还会按当前边长现转一份立方图。
+    /// 背景来源下拉的选中项；选项实例即身份，Value 直接给出来源序号。换来源立即把新的
+    /// OneOf 分支写到场景背景上（场景建好之前只记在 backing 里，登记时统一补写），
+    /// HDRI 分支还会按当前边长现转一份立方图。
     /// </summary>
-    public object? SelectedSource
+    public Kit.ComboOption<int>? SelectedSource
     {
         get => selectedSource;
         set
@@ -190,7 +196,7 @@ public sealed partial class SkyboxBackgroundViewModel : ObservableObject
             if (value == null || !SetProperty(ref selectedSource, value))
                 return;
 
-            sourceIndex = Math.Max(0, SourceOptions.IndexOf(value));
+            sourceIndex = value.Value;
 
             if (scene != null)
                 ApplyBackground(scene);

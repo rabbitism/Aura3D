@@ -47,7 +47,9 @@ public sealed partial class PrimitivesViewModel : ObservableObject
 
     private Mesh? selected;
 
-    private object? selectedKind;
+    private List<Kit.ComboOption<PrimitiveType>> kindOptions = [];
+
+    private Kit.ComboOption<PrimitiveType>? selectedKind;
 
     private double columns = 12;
     private double rows = 6;
@@ -61,7 +63,9 @@ public sealed partial class PrimitivesViewModel : ObservableObject
     /// </summary>
     public PrimitivesViewModel()
     {
-        KindOptions = Kinds.Select(k => k.Label.T()).ToList();
+        // 选项的 Name 从 Lingua 键取 observable（切语言自动换），Value 是图元种类——
+        // 稳定值直接索引 meshes 字典，选中比较回到选项实例，不再依赖翻译后的文案。
+        kindOptions = Kinds.Select(k => Kit.ComboOption.ForKey(k.Label, k.Type)).ToList();
 
         foreach (var (type, label) in Kinds)
         {
@@ -77,8 +81,8 @@ public sealed partial class PrimitivesViewModel : ObservableObject
             meshes[type] = mesh;
         }
 
-        selected = meshes[PrimitiveType.Triangles];
-        selectedKind = KindOptions[4];
+        selectedKind = kindOptions[4];
+        selected = meshes[selectedKind.Value];
 
         Layout();
 
@@ -97,8 +101,8 @@ public sealed partial class PrimitivesViewModel : ObservableObject
     /// <summary>聚焦或参数变化后请求一帧重绘；视图把它接到宿主的 InvalidateRender 上。</summary>
     public event Action? FrameRequested;
 
-    /// <summary>「聚焦图元」下拉的选项文案；当前语言的一份快照，随页面重建。</summary>
-    public IList KindOptions { get; }
+    /// <summary>「聚焦图元」下拉的选项：Name 跟随语言（Lingua 流绑定），Value 是图元种类（直接索引 meshes 字典）。</summary>
+    public IList KindOptions => kindOptions;
 
     /// <summary>七种图元的网格（顺序同 Kinds）；建场景时由视图挂进场景。</summary>
     public IReadOnlyList<Mesh> Meshes { get; }
@@ -107,11 +111,12 @@ public sealed partial class PrimitivesViewModel : ObservableObject
     public LinguaFormatObservable ReadoutText { get; }
 
     /// <summary>
-    /// 「聚焦图元」下拉的选中项；换一种图元就把聚焦挪过去、其余摆回相机背后。
+    /// 「聚焦图元」下拉的选中项；选项实例即身份，Value 直接给出图元种类（旧实现按翻译后的
+    /// 字符串 IndexOf 反查下标，换语言即脱钩），换一种图元就把聚焦挪过去、其余摆回相机背后。
     /// 旧处理器里「场景没建先放过」的早退不再需要：网格在 VM 构造期已建全，任何时刻改选
     /// 都落得到 Mesh 上，建场景时摆位一并生效。
     /// </summary>
-    public object? SelectedKind
+    public Kit.ComboOption<PrimitiveType>? SelectedKind
     {
         get => selectedKind;
         set
@@ -119,10 +124,7 @@ public sealed partial class PrimitivesViewModel : ObservableObject
             if (value == null || !SetProperty(ref selectedKind, value))
                 return;
 
-            var index = KindOptions.IndexOf(value);
-
-            if (index >= 0)
-                selected = meshes[Kinds[index].Type];
+            selected = meshes[value.Value];
 
             Layout();
             ReadoutText.Refresh();

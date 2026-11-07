@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.Input;
 using Irihi.Lingua;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Color = System.Drawing.Color;
@@ -64,13 +65,15 @@ public sealed partial class EnvironmentViewModel : ObservableObject
     /// <param name="settings">宿主当前生效的管线设置，仅在构造期读初值，不保存引用。</param>
     public EnvironmentViewModel(PipelineSettings settings)
     {
-        PanoramaOptions = EnvKeys.Select(k => k.T()).ToList();
+        // 选项的 Name 是 Lingua 流绑定（换语言自动换文案），Value 是语言无关的全景图序号，
+        // 选中项按对象身份比较，不再按翻译后的字符串 IndexOf 反查。
+        panoramaOptionList = EnvKeys.Select((k, i) => Kit.ComboOption.ForKey(k, i)).ToList();
 
         iblAmbientIntensity = settings.IblAmbientIntensity;
         toneMappingExposure = settings.ToneMappingExposure;
         brightnessClamp = settings.BrightnessClamp;
 
-        selectedPanorama = PanoramaOptions[envIndex];
+        selectedPanorama = panoramaOptionList[panoramaIndex];
 
         // Readout 模板 {0}..{7}：背景分支（立方图带边长/普通图/未设）、全景选项名、请求面大小、
         // 两张缓存 CubeRenderTarget 的 fbo 号（逐帧读，重烘后自动带出新号）、IBL 强度与曝光
@@ -88,7 +91,7 @@ public sealed partial class EnvironmentViewModel : ObservableObject
                         ? Strings.Keys.Environment_BackgroundPlain.T()
                         : Strings.Keys.Environment_BackgroundNone.T();
             })
-            .Arg(() => (string)PanoramaOptions[envIndex]!)
+            .Arg(() => selectedPanorama?.CurrentName ?? string.Empty)
             .Arg(() => effectiveFaceSize)
             .Arg(() => scene?.MainCamera.GetPipelineGpuState<CubeRenderTarget>(IrradianceKey)?.FrameBufferId ?? 0)
             .Arg(() => scene?.MainCamera.GetPipelineGpuState<CubeRenderTarget>(PrefilterKey)?.FrameBufferId ?? 0)
@@ -143,8 +146,8 @@ public sealed partial class EnvironmentViewModel : ObservableObject
     /// <summary>逐帧读数。语言切换时模板换新，绑定自动收到重排后的整句。</summary>
     public LinguaFormatObservable ReadoutText { get; }
 
-    /// <summary>全景图下拉的选项文案；当前语言的一份快照，随页面重建。</summary>
-    public IList PanoramaOptions { get; }
+    /// <summary>全景图下拉的选项：Name 跟随语言（Lingua 流绑定），Value 是全景图序号（驱动 ApplyEnvironment 的来源分流）。</summary>
+    public IList PanoramaOptions => panoramaOptionList;
 
     /// <summary>
     /// 请求整页重建；源生成 <c>ReloadCommand</c> 供按钮绑定。重建后页面连同本 VM 一起换新
@@ -185,8 +188,9 @@ public sealed partial class EnvironmentViewModel : ObservableObject
     private Texture? hdrPanorama;
     private CubeTexture? fileCube;
 
-    private int envIndex;
-    private object? selectedPanorama;
+    private int panoramaIndex;
+    private List<Kit.ComboOption<int>> panoramaOptionList = [];
+    private Kit.ComboOption<int>? selectedPanorama;
 
     // 滑杆 backing 保留拖动的原值（旧页面也不把取整结果写回滑杆）；effectiveFaceSize 才是烘培用的。
     private double faceSize = 128;
@@ -201,10 +205,11 @@ public sealed partial class EnvironmentViewModel : ObservableObject
     private bool rebaked;
 
     /// <summary>
-    /// 全景图下拉的选中项；换图立即重设 Background（setter 自己会作废两张 IBL 缓存），
-    /// 场景没建好前只记账、等 AttachScene 时一并落地。
+    /// 全景图下拉的选中项；选项实例即身份，Value 直接给出全景图序号。换图立即重设
+    /// Background（setter 自己会作废两张 IBL 缓存），场景没建好前只记账、等 AttachScene
+    /// 时一并落地。
     /// </summary>
-    public object? SelectedPanorama
+    public Kit.ComboOption<int>? SelectedPanorama
     {
         get => selectedPanorama;
         set
@@ -212,7 +217,7 @@ public sealed partial class EnvironmentViewModel : ObservableObject
             if (value == null || !SetProperty(ref selectedPanorama, value))
                 return;
 
-            envIndex = Math.Max(0, PanoramaOptions.IndexOf(value));
+            panoramaIndex = value.Value;
 
             if (scene != null)
                 ApplyEnvironment();
@@ -320,7 +325,7 @@ public sealed partial class EnvironmentViewModel : ObservableObject
     /// </summary>
     private void ApplyEnvironment()
     {
-        scene!.Background = envIndex switch
+        scene!.Background = panoramaIndex switch
         {
             // 真实 HDRI：文件里是线性 HDR 值，烘之前不能再走一次 gamma 解码（加载器默认就是 false）。
             0 => HDRIToCubeTextureConverter.ConvertFromTexture(hdrPanorama!, effectiveFaceSize),
@@ -330,7 +335,7 @@ public sealed partial class EnvironmentViewModel : ObservableObject
 
             // 程序化全景图：花样的编号从 FirstProceduralIndex 起算。
             _ => HDRIToCubeTextureConverter.ConvertFromTexture(
-                BuildPanorama(envIndex - FirstProceduralIndex), effectiveFaceSize),
+                BuildPanorama(panoramaIndex - FirstProceduralIndex), effectiveFaceSize),
         };
     }
 

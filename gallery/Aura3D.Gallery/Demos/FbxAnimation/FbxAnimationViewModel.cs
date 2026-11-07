@@ -1,4 +1,5 @@
 using Aura3D.Core.Resources;
+using Aura3D.Gallery.Kit;
 using Aura3D.Gallery.Localization;
 using Avalonia.Collections;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -45,19 +46,27 @@ public sealed partial class FbxAnimationViewModel : ObservableObject
     /// </summary>
     public FbxAnimationViewModel()
     {
-        ClipOptions = MotionFiles.Select(file => file.Label)
-            .Prepend(Strings.Keys.FbxAnimation_NoSampler.T())
+        // 第 0 项「不挂采样器」走 Lingua 键（要翻译），其余是动作文件标签（语言无关的文件标识，
+        // 字面量名直出）；Value 统一用下拉序号承载稳定身份——0 即不挂，i+1 即第 i 个动作文件，
+        // 选中比较走选项实例，不再按显示字符串回查下标。
+        var clipOptionList = MotionFiles.Select((file, i) => Kit.ComboOption.Literal(file.Label, i + 1))
+            .Prepend(Kit.ComboOption.ForKey(Strings.Keys.FbxAnimation_NoSampler, 0))
             .ToList();
+
+        ClipOptions = clipOptionList;
 
         // 初选对齐旧页面构造函数里的 ClipRow.SelectedItem = ClipOptions[1]（clipIndex 初值 1），
         // 现在由绑定初始化替它完成。
-        selectedClip = ClipOptions[clipIndex];
+        selectedClip = clipOptionList[clipIndex];
 
         // 剪辑表模板 {0}..{3}：占位语义与旧 Report() 里的 string.Format 逐个对齐——当前项、
         // 条数、名字(时长)拼接（空表落到「无」）、采样器骨骼变换数。当前项与拼接都是重读型：
-        // 换剪辑 / 模型就位两个变异点上 Refresh 带出新值。
+        // 换剪辑 / 模型就位两个变异点上 Refresh 带出新值。当前项不能捕获某个选项的 Name 流——
+        // 那会把占位钉死在构造时的那一项上，所以按 clipIndex 现取显示名（第 0 项重取键值，其余取标签）。
         ClipsReadoutText = Strings.Keys.FbxAnimation_ClipTableReadout.CreateFormat()
-            .Arg(() => (string)ClipOptions[clipIndex]!)
+            .Arg(() => clipIndex == 0
+                           ? Strings.Keys.FbxAnimation_NoSampler.T()
+                           : MotionFiles[clipIndex - 1].Label)
             .Arg(() => clips.Count)
             .Arg(() =>
             {
@@ -90,12 +99,14 @@ public sealed partial class FbxAnimationViewModel : ObservableObject
     /// <summary>资产阶段取回的模型节点；剪辑下拉从此写穿它上面的 AnimationSampler。</summary>
     public ModelNode? Model => model;
 
-    /// <summary>「挂上的动作」下拉的选项；第 0 项是当前语言的一份快照，随页面重建（换语言即换页）。</summary>
+    /// <summary>「挂上的动作」下拉的选项：第 0 项的 Name 是 Lingua 流（随语言自动换），其余是
+    /// 动作文件标签；Value 是下拉序号（0 = 不挂采样器）。</summary>
     public IList ClipOptions { get; }
 
     /// <summary>骨骼名单：资产到位前是空的，<see cref="PrepareBones"/> 里就地补齐。
-    /// 仍用 AvaloniaList—— ComboRow 绑定它，补齐发生在渲染线程回调里，沿用旧页同一集合类型不打乱时序。</summary>
-    public AvaloniaList<string> BoneOptions { get; } = [];
+    /// 仍用 AvaloniaList—— ComboRow 绑定它，补齐发生在渲染线程回调里，沿用旧页同一集合类型不打乱时序；
+    /// 选项的 Name/Value 都是骨骼名这一引擎标识。</summary>
+    public AvaloniaList<Kit.ComboOption<string>> BoneOptions { get; } = [];
 
     /// <summary>资产阶段由视图喂进取回的模型（旧页的 model 字段）。</summary>
     public void SetModel(ModelNode loadedModel) => model = loadedModel;
@@ -127,9 +138,13 @@ public sealed partial class FbxAnimationViewModel : ObservableObject
         BoneOptions.Clear();
 
         foreach (var name in model?.Skeleton?.Bones.Select(b => b.Name) ?? [])
-            BoneOptions.Add(name);
+            BoneOptions.Add(Kit.ComboOption.Literal(name, name));
 
-        SelectedBone = PickBone();
+        // PickBone 给的是骨骼名，包装回选项实例再走 SelectedBone（选项实例即身份，不再按字符串匹配）；
+        // 空骨架挑不出名字时回落 null，取样读数自然落到「没有可取样的剪辑」。
+        var picked = PickBone();
+
+        SelectedBone = BoneOptions.FirstOrDefault(o => o.Value == picked);
 
         // 旧 SetModel 尾部的 Report：两条模板读数的首个真值由这里带出。
         ClipsReadoutText.Refresh();
@@ -138,8 +153,12 @@ public sealed partial class FbxAnimationViewModel : ObservableObject
         UpdateSampleText();
     }
 
-    /// <summary>当前选中项的身份：第 0 项是「不挂采样器」，其余是动作文件的标签。</summary>
-    private string ClipLabel => (string)ClipOptions[clipIndex]!;
+    /// <summary>
+    /// 当前选中项对应的动作文件标签（byLabel 的键）：Value 即下拉序号。第 0 项「不挂采样器」
+    /// 没有对应的动作文件，给空串让字典查不到、取数端走 clips[0] 回落（旧口径是拿「不挂采样器」
+    /// 这句文案当键查，同样查不到任何剪辑，行为一致）。
+    /// </summary>
+    private string ClipLabel => clipIndex > 0 ? MotionFiles[clipIndex - 1].Label : string.Empty;
 
     private ModelNode? model;
     private readonly List<Animation> clips = [];
@@ -147,17 +166,18 @@ public sealed partial class FbxAnimationViewModel : ObservableObject
 
     private AnimationSampler? sampler;
 
-    // clipIndex 与下拉选中项互为影子：比较/回写用下标，显示用字符串（同 Particles 的贴图下拉）。
+    // 选中项实例即身份：Value（下拉序号）写进 clipIndex 驱动引擎侧，显示交给选项自己的 Name 流。
     private int clipIndex = 1;
-    private object? selectedClip;
+    private Kit.ComboOption<int>? selectedClip;
 
-    private string boneName = string.Empty;
+    private Kit.ComboOption<string>? selectedBone;
     private double sampleTime;
 
     private string sampleText;
 
-    /// <summary>「挂上的动作」下拉的选中项；换剪辑即换模型节点上的采样器，并重算取样读数。</summary>
-    public object? SelectedClip
+    /// <summary>「挂上的动作」下拉的选中项；选项实例即身份，Value（下拉序号）直接驱动换剪辑
+    /// ——换模型节点上的采样器，并重算取样读数。</summary>
+    public Kit.ComboOption<int>? SelectedClip
     {
         get => selectedClip;
         set
@@ -165,7 +185,7 @@ public sealed partial class FbxAnimationViewModel : ObservableObject
             if (value == null || !SetProperty(ref selectedClip, value))
                 return;
 
-            clipIndex = Math.Max(0, ClipOptions.IndexOf(value));
+            clipIndex = value.Value;
 
             ApplyClip();
 
@@ -177,13 +197,13 @@ public sealed partial class FbxAnimationViewModel : ObservableObject
         }
     }
 
-    /// <summary>骨骼下拉的选中项；只影响取样读数在哪根骨骼上取样。</summary>
-    public object? SelectedBone
+    /// <summary>骨骼下拉的选中项；选项实例即身份，Value 即骨骼名，只影响取样读数在哪根骨骼上取样。</summary>
+    public Kit.ComboOption<string>? SelectedBone
     {
-        get => boneName;
+        get => selectedBone;
         set
         {
-            if (value is not string name || !SetProperty(ref boneName, name))
+            if (value == null || !SetProperty(ref selectedBone, value))
                 return;
 
             UpdateSampleText();
@@ -264,6 +284,9 @@ public sealed partial class FbxAnimationViewModel : ObservableObject
         var animation = clips.Count > 0
             ? byLabel.GetValueOrDefault(ClipLabel) ?? clips[0]
             : null;
+
+        // 消费端从选中项的 Value 取骨骼名，不再单独养一个字符串影子字段。
+        var boneName = SelectedBone?.Value;
 
         if (animation == null || string.IsNullOrEmpty(boneName))
         {

@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 
 namespace Aura3D.Gallery.Demos;
@@ -32,7 +33,11 @@ public sealed partial class CameraViewModel : ObservableObject
     private Mesh? focusTarget;
 
     private ProjectionType projection = ProjectionType.Perspective;
-    private object? selectedProjection;
+
+    // 下拉选项统一走 ComboOption：Name 是引擎枚举名（语言无关的引擎标识，走 Literal），
+    // Value 即枚举值，选中比较回到选项实例，不再按 ToString 的字符串匹配。
+    private List<Kit.ComboOption<ProjectionType>> projectionOptionList = [];
+    private Kit.ComboOption<ProjectionType>? selectedProjection;
 
     // 真相机要等 BuildScene 才出生，ctor 对齐的是「建场景那一刻将要写进它的那一份」初值，
     // 即旧页面滑杆上的 60 / 4 / 0.1 / 100——初值与引擎最终生效值一致，绑定初始化即对表。
@@ -56,17 +61,17 @@ public sealed partial class CameraViewModel : ObservableObject
     /// </summary>
     public CameraViewModel()
     {
-        ProjectionOptions = new List<ProjectionType>
+        projectionOptionList = new List<ProjectionType>
         {
             ProjectionType.Perspective,
             ProjectionType.Orthographic,
-        };
+        }.Select(p => Kit.ComboOption.Literal(p.ToString(), p)).ToList();
 
-        selectedProjection = projection;
+        selectedProjection = projectionOptionList.Single(o => o.Value == projection);
     }
 
-    /// <summary>投影方式下拉的选项。</summary>
-    public IList ProjectionOptions { get; }
+    /// <summary>投影方式下拉的选项：Name 是引擎枚举名（语言无关的引擎标识），Value 即枚举值。</summary>
+    public IList ProjectionOptions => projectionOptionList;
 
     /// <summary>视锥或背景参数变化后请求一帧重绘；视图把它接到宿主的 RequestFrame 上。</summary>
     public event Action? FrameRequested;
@@ -105,16 +110,17 @@ public sealed partial class CameraViewModel : ObservableObject
             : Strings.Keys.Camera_BehindCamera.T();
     }
 
-    /// <summary>投影方式；写穿真相机并排一次重绘。</summary>
-    public object? SelectedProjection
+    /// <summary>投影方式；选项的 Value 即引擎枚举，写穿真相机并排一次重绘。</summary>
+    public Kit.ComboOption<ProjectionType>? SelectedProjection
     {
         get => selectedProjection;
         set
         {
-            if (value is not ProjectionType type || !SetProperty(ref selectedProjection, value))
+            // 选项实例即身份：绑定初始化把当前项再推一次时是同一实例，SetProperty 挡掉。
+            if (value == null || !SetProperty(ref selectedProjection, value))
                 return;
 
-            projection = type;
+            projection = value.Value;
 
             ApplyProjection();
         }

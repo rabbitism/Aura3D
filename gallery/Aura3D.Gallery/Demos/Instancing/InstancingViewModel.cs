@@ -51,9 +51,11 @@ public sealed partial class InstancingViewModel : ObservableObject
     private InstancedMesh? litField;
     private InstancedMesh? coloredField;
 
-    // updateModeIndex 与下拉选中项互为影子：比较/回写用下标，显示用字符串。
+    // updateModeIndex 与下拉选中项互为影子：下标供 WriteFrame 分流两种更新路径，
+    // 稳定值回写自选中项的 Value，不再按翻译后的字符串 IndexOf 反查下标。
     private int updateModeIndex;
-    private object? selectedUpdateMode;
+    private List<Kit.ComboOption<int>> updateModeOptions = [];
+    private Kit.ComboOption<int>? selectedUpdateMode;
 
     // 滑杆是 double：实例数这个整数参数在写穿时统一 (int) 换算，与旧事件处理一致。
     private double instanceCount = 1200;
@@ -70,21 +72,24 @@ public sealed partial class InstancingViewModel : ObservableObject
     /// </summary>
     public InstancingViewModel()
     {
-        UpdateModeOptions = UpdateModeKeys.Select(k => k.T()).ToList();
-        selectedUpdateMode = UpdateModeOptions[updateModeIndex];
+        // 选项的 Name 从 Lingua 键取 observable（切语言自动换），Value 是模式下标——
+        // 语言无关的稳定值，WriteFrame 按它分流两种更新路径。
+        updateModeOptions = UpdateModeKeys.Select((k, i) => Kit.ComboOption.ForKey(k, i)).ToList();
+        selectedUpdateMode = updateModeOptions[updateModeIndex];
 
-        // Readout 模板 {0}..{3}：两片实例数与模式名在读数变化时跟着走，
-        // 顶点数读左片（两片同源几何，旧 Report 也是只报左片那份）。
+        // Readout 模板 {0}..{3}：两片实例数在读数变化时跟着走；模式名占位直接挂选中选项的
+        // Name observable，切语言自动换（不再取当前语言的一份字符串快照）；顶点数读左片
+        // （两片同源几何，旧 Report 也是只报左片那份）。
         ReadoutText = Strings.Keys.Instancing_CostReadout.CreateFormat()
             .Arg(() => litField?.InstanceCount ?? 0)
             .Arg(() => coloredField?.InstanceCount ?? 0)
             .Arg(() => litField?.VertexCount ?? 0)
-            .Arg(() => (string)UpdateModeOptions[updateModeIndex]!)
+            .Arg(() => selectedUpdateMode?.CurrentName ?? string.Empty)
             .Build();
     }
 
-    /// <summary>「更新方式」下拉的选项文案；当前语言的一份快照，随页面重建。</summary>
-    public IList UpdateModeOptions { get; }
+    /// <summary>「更新方式」下拉的选项：Name 跟随语言（Lingua 流绑定），Value 是模式下标（WriteFrame 按它分流）。</summary>
+    public IList UpdateModeOptions => updateModeOptions;
 
     /// <summary>逐帧读数。语言切换时模板换新，绑定自动收到重排后的整句。</summary>
     public LinguaFormatObservable ReadoutText { get; }
@@ -146,8 +151,9 @@ public sealed partial class InstancingViewModel : ObservableObject
         }
     }
 
-    /// <summary>更新方式下拉的选中项；换模式立即按当前时钟重写一帧矩阵，代价差异立刻可见。</summary>
-    public object? SelectedUpdateMode
+    /// <summary>更新方式下拉的选中项；选项实例即身份，Value 直接给出模式下标，
+    /// 换模式立即按当前时钟重写一帧矩阵，代价差异立刻可见。</summary>
+    public Kit.ComboOption<int>? SelectedUpdateMode
     {
         get => selectedUpdateMode;
         set
@@ -155,7 +161,7 @@ public sealed partial class InstancingViewModel : ObservableObject
             if (value == null || !SetProperty(ref selectedUpdateMode, value))
                 return;
 
-            updateModeIndex = Math.Max(0, UpdateModeOptions.IndexOf(value));
+            updateModeIndex = value.Value;
 
             // 旧处理器这里不请求重绘：动画开着自然有下一帧，保持同一口径。
             WriteFrame(clock);
